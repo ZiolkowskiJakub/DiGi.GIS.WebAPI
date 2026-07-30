@@ -13,7 +13,7 @@ namespace DiGi.GIS.WebAPI
         /// </summary>
         /// <param name="table">The table to update</param>
         /// <param name="building2DReferences">The building2DReferences to use for updating</param>
-        public static async void Update_Id(this Table? table, IEnumerable<Building2DReference>? building2DReferences)
+        public static void Update_Id(this Table? table, IEnumerable<Building2DReference>? building2DReferences)
         {
             if (table is null || building2DReferences is null)
             {
