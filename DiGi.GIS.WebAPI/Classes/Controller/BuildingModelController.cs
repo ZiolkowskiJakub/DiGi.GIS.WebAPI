@@ -20,7 +20,7 @@ namespace DiGi.GIS.WebAPI.Classes
     public class BuildingModelController : DiGi.WebAPI.Classes.WebAPIController
     {
         private readonly PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
-        private readonly PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter; //TODO: Remove building2DPostgreSQLConverter and GetItemsByCircleAsync from this controller. The workflow shall use Building2DController Buu
+        private readonly PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter; //TODO: Remove building2DPostgreSQLConverter and GetItemsByCircleAsync from this controller. The workflow shall use Building2DController
         private readonly PostgreSQL.Classes.BuildingModelPostgreSQLConverter buildingModelPostgreSQLConverter;
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
 
@@ -92,6 +92,8 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 return NotFound();
             }
+
+            //TODO: temporary method. Use buildingModelPostgreSQLConverter.GetItemsByReferenceAsync to extract building model
 
             List<BuildingModel> buildingModels = [];
             foreach (PostgreSQL.Classes.Building2D building2D_PostgreSQL in building2Ds_PostgreSQL)
