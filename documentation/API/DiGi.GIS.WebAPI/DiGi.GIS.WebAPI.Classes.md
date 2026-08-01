@@ -2321,52 +2321,52 @@ The converter used for Building 2D data operations in PostgreSQL\.
 The converter used to resolve an administrative area code to its county identifier\.
 ### Methods
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken)'></a>
 
-## BuildingModelController\.GetItemsByCircleAsync\(double, double, Nullable\<double\>, Nullable\<double\>, Nullable\<double\>, Nullable\<double\>\) Method
+## BuildingModelController\.GetItemsByCircleAsync\(double, double, Nullable\<double\>, Nullable\<double\>, Nullable\<double\>, CancellationToken\) Method
 
-Retrieves building models within a specified circle\.
+Retrieves the building models stored in the database for all buildings within a specified circle\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByCircleAsync(double x, double y, System.Nullable<double> radius, System.Nullable<double> diameter, System.Nullable<double> storeyHeight=3.0, System.Nullable<double> tolerance=1E-06);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByCircleAsync(double x, double y, System.Nullable<double> radius, System.Nullable<double> diameter, System.Nullable<double> tolerance=1E-06, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).x'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).x'></a>
 
 `x` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The X\-coordinate of the center point of the search circle\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).y'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).y'></a>
 
 `y` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The Y\-coordinate of the center point of the search circle\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).radius'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).radius'></a>
 
 `radius` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The radius of the search circle\. This value can be null\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).diameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).diameter'></a>
 
 `diameter` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The diameter of the search circle\. This value can be null\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).storeyHeight'></a>
-
-`storeyHeight` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
-
-An optional storey height used for generating building models\. If not provided, a default value of 3\.0 is used\.
-
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_).tolerance'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).tolerance'></a>
 
 `tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 An optional tolerance value for the spatial query\. If not provided, the default distance tolerance is used\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  

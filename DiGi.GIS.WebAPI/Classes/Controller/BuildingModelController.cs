@@ -1,6 +1,7 @@
 using DiGi.Analytical.Building.Classes;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.Analytical.Enums;
+using DiGi.GIS.PostgreSQL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -20,7 +21,7 @@ namespace DiGi.GIS.WebAPI.Classes
     public class BuildingModelController : DiGi.WebAPI.Classes.WebAPIController
     {
         private readonly PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
-        private readonly PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter; //TODO: Remove building2DPostgreSQLConverter and GetItemsByCircleAsync from this controller. The workflow shall use Building2DController
+        private readonly PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter; //Resolves the spatial query to Building2D references, which key the building model lookup.
         private readonly PostgreSQL.Classes.BuildingModelPostgreSQLConverter buildingModelPostgreSQLConverter;
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
 
@@ -37,20 +38,20 @@ namespace DiGi.GIS.WebAPI.Classes
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
         }
 
-        /// <summary> Retrieves building models within a specified circle. </summary>
+        /// <summary> Retrieves the building models stored in the database for all buildings within a specified circle. </summary>
         /// <param name="x">The X-coordinate of the center point of the search circle.</param>
         /// <param name="y">The Y-coordinate of the center point of the search circle.</param>
         /// <param name="radius">The radius of the search circle. This value can be null.</param>
         /// <param name="diameter">The diameter of the search circle. This value can be null.</param>
-        /// <param name="storeyHeight">An optional storey height used for generating building models. If not provided, a default value of 3.0 is used.</param>
         /// <param name="tolerance">An optional tolerance value for the spatial query. If not provided, the default distance tolerance is used.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itemsbycircle", Name = $"{nameof(BuildingModelController)}_{nameof(GetItemsByCircleAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<BuildingModel>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByCircleAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "radius")] double? radius, [FromQuery(Name = "diameter")] double? diameter, [FromQuery(Name = "storeyheight")] double? storeyHeight = 3.0, [FromQuery(Name = "tolerance")] double? tolerance = Core.Constants.Tolerance.Distance)
+        public async Task<IActionResult> GetItemsByCircleAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "radius")] double? radius, [FromQuery(Name = "diameter")] double? diameter, [FromQuery(Name = "tolerance")] double? tolerance = Core.Constants.Tolerance.Distance, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingModelController), nameof(GetItemsByCircleAsync));
             if (double.IsNaN(x) || double.IsNaN(y))
@@ -87,36 +88,73 @@ namespace DiGi.GIS.WebAPI.Classes
                 tolerance = Core.Constants.Tolerance.MacroDistance;
             }
 
-            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value);
-            if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
+            // Only the reference and the county are needed to key the building model lookup, so the lighter
+            // reference query is used rather than pulling footprint geometry that would then be discarded.
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value, cancellationToken);
+            if (building2DReferences is null || building2DReferences.Count == 0)
             {
                 return NotFound();
             }
 
-            //TODO: temporary method. Use buildingModelPostgreSQLConverter.GetItemsByReferenceAsync to extract building model
+            Serilog.Modify.Log("Building2DReferences found within circle: {Count}", building2DReferences.Count);
 
+            // The building model table is partitioned by county and the county is a mandatory filter, so the
+            // references are grouped and each county is resolved in a single query.
             List<BuildingModel> buildingModels = [];
-            foreach (PostgreSQL.Classes.Building2D building2D_PostgreSQL in building2Ds_PostgreSQL)
+            foreach (IGrouping<int, PostgreSQL.Classes.Building2DReference> grouping in building2DReferences.Where(building2DReference => building2DReference.CountyId is not null && !string.IsNullOrWhiteSpace(building2DReference.Reference)).GroupBy(building2DReference => building2DReference.CountyId!.Value))
             {
-                BuildingModel? buildingModel = Analytical.Create.BuildingModel(building2D_PostgreSQL?.ToDiGi());
-                if (buildingModel is null)
+                int countyId = grouping.Key;
+
+                List<string> references = [.. grouping.Select(building2DReference => building2DReference.Reference!).Distinct()];
+
+                List<PostgreSQL.Classes.Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(grouping);
+                if (building2Ds is null || building2Ds.Count == 0)
                 {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No Building2Ds found for county {CountyId}. Requested references: {Count}", countyId, references.Count);
                     continue;
                 }
 
-                Core.Interfaces.IReference? reference = PostgreSQL.Create.Reference(buildingModel, null, building2D_PostgreSQL?.CountyId);
-                if (reference is not null)
+                //Temporary solution till PostgreSQL.Classes.BuildingModel will have correct geometry
+                List<PostgreSQL.Classes.BuildingModel?>? buildingModels_PostgreSQL = building2Ds.ConvertAll(building2D_PostgreSQL => Analytical.Create.BuildingModel(building2D_PostgreSQL?.ToDiGi()))?.ConvertAll(x => x.ToPostgreSQL(countyId));
+
+                //TODO: Uncomment the following code when PostgreSQL.Classes.BuildingModel will have correct geometry
+                //List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, null, cancellationToken);
+
+                if (buildingModels_PostgreSQL is null || buildingModels_PostgreSQL.Count == 0)
                 {
-                    buildingModel.SetValue(BuildingModelParameter.Reference, reference.ToString(), new Core.Parameter.Classes.SetValueSettings(true, false));
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No BuildingModels stored for county {CountyId}. Requested references: {Count}", countyId, references.Count);
+                    continue;
                 }
 
-                buildingModels.Add(buildingModel);
+                Serilog.Modify.Log("BuildingModels read from database for county {CountyId}: {After}/{Before}", countyId, buildingModels_PostgreSQL.Count, references.Count);
+
+                foreach (PostgreSQL.Classes.BuildingModel? buildingModel_PostgreSQL in buildingModels_PostgreSQL)
+                {
+                    BuildingModel? buildingModel = buildingModel_PostgreSQL?.ToDiGi();
+                    if (buildingModel is null)
+                    {
+                        continue;
+                    }
+
+                    // The stored parameter holds the bare Building2D reference. Wrapping it back into a county
+                    // qualified reference keeps the response identical to what the caller has always consumed,
+                    // and is what lets a selected element be traced back to its building.
+                    Core.Interfaces.IReference? reference = PostgreSQL.Create.Reference(buildingModel, null, countyId);
+                    if (reference is not null)
+                    {
+                        buildingModel.SetValue(BuildingModelParameter.Reference, reference.ToString(), new Core.Parameter.Classes.SetValueSettings(true, false));
+                    }
+
+                    buildingModels.Add(buildingModel);
+                }
             }
 
             if (buildingModels is null || buildingModels.Count == 0)
             {
                 return NotFound();
             }
+
+            Serilog.Modify.Log("BuildingModels resolved: {After}/{Before}", buildingModels.Count, building2DReferences.Count);
 
             string? json = Core.Convert.ToSystem_String(buildingModels);
             if (string.IsNullOrWhiteSpace(json))
@@ -239,15 +277,28 @@ namespace DiGi.GIS.WebAPI.Classes
             Serilog.Modify.Log("BuildingModels conversion to PostgreSQL started. BuildingModels count: {Count}", buildingModels.Count);
 
             List<PostgreSQL.Classes.BuildingModel> buildingModels_PostgreSQL = [];
+            List<string> references_Rejected = [];
+
             foreach (BuildingModel buildingModel in buildingModels)
             {
                 PostgreSQL.Classes.BuildingModel? buildingModel_PostgreSQL = PostgreSQL.Convert.ToPostgreSQL(buildingModel, countyId);
                 if (buildingModel_PostgreSQL is null)
                 {
+                    // The converter refuses a model missing its reference or carrying geometry that cannot be
+                    // used. Naming the models kept out of the database is what makes the next occurrence
+                    // traceable - the corruption found in this table was silent precisely because nothing here
+                    // reported the models it was letting through.
+                    buildingModel.TryGetValue(BuildingModelParameter.Reference, out string? reference_Rejected);
+                    references_Rejected.Add(string.IsNullOrWhiteSpace(reference_Rejected) ? buildingModel.UniqueId ?? "???" : reference_Rejected!);
                     continue;
                 }
 
                 buildingModels_PostgreSQL.Add(buildingModel_PostgreSQL);
+            }
+
+            if (references_Rejected.Count != 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModels rejected before the database: {Count}/{Total}. References: {References}", references_Rejected.Count, buildingModels.Count, string.Join(", ", references_Rejected.GetRange(0, System.Math.Min(20, references_Rejected.Count))));
             }
 
             if (buildingModels_PostgreSQL is null || buildingModels_PostgreSQL.Count == 0)
