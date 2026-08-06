@@ -260,6 +260,27 @@ namespace DiGi.GIS.WebAPI.Classes
             return Content(json, "application/json");
         }
 
+        /// <summary> Asynchronously retrieves the 2D bounding box enclosing country administrative areas. </summary>
+        /// <param name="cancellationToken">A cancellation token that can be used by the called method to indicate that the operation should be canceled.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpGet("boundingbox2D", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetBoundingBox2DAsync)}")]
+        [ProducesResponseType(typeof(BoundingBox2D), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetBoundingBox2DAsync(CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetBoundingBox2DAsync));
+
+            BoundingBox2D? boundingBox2D = await administrativeAreal2DPostgreSQLConverter.GetBoundingBox2DAsync(cancellationToken);
+
+            string? json = Core.Convert.ToSystem_String(boundingBox2D);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
         /// <summary> Retrieves all available administrative area codes. </summary>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("codes", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetCodesAsync)}")]
