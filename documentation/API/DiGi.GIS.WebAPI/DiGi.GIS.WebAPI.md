@@ -63,6 +63,27 @@ The manager used to create the HTTP client instance\.
 [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient')  
 A task that represents the asynchronous operation\.
 
+<a name='DiGi.GIS.WebAPI.Create.HttpClient_GUGiK(DiGi.GIS.WebAPI.Classes.GISWebAPIManager)'></a>
+
+## Create\.HttpClient\_GUGiK\(GISWebAPIManager\) Method
+
+Creates and configures an [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient') instance for the "Główny Urząd Geodezji i Kartografii" service, including a custom User\-Agent header based on the executing assembly's name and version\.
+
+```csharp
+public static System.Net.Http.HttpClient? HttpClient_GUGiK(DiGi.GIS.WebAPI.Classes.GISWebAPIManager GISWebAPIManager);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Create.HttpClient_GUGiK(DiGi.GIS.WebAPI.Classes.GISWebAPIManager).GISWebAPIManager'></a>
+
+`GISWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
+
+The manager used to create the HTTP client instance\.
+
+#### Returns
+[System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient')  
+A task that represents the asynchronous operation\.
+
 <a name='DiGi.GIS.WebAPI.Create.HttpContent(thisbyte[],System.IO.Compression.CompressionLevel,System.Threading.CancellationToken)'></a>
 
 ## Create\.HttpContent\(this byte\[\], CompressionLevel, CancellationToken\) Method
