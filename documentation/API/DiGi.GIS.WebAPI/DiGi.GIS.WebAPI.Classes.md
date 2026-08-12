@@ -1551,6 +1551,8 @@ A task that represents the asynchronous operation\.
 
 Updates multiple building items based on the provided JSON array and identification code\.
 
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [UpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
+
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code);
 ```
@@ -1567,6 +1569,35 @@ The JSON array containing the building items to be updated\.
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The identification code required for the update operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the update operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int)'></a>
+
+## BuildingController\.UpdateItemsByCountyIdAsync\(JsonArray, int\) Method
+
+Updates multiple building items in the database for an explicitly identified county row\.
+
+The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int countyId);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).jsonArray'></a>
+
+`jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
+
+The JSON array containing the building items to be updated\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row the buildings belong to\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -2436,7 +2467,9 @@ A task that represents the asynchronous operation\.
 
 ## BuildingModelController\.UpdateItemsAsync\(JsonArray, string\) Method
 
-Updates multiple building model items in the database\.
+Updates multiple building model items in the database, keyed by administrative area code\.
+
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [UpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code);
@@ -2454,6 +2487,35 @@ The JSON array containing the building models to be updated\. This value can be 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The administrative area code the building models belong to, resolved server\-side to a county identifier\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int)'></a>
+
+## BuildingModelController\.UpdateItemsByCountyIdAsync\(JsonArray, int\) Method
+
+Updates multiple building model items in the database for an explicitly identified county row\.
+
+The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int countyId);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).jsonArray'></a>
+
+`jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
+
+The JSON array containing the building models to be updated\. This value can be null\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row the building models belong to\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -2496,13 +2558,67 @@ The [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWeb
 
 Gets or sets the administrative area code the building models belong to\. It is resolved server\-side to a county identifier\.
 
+A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelsPostTask\.CountyId') instead wherever the identifier is already known. [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelsPostTask\.CountyId') takes precedence when both are set.
+
 ```csharp
 public string? Code { get; set; }
 ```
 
 #### Property Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.CountyId'></a>
+
+## BuildingModelsPostTask\.CountyId Property
+
+Gets or sets the identifier of the county row the building models belong to\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelsPostTask\.Code'), which leaves the server to choose between the rows of a multi\-part county\.
+
+```csharp
+public System.Nullable<int> CountyId { get; set; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 ### Methods
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken)'></a>
+
+## BuildingModelsPostTask\.ExecuteAsync\(IEnumerable\<BuildingModel\>, int, LongProgressWrapper, CancellationToken\) Method
+
+Asynchronously executes the task of posting building models to the database in memory\-size\-split batches, keyed by county identifier\.
+
+```csharp
+protected System.Threading.Tasks.Task<bool> ExecuteAsync(System.Collections.Generic.IEnumerable<DiGi.Analytical.Building.Classes.BuildingModel>? buildingModels, int countyId, DiGi.Core.Classes.LongProgressWrapper? longProgressWrapper, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).buildingModels'></a>
+
+`buildingModels` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of [DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel') instances to post\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row the building models belong to\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).longProgressWrapper'></a>
+
+`longProgressWrapper` [DiGi\.Core\.Classes\.LongProgressWrapper](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.longprogresswrapper 'DiGi\.Core\.Classes\.LongProgressWrapper')
+
+A [DiGi\.Core\.Classes\.LongProgressWrapper](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.longprogresswrapper 'DiGi\.Core\.Classes\.LongProgressWrapper') tracking the progress of the operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result is true if all batches were posted successfully; otherwise, false\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,string,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken)'></a>
 
@@ -2580,13 +2696,67 @@ The GIS PostgreSQL Web API manager used to handle data persistence\.
 
 Gets or sets the code associated with the buildings post task\.
 
+A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingsPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.BuildingsPostTask\.CountyId') instead wherever the identifier is already known. [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingsPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.BuildingsPostTask\.CountyId') takes precedence when both are set.
+
 ```csharp
 public string? Code { get; set; }
 ```
 
 #### Property Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingsPostTask.CountyId'></a>
+
+## BuildingsPostTask\.CountyId Property
+
+Gets or sets the identifier of the county row the buildings belong to\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingsPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.BuildingsPostTask\.Code'), which leaves the server to choose between the rows of a multi\-part county\.
+
+```csharp
+public System.Nullable<int> CountyId { get; set; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 ### Methods
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.CityGML.Classes.Building_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken)'></a>
+
+## BuildingsPostTask\.ExecuteAsync\(IEnumerable\<Building\>, int, LongProgressWrapper, CancellationToken\) Method
+
+Asynchronously executes the task of posting building objects to the database, keyed by county identifier\.
+
+```csharp
+protected System.Threading.Tasks.Task<bool> ExecuteAsync(System.Collections.Generic.IEnumerable<DiGi.CityGML.Classes.Building>? values, int countyId, DiGi.Core.Classes.LongProgressWrapper? longProgressWrapper, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.CityGML.Classes.Building_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).values'></a>
+
+`values` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.CityGML\.Classes\.Building](https://learn.microsoft.com/en-us/dotnet/api/digi.citygml.classes.building 'DiGi\.CityGML\.Classes\.Building')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of [DiGi\.CityGML\.Classes\.Building](https://learn.microsoft.com/en-us/dotnet/api/digi.citygml.classes.building 'DiGi\.CityGML\.Classes\.Building') instances to post\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.CityGML.Classes.Building_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row the buildings belong to\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.CityGML.Classes.Building_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).longProgressWrapper'></a>
+
+`longProgressWrapper` [DiGi\.Core\.Classes\.LongProgressWrapper](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.longprogresswrapper 'DiGi\.Core\.Classes\.LongProgressWrapper')
+
+A [DiGi\.Core\.Classes\.LongProgressWrapper](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.longprogresswrapper 'DiGi\.Core\.Classes\.LongProgressWrapper') tracking the progress of the operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.CityGML.Classes.Building_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result is true if all batches were posted successfully; otherwise, false\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.CityGML.Classes.Building_,string,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken)'></a>
 
@@ -3539,6 +3709,8 @@ An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us
 
 Asynchronously updates building 2D items based on the provided JSON data and identification code\.
 
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [Building2DUpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
+
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code);
 ```
@@ -3555,6 +3727,35 @@ The [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dot
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The identification code used to validate or categorize the update request\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int)'></a>
+
+## OccupancyDataController\.Building2DUpdateItemsByCountyIdAsync\(JsonArray, int\) Method
+
+Asynchronously updates building 2D occupancy items in the database for an explicitly identified county row\.
+
+The unambiguous counterpart of [Building2DUpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int countyId);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).jsonArray'></a>
+
+`jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
+
+The [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray') containing the item data to be updated\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row the occupancy data belong to\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -3657,12 +3858,27 @@ The manager used to handle GIS PostgreSQL Web API operations\.
 
 Gets or sets the code associated with the occupancy data post task\.
 
+A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.CountyId') instead wherever the identifier is already known. [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.CountyId') takes precedence when both are set.
+
 ```csharp
 public string? Code { get; set; }
 ```
 
 #### Property Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.CountyId'></a>
+
+## OccupancyDatasPostTask\.CountyId Property
+
+Gets or sets the identifier of the county row the building 2D occupancy data belong to\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.Code'), which leaves the server to choose between the rows of a multi\-part county\. It does not affect [Values\_AdministrativeAreal2D](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.Values_AdministrativeAreal2D 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.Values\_AdministrativeAreal2D'), which is not county\-keyed\.
+
+```csharp
+public System.Nullable<int> CountyId { get; set; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 <a name='DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.Values_AdministrativeAreal2D'></a>
 
@@ -3894,6 +4110,8 @@ A task that represents the asynchronous operation\.
 
 Updates items identified by a specific code using the provided JSON array\.
 
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [UpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasController\.UpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
+
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code);
 ```
@@ -4012,12 +4230,27 @@ The manager instance used to handle PostgreSQL web API operations\.
 
 Gets or sets the code associated with the OrtoDatas post task\.
 
+A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasPostTask\.CountyId') instead wherever the identifier is already known. [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasPostTask\.CountyId') takes precedence when both are set.
+
 ```csharp
 public string? Code { get; set; }
 ```
 
 #### Property Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask.CountyId'></a>
+
+## OrtoDatasPostTask\.CountyId Property
+
+Gets or sets the identifier of the county row the OrtoDatas belong to\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasPostTask\.Code'), which leaves the server to choose between the rows of a multi\-part county\.
+
+```csharp
+public System.Nullable<int> CountyId { get; set; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasTask'></a>
 
@@ -4494,6 +4727,8 @@ A task that represents the asynchronous operation\.
 
 Updates multiple year built data items based on the provided JSON array and identification code\.
 
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [UpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
+
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code);
 ```
@@ -4510,6 +4745,35 @@ The JSON array containing the data items to be updated\.
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The identification code required for the update operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the update operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int)'></a>
+
+## YearBuiltDataController\.UpdateItemsByCountyIdAsync\(JsonArray, int\) Method
+
+Updates multiple year built data items in the database for an explicitly identified county row\.
+
+The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int countyId);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).jsonArray'></a>
+
+`jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
+
+The JSON array containing the data items to be updated\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row the year built data belong to\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -4552,9 +4816,24 @@ The GIS PostgreSQL Web API manager used to handle data persistence\.
 
 Gets or sets the code associated with the year built data post task\.
 
+A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDatasPostTask\.CountyId') instead wherever the identifier is already known. [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDatasPostTask\.CountyId') takes precedence when both are set.
+
 ```csharp
 public string? Code { get; set; }
 ```
 
 #### Property Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.CountyId'></a>
+
+## YearBuiltDatasPostTask\.CountyId Property
+
+Gets or sets the identifier of the county row the year built data belong to\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDatasPostTask\.Code'), which leaves the server to choose between the rows of a multi\-part county\.
+
+```csharp
+public System.Nullable<int> CountyId { get; set; }
+```
+
+#### Property Value
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')

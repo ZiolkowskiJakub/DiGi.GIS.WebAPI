@@ -41,6 +41,12 @@
 		<Reference Include="DiGi.BDL">
 		  <HintPath>..\..\DiGi.BDL\bin\DiGi.BDL.dll</HintPath>
 		</Reference>
+		<!-- Not used directly. Overload resolution on Convert.ToDiGi in Building2DController drags in
+		     candidates whose signatures mention BDOT10k types (OT_ADJA_A, OT_BUBD_A, ...), and the
+		     compiler needs the metadata to reject them (CS0012). -->
+		<Reference Include="DiGi.BDOT10k">
+		  <HintPath>..\..\DiGi.BDOT10k\bin\DiGi.BDOT10k.dll</HintPath>
+		</Reference>
 		<Reference Include="DiGi.CityGML">
 		  <HintPath>..\..\DiGi.CityGML\bin\DiGi.CityGML.dll</HintPath>
 		</Reference>

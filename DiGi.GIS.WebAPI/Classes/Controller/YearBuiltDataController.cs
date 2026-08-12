@@ -2,6 +2,7 @@ using DiGi.GIS.PostgreSQL.Classes;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +35,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Updates multiple year built data items based on the provided JSON array and identification code.
+        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer <see cref="UpdateItemsByCountyIdAsync"/>, which leaves the server nothing to guess.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the data items to be updated.</param>
         /// <param name="code">The identification code required for the update operation.</param>
@@ -68,10 +70,48 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            int? countyId = await administrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(code, PostgreSQL.Enums.AdministrativeArealType.County);
-            if (countyId is null)
+            HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, PostgreSQL.Enums.AdministrativeArealType.County);
+            if (countyIds is null || countyIds.Count == 0)
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' was not found in database", code);
                 return BadRequest();
+            }
+
+            int countyId_Resolved = countyIds.Min();
+
+            // Resolving an ambiguous code silently is what let the skew in this table go unnoticed: the
+            // upload reported success while everything filed under a sibling row read back empty.
+            if (countyIds.Count > 1)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. The whole batch is being filed under {CountyId}; post to 'updateitemsbycountyid' to pick the part yourself", code, countyIds.Count, string.Join(", ", countyIds.OrderBy(x => x)), countyId_Resolved);
+            }
+
+            return await UpdateItemsByCountyIdAsync(jsonArray, countyId_Resolved);
+        }
+
+        /// <summary>
+        /// Updates multiple year built data items in the database for an explicitly identified county row.
+        /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.</para>
+        /// </summary>
+        /// <param name="jsonArray">The JSON array containing the data items to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the year built data belong to.</param>
+        /// <returns>An <see cref="IActionResult"/> representing the result of the update operation.</returns>
+        [HttpPost("updateitemsbycountyid")]
+        public async Task<IActionResult> UpdateItemsByCountyIdAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyid")] int countyId)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(UpdateItemsByCountyIdAsync));
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "YearBuiltData update not allowed");
+                return BadRequest();
+            }
+
+            if (jsonArray is null || jsonArray.Count == 0)
+            {
+                Serilog.Modify.Log("No YearBuiltData to update");
+                return NoContent();
             }
 
             List<GIS.Classes.YearBuiltData>? yearBuiltDatas_GIS = Core.Create.SerializableObjects<GIS.Classes.YearBuiltData>(jsonArray);

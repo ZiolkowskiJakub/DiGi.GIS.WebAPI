@@ -450,6 +450,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Updates items identified by a specific code using the provided JSON array.
+        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer <see cref="UpdateItemsByCountyIdAsync"/>, which leaves the server nothing to guess.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the updated item data.</param>
         /// <param name="code">The unique identifier or code used to identify the items for update.</param>
@@ -484,64 +485,23 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            int? countyId = await administrativeAreal2DPostgreSQLConverter.GetIdByCodeAsync(code, AdministrativeArealType.County);
-            if (countyId is null)
+            HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, AdministrativeArealType.County);
+            if (countyIds is null || countyIds.Count == 0)
             {
                 Serilog.Modify.Log("County with given code not found");
                 return BadRequest();
             }
 
-            List<OrtoDatas>? ortoDatas = Core.Create.SerializableObjects<OrtoDatas>(jsonArray);
-            if (ortoDatas is null)
+            int countyId = countyIds.Min();
+
+            // Resolving an ambiguous code silently is what let the skew in this table go unnoticed: the
+            // upload reported success while everything filed under a sibling row read back empty.
+            if (countyIds.Count > 1)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatas could not be converted from json");
-                return BadRequest();
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. The whole batch is being filed under {CountyId}; post to 'updateitemsbycountyid' to pick the part yourself", code, countyIds.Count, string.Join(", ", countyIds.OrderBy(x => x)), countyId);
             }
 
-            Serilog.Modify.Log("OrtoDatas conversion to PostgreSQL started. OrtoDatas count: {Count}", ortoDatas.Count);
-
-            List<PostgreSQL.Classes.OrtoDatas> ortoDatas_PostgreSQL = [];
-            foreach (OrtoDatas ortoDatas_Temp in ortoDatas)
-            {
-                PostgreSQL.Classes.OrtoDatas? ortoDatas_PostgreSQL_Temp = ortoDatas_Temp.ToPostgreSQL(countyId);
-                if (ortoDatas_PostgreSQL_Temp is null)
-                {
-                    continue;
-                }
-
-                ortoDatas_PostgreSQL.Add(ortoDatas_PostgreSQL_Temp);
-            }
-
-            if (ortoDatas_PostgreSQL is null || ortoDatas_PostgreSQL.Count == 0)
-            {
-                Serilog.Modify.Log("No OrtoDatas PostgreSQL to update");
-                return NoContent();
-            }
-
-            Serilog.Modify.Log("OrtoDatas conversion to PostgreSQL ended. OrtoDatas converted: {After}/{Before}", ortoDatas_PostgreSQL.Count, ortoDatas.Count);
-
-            Serilog.Modify.Log("Updating to database starting");
-
-            HashSet<long>? ids = null;
-            try
-            {
-                ids = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatas_PostgreSQL);
-            }
-            catch (Exception exception)
-            {
-                Serilog.Modify.Log(exception, "Database could not be updated");
-            }
-
-            if (ids is null || ids.Count == 0)
-            {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no OrtoDatas have been updated");
-            }
-            else
-            {
-                Serilog.Modify.Log("Updating to database ended. Updated OrtoDatas: {After}/{Before}", ids?.Count ?? 0, ortoDatas_PostgreSQL.Count);
-            }
-
-            return Ok();
+            return await UpdateItemsByCountyIdAsync(jsonArray, countyId);
         }
 
         /// <summary>
