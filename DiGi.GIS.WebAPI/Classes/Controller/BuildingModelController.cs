@@ -270,16 +270,103 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            int countyId_Resolved = countyIds.Min();
-
-            // Resolving an ambiguous code silently is what let the skew in this table go unnoticed: the
-            // upload reported success while everything filed under a sibling row read back empty.
-            if (countyIds.Count > 1)
+            List<BuildingModel>? buildingModels = Core.Create.SerializableObjects<BuildingModel>(jsonArray);
+            if (buildingModels is null)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. The whole batch is being filed under {CountyId}; post to 'updateitemsbycountyid' to pick the part yourself", code, countyIds.Count, string.Join(", ", countyIds.OrderBy(x => x)), countyId_Resolved);
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "BuildingModels could not be converted from json");
+                return BadRequest();
             }
 
-            return await UpdateItemsByCountyIdAsync(jsonArray, countyId_Resolved);
+            if (countyIds.Count == 1)
+            {
+                return await UpdateAsync(buildingModels, countyIds.Min());
+            }
+
+            // A code names every polygon part of a multi-part county, so which part a model belongs to is
+            // read from the 2D building it was created from rather than guessed. Filing the whole batch
+            // under one part is what left sibling parts reading back empty while the upload reported success.
+            List<int> countyIds_Sorted = [.. countyIds.OrderBy(x => x)];
+
+            Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each model is being filed under the part its Building2D is stored in", code, countyIds.Count, string.Join(", ", countyIds_Sorted));
+
+            Dictionary<string, List<BuildingModel>> buildingModels_ByReference = [];
+            foreach (BuildingModel buildingModel in buildingModels)
+            {
+                if (!buildingModel.TryGetValue(BuildingModelParameter.Reference, out string? reference) || string.IsNullOrWhiteSpace(reference))
+                {
+                    continue;
+                }
+
+                if (!buildingModels_ByReference.TryGetValue(reference!, out List<BuildingModel>? buildingModels_Reference))
+                {
+                    buildingModels_Reference = [];
+                    buildingModels_ByReference[reference!] = buildingModels_Reference;
+                }
+
+                buildingModels_Reference.Add(buildingModel);
+            }
+
+            Dictionary<int, List<BuildingModel>> buildingModels_ByCountyId = [];
+            HashSet<string> references_Unresolved = [.. buildingModels_ByReference.Keys];
+
+            // One batched lookup per part, lowest part first, so a reference held by more than one part
+            // resolves to the same one every run.
+            foreach (int countyId in countyIds_Sorted)
+            {
+                if (references_Unresolved.Count == 0)
+                {
+                    break;
+                }
+
+                List<PostgreSQL.Classes.Building2DReference> building2DReferences_Requested = [.. references_Unresolved.Select(x => new PostgreSQL.Classes.Building2DReference() { Reference = x, CountyId = countyId })];
+
+                List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesAsync(building2DReferences_Requested);
+                if (building2DReferences is null)
+                {
+                    continue;
+                }
+
+                foreach (PostgreSQL.Classes.Building2DReference building2DReference in building2DReferences)
+                {
+                    string? reference = building2DReference.Reference;
+                    if (string.IsNullOrWhiteSpace(reference) || !references_Unresolved.Remove(reference!))
+                    {
+                        continue;
+                    }
+
+                    if (!buildingModels_ByCountyId.TryGetValue(countyId, out List<BuildingModel>? buildingModels_County))
+                    {
+                        buildingModels_County = [];
+                        buildingModels_ByCountyId[countyId] = buildingModels_County;
+                    }
+
+                    buildingModels_County.AddRange(buildingModels_ByReference[reference!]);
+                }
+            }
+
+            if (references_Unresolved.Count != 0)
+            {
+                // No Building2D anywhere under this code means nothing states where the model belongs, and
+                // storing it under a guessed part is exactly the state being repaired here.
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModels not written because no Building2D under code '{Code}' carries their reference: {Count}/{Total}. References: {References}", references_Unresolved.Count, buildingModels.Count, string.Join(", ", references_Unresolved.Take(20)));
+            }
+
+            if (buildingModels_ByCountyId.Count == 0)
+            {
+                Serilog.Modify.Log("No BuildingModels to update");
+                return NoContent();
+            }
+
+            foreach (KeyValuePair<int, List<BuildingModel>> keyValuePair in buildingModels_ByCountyId)
+            {
+                IActionResult actionResult = await UpdateAsync(keyValuePair.Value, keyValuePair.Key);
+                if (actionResult is not OkResult)
+                {
+                    return actionResult;
+                }
+            }
+
+            return Ok();
         }
 
         /// <summary>
@@ -318,7 +405,19 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            Serilog.Modify.Log("BuildingModels conversion to PostgreSQL started. BuildingModels count: {Count}", buildingModels.Count);
+            return await UpdateAsync(buildingModels, countyId);
+        }
+
+        /// <summary>
+        /// Writes the given building models to the partition of a single county row.
+        /// <para>Shared by both update actions so the county row is resolved once, by the action, and this method never has to guess one.</para>
+        /// </summary>
+        /// <param name="buildingModels">The building models to write.</param>
+        /// <param name="countyId">The identifier of the county row the models belong to.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        private async Task<IActionResult> UpdateAsync(List<BuildingModel> buildingModels, int countyId)
+        {
+            Serilog.Modify.Log("BuildingModels conversion to PostgreSQL started. BuildingModels count: {Count}, CountyId: {CountyId}", buildingModels.Count, countyId);
 
             List<PostgreSQL.Classes.BuildingModel> buildingModels_PostgreSQL = [];
             List<string> references_Rejected = [];

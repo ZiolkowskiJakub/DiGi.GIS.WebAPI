@@ -2463,6 +2463,35 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateAsync(System.Collections.Generic.List_DiGi.Analytical.Building.Classes.BuildingModel_,int)'></a>
+
+## BuildingModelController\.UpdateAsync\(List\<BuildingModel\>, int\) Method
+
+Writes the given building models to the partition of a single county row\.
+
+Shared by both update actions so the county row is resolved once, by the action, and this method never has to guess one.
+
+```csharp
+private System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateAsync(System.Collections.Generic.List<DiGi.Analytical.Building.Classes.BuildingModel> buildingModels, int countyId);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateAsync(System.Collections.Generic.List_DiGi.Analytical.Building.Classes.BuildingModel_,int).buildingModels'></a>
+
+`buildingModels` [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+The building models to write\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateAsync(System.Collections.Generic.List_DiGi.Analytical.Building.Classes.BuildingModel_,int).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row the models belong to\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
 <a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string)'></a>
 
 ## BuildingModelController\.UpdateItemsAsync\(JsonArray, string\) Method
