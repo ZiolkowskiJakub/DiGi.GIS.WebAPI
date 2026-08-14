@@ -14,6 +14,10 @@
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 		<None Include="Classes\Parameter\CountByAdministrativeAreal2DIdsParameter.cs" />
+		<!-- DiGi.Geometry is referenced by HintPath, so its NuGet dependencies do not reach this host.
+		     The county part decision and the BDOT10k import both run planar geometry here, and a missing
+		     QuikGraph surfaces only at runtime, per building, long after everything built and tested clean. -->
+		<PackageReference Include="QuikGraph" Version="2.5.0" />
 		<PackageReference Include="NetTopologySuite" Version="2.6.0" />
 		<PackageReference Include="Npgsql" Version="10.0.2" />
 		<PackageReference Include="ProjNET4GeoAPI" Version="1.4.1" />
