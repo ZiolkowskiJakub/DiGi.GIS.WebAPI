@@ -1,4 +1,5 @@
 using DiGi.GIS.PostgreSQL.Classes;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -41,6 +42,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="code">The identification code required for the update operation.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation.</returns>
         [HttpPost("updateitems")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string code)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(UpdateItemsAsync));
@@ -97,6 +102,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyId">The identifier of the county row the year built data belong to.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation.</returns>
         [HttpPost("updateitemsbycountyid")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateItemsByCountyIdAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyid")] int countyId)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(UpdateItemsByCountyIdAsync));
@@ -152,16 +161,20 @@ namespace DiGi.GIS.WebAPI.Classes
             catch (Exception exception)
             {
                 Serilog.Modify.Log(exception, "Database could not be updated");
+                return StatusCode(500, "Database update failed.");
             }
 
+            // Answering Ok here is what let a whole county regeneration report success while writing
+            // nothing: the storage database was unreachable, every batch came back empty, and the client
+            // treats 200 as done. YearBuiltDatas were converted and reached this point, so nothing updated
+            // is a failure, not a quiet no-op. BuildingController already answers this case the same way.
             if (ids is null || ids.Count == 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no YearBuiltDatas have been updated");
+                return StatusCode(500, "Database update returned no modified YearBuiltData IDs.");
             }
-            else
-            {
-                Serilog.Modify.Log("Updating to database ended. Updated YearBuiltDatas: {After}/{Before}", ids?.Count ?? 0, yearBuiltDatas_PostgreSQL.Count);
-            }
+
+            Serilog.Modify.Log("Updating to database ended. Updated YearBuiltDatas: {After}/{Before}", ids.Count, yearBuiltDatas_PostgreSQL.Count);
 
             return Ok();
         }

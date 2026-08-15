@@ -45,6 +45,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(EPWFileController), nameof(UpdateItemsAsync));
@@ -88,14 +89,17 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Internal server error during database update");
             }
 
+            // The identifiers travel in the body, but no caller reads them: DiGi.WebAPI.Modify.PostAsync
+            // forces PostOptions.RequestResult to false for this shape of POST, so success is decided by
+            // the status code alone. An empty list behind a 200 is therefore as invisible as a bare Ok, and
+            // the EPWFiles reached this point, so nothing updated is a failure rather than a quiet no-op.
             if (ids.Count == 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no EPWFiles have been updated");
+                return StatusCode(500, "Database update returned no modified EPWFile IDs.");
             }
-            else
-            {
-                Serilog.Modify.Log("Updating to database ended. Updated EPWFiles: {After}/{Before}", ids.Count, count_Before);
-            }
+
+            Serilog.Modify.Log("Updating to database ended. Updated EPWFiles: {After}/{Before}", ids.Count, count_Before);
 
             return Ok(ids);
         }

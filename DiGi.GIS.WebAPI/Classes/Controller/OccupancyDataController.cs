@@ -1,4 +1,5 @@
 using DiGi.GIS.PostgreSQL.Classes;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -42,6 +43,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="jsonArray">The <see cref="JsonArray"/> containing the occupancy data items to be updated.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation, returning a bad request if updates are disabled or no content if the input array is null or empty.</returns>
         [HttpPost("administrativeareal2d/updateitems")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> AdministrativeAreal2DUpdateItemsAsync([FromBody] JsonArray? jsonArray)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(AdministrativeAreal2DUpdateItemsAsync));
@@ -96,16 +101,20 @@ namespace DiGi.GIS.WebAPI.Classes
             catch (Exception exception)
             {
                 Serilog.Modify.Log(exception, "Database could not be updated");
+                return StatusCode(500, "Database update failed.");
             }
 
+            // Answering Ok here is what let a whole county regeneration report success while writing
+            // nothing: the storage database was unreachable, every batch came back empty, and the client
+            // treats 200 as done. OccupancyDatas were converted and reached this point, so nothing updated
+            // is a failure, not a quiet no-op. BuildingController already answers this case the same way.
             if (ids is null || ids.Count == 0)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no Building2DOccupancyDatas have been updated");
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no AdministrativeAreal2DOccupancyDatas have been updated");
+                return StatusCode(500, "Database update returned no modified AdministrativeAreal2DOccupancyData IDs.");
             }
-            else
-            {
-                Serilog.Modify.Log("Updating to database ended. Updated AdministrativeAreal2DOccupancyDatas: {After}/{Before}", ids?.Count ?? 0, administrativeAreal2DBuilding2DOccupancyDatas_PostgreSQL.Count);
-            }
+
+            Serilog.Modify.Log("Updating to database ended. Updated AdministrativeAreal2DOccupancyDatas: {After}/{Before}", ids.Count, administrativeAreal2DBuilding2DOccupancyDatas_PostgreSQL.Count);
 
             return Ok();
         }
@@ -118,6 +127,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="code">The identification code used to validate or categorize the update request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("building2d/updateitems")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Building2DUpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string code)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(Building2DUpdateItemsAsync));
@@ -174,6 +187,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyId">The identifier of the county row the occupancy data belong to.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("building2d/updateitemsbycountyid")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Building2DUpdateItemsByCountyIdAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyid")] int countyId)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(Building2DUpdateItemsByCountyIdAsync));
@@ -229,16 +246,20 @@ namespace DiGi.GIS.WebAPI.Classes
             catch (Exception exception)
             {
                 Serilog.Modify.Log(exception, "Database could not be updated");
+                return StatusCode(500, "Database update failed.");
             }
 
+            // Answering Ok here is what let a whole county regeneration report success while writing
+            // nothing: the storage database was unreachable, every batch came back empty, and the client
+            // treats 200 as done. OccupancyDatas were converted and reached this point, so nothing updated
+            // is a failure, not a quiet no-op. BuildingController already answers this case the same way.
             if (ids is null || ids.Count == 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no Building2DOccupancyDatas have been updated");
+                return StatusCode(500, "Database update returned no modified Building2DOccupancyData IDs.");
             }
-            else
-            {
-                Serilog.Modify.Log("Updating to database ended. Updated Building2DOccupancyDatas: {After}/{Before}", ids?.Count ?? 0, building2DOccupancyDatas_PostgreSQL.Count);
-            }
+
+            Serilog.Modify.Log("Updating to database ended. Updated Building2DOccupancyDatas: {After}/{Before}", ids.Count, building2DOccupancyDatas_PostgreSQL.Count);
 
             return Ok();
         }
