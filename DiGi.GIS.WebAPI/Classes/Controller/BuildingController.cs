@@ -44,7 +44,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="code">The identification code required for the update operation.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation.</returns>
         [HttpPost("updateitems", Name = $"{nameof(BuildingController)}_{nameof(UpdateItemsAsync)}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -105,7 +105,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyId">The identifier of the county row the buildings belong to.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation.</returns>
         [HttpPost("updateitemsbycountyid", Name = $"{nameof(BuildingController)}_{nameof(UpdateItemsByCountyIdAsync)}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -156,15 +156,38 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 Serilog.Modify.Log("Updating to database starting");
 
-                HashSet<long>? ids = await buildingPostgreSQLConverter.UpdateAsync(buildings);
-                if (ids is null || ids.Count == 0)
+                PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = await buildingPostgreSQLConverter.UpdateAsync(buildings);
+
+                UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(buildings.Count);
+                if (updateItemsResult is null)
                 {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database could not be attempted");
+                    return StatusCode(500, "Database update failed.");
+                }
+
+                // The county is stated by the caller here, so a drop means the row carried no geometry or
+                // its partition could not be created - never that resolution failed. It is still a partial
+                // write, and it used to leave no trace.
+                if (updateItemsResult.Rejected.Count != 0)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Buildings rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
+                }
+
+                if (updateItemsResult.Updated == 0)
+                {
+                    if (updateItemsResult.Rejected.Count == updateItemsResult.Sent)
+                    {
+                        return StatusCode(500, $"All {updateItemsResult.Sent} Buildings were rejected before the database; none could be filed under a county.");
+                    }
+
                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no Buildings have been updated");
                     return StatusCode(500, "Database update returned no modified building IDs.");
                 }
 
-                Serilog.Modify.Log("Updating to database ended. Updated Buildings: {After}/{Before}", ids.Count, buildings.Count);
-                return Ok();
+                // Updated counts distinct identifiers, and rows colliding on the conflict key share one, so
+                // Updated < Sent on its own proves nothing. Rejected is the exact figure.
+                Serilog.Modify.Log("Updating to database ended. Updated Buildings: {After}/{Before}, rejected: {Rejected}", updateItemsResult.Updated, updateItemsResult.Sent, updateItemsResult.Rejected.Count);
+                return Ok(updateItemsResult);
             }
             catch (Exception exception)
             {

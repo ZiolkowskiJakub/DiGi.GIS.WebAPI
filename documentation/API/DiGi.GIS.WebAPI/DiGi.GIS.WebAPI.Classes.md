@@ -4674,6 +4674,115 @@ public DiGi.PostgreSQL.Table.Classes.FilterGroup? FilterGroup { get; set; }
 #### Property Value
 [DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.classes.filtergroup 'DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup')
 
+<a name='DiGi.GIS.WebAPI.Classes.UpdateItemsResult'></a>
+
+## UpdateItemsResult Class
+
+The outcome of a write endpoint: how much was stored, and which rows were not\.
+
+A partial write still answers 200 - the rows that resolved really were stored, and failing the whole batch would discard them - but it is no longer silent. [Rejected](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejected 'DiGi\.GIS\.WebAPI\.Classes\.UpdateItemsResult\.Rejected') names what did not reach the database so the caller can correct and repost it, or report it onwards.
+
+```csharp
+public class UpdateItemsResult
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → UpdateItemsResult
+### Properties
+
+<a name='DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejected'></a>
+
+## UpdateItemsResult\.Rejected Property
+
+Gets or sets the rows dropped before the database, each named with the reason it was dropped\.
+
+```csharp
+public System.Collections.Generic.List<DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection> Rejected { get; set; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[Rejection](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection 'DiGi\.GIS\.WebAPI\.Classes\.UpdateItemsResult\.Rejection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+<a name='DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Sent'></a>
+
+## UpdateItemsResult\.Sent Property
+
+Gets or sets the number of rows handed to the database\.
+
+```csharp
+public int Sent { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+### Example
+5000
+
+<a name='DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Updated'></a>
+
+## UpdateItemsResult\.Updated Property
+
+Gets or sets the number of distinct identifiers the database returned\.
+
+Not a row count. Identifiers arrive as a set, and rows of one batch colliding on the conflict key return the same identifier, so this can be lower than the number stored. [Rejected](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejected 'DiGi\.GIS\.WebAPI\.Classes\.UpdateItemsResult\.Rejected') is the exact account of what was lost.
+
+```csharp
+public int Updated { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+### Example
+4987
+
+<a name='DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection'></a>
+
+## UpdateItemsResult\.Rejection Class
+
+One row that was dropped before the database, and why\.
+
+```csharp
+public class UpdateItemsResult.Rejection
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Rejection
+### Properties
+
+<a name='DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection.Reason'></a>
+
+## UpdateItemsResult\.Rejection\.Reason Property
+
+Gets or sets the reason the row was dropped\. It decides whether reposting is worth anything: a payload defect is worth correcting, a footprint outside every candidate county part is not\.
+
+```csharp
+public DiGi.GIS.PostgreSQL.Enums.UpdateRejectionReason Reason { get; set; }
+```
+
+#### Property Value
+[DiGi\.GIS\.PostgreSQL\.Enums\.UpdateRejectionReason](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.updaterejectionreason 'DiGi\.GIS\.PostgreSQL\.Enums\.UpdateRejectionReason')
+
+### Example
+CountyUnresolved
+
+<a name='DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection.Reference'></a>
+
+## UpdateItemsResult\.Rejection\.Reference Property
+
+Gets or sets the reference of the dropped row\. Null when the row carried none\.
+
+The host omits null properties, so a rejection with nothing to name arrives as `{"reason":"Undefined"}` - an absent `reference` is the null, not a serialization fault.
+
+```csharp
+public string? Reference { get; set; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+### Example
+1234\.5678\.AB\_12
+
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController'></a>
 
 ## YearBuiltDataController Class

@@ -571,7 +571,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <returns>A task that represents the asynchronous operation.</returns>
 
         [HttpPost("updateitem", Name = $"{nameof(Building2DController)}_{nameof(UpdateItemAsync)}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -603,18 +603,29 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            HashSet<long>? ids = await building2DPostgreSQLConverter.UpdateAsync([building2D_PostgreSQL]);
+            PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = await building2DPostgreSQLConverter.UpdateAsync([building2D_PostgreSQL]);
+
+            UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(1);
 
             // The result used to be discarded outright, so an unreachable database was reported to the
             // caller as a stored building. The Building2D was converted and reached this point, so nothing
             // updated is a failure rather than a quiet no-op.
-            if (ids is null || ids.Count == 0)
+            if (updateItemsResult is null || updateItemsResult.Updated == 0)
             {
+                // A single item leaves no room for a partial write, so the rejection - when there is one -
+                // is the entire explanation of the failure and belongs in the response.
+                UpdateItemsResult.Rejection? rejection = updateItemsResult?.Rejected.Count > 0 ? updateItemsResult.Rejected[0] : null;
+                if (rejection is not null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2D rejected before the database. Reference: {Reference}, reason: {Reason}", rejection.Reference ?? string.Empty, rejection.Reason);
+                    return StatusCode(500, $"Building2D was rejected before the database: {rejection.Reason}.");
+                }
+
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no Building2Ds have been updated");
                 return StatusCode(500, "Database update returned no modified Building2D IDs.");
             }
 
-            return Ok();
+            return Ok(updateItemsResult);
         }
 
         /// <summary> Updates multiple building 2D items. </summary>
@@ -623,7 +634,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <returns>A task that represents the asynchronous operation.</returns>
 
         [HttpPost("updateitems", Name = $"{nameof(Building2DController)}_{nameof(UpdateItemsAsync)}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -676,10 +687,10 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("Updating to database starting");
 
-            HashSet<long>? ids = null;
+            PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = null;
             try
             {
-                ids = await building2DPostgreSQLConverter.UpdateAsync(building2Ds_PostgreSQL);
+                postgreSQLUpdateResult = await building2DPostgreSQLConverter.UpdateAsync(building2Ds_PostgreSQL);
             }
             catch (Exception exception)
             {
@@ -687,19 +698,41 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Database update failed.");
             }
 
+            UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(building2Ds_PostgreSQL.Count);
+            if (updateItemsResult is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database could not be attempted");
+                return StatusCode(500, "Database update failed.");
+            }
+
+            // This is the route where the county tier can genuinely fail: ToPostgreSQL(code) leaves CountyId
+            // null, so every row is resolved by the converter and a footprint outside every candidate part
+            // is dropped. Naming those rows is the whole point - a partial write used to be indistinguishable
+            // from a complete one.
+            if (updateItemsResult.Rejected.Count != 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2Ds rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
+            }
+
             // Answering Ok here is what let a whole county regeneration report success while writing
             // nothing: the storage database was unreachable, every batch came back empty, and the client
             // treats 200 as done. Building2Ds were converted and reached this point, so nothing updated is
             // a failure, not a quiet no-op. BuildingController already answers this case the same way.
-            if (ids is null || ids.Count == 0)
+            if (updateItemsResult.Updated == 0)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no Building2Ds have been updated");
+                if (updateItemsResult.Rejected.Count == updateItemsResult.Sent)
+                {
+                    return StatusCode(500, $"All {updateItemsResult.Sent} Building2Ds were rejected before the database; none could be filed under a county.");
+                }
+
                 return StatusCode(500, "Database update returned no modified Building2D IDs.");
             }
 
-            Serilog.Modify.Log("Updating to database ended. Updated Building2Ds: {After}/{Before}", ids.Count, building2Ds_PostgreSQL.Count);
+            // Updated counts distinct identifiers, and rows colliding on (reference, county_id) share one,
+            // so Updated < Sent on its own proves nothing. Rejected is the exact figure.
+            Serilog.Modify.Log("Updating to database ended. Updated Building2Ds: {After}/{Before}, rejected: {Rejected}", updateItemsResult.Updated, updateItemsResult.Sent, updateItemsResult.Rejected.Count);
 
-            return Ok();
+            return Ok(updateItemsResult);
         }
     }
 }

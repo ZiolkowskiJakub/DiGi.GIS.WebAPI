@@ -457,7 +457,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="code">The unique identifier or code used to identify the items for update.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitemsbycode")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -516,7 +516,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyId">The unique identifier of the county for which the updates are applied.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitemsbycountyid")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -568,10 +568,10 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("Updating to database starting");
 
-            HashSet<long>? ids = null;
+            PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = null;
             try
             {
-                ids = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatas_PostgreSQL);
+                postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatas_PostgreSQL);
             }
             catch (Exception exception)
             {
@@ -579,19 +579,41 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Database update failed.");
             }
 
+            UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(ortoDatas_PostgreSQL.Count);
+            if (updateItemsResult is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database could not be attempted");
+                return StatusCode(500, "Database update failed.");
+            }
+
+            // The county is stated by the caller here, so a drop means the row carried no geometry or its
+            // partition could not be created - never that resolution failed. It is still a partial write,
+            // and it used to leave no trace.
+            if (updateItemsResult.Rejected.Count != 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
+            }
+
             // Answering Ok here is what let a whole county regeneration report success while writing
             // nothing: the storage database was unreachable, every batch came back empty, and the client
             // treats 200 as done. OrtoDatas were converted and reached this point, so nothing updated is a
             // failure, not a quiet no-op. BuildingController already answers this case the same way.
-            if (ids is null || ids.Count == 0)
+            if (updateItemsResult.Updated == 0)
             {
+                if (updateItemsResult.Rejected.Count == updateItemsResult.Sent)
+                {
+                    return StatusCode(500, $"All {updateItemsResult.Sent} OrtoDatas were rejected before the database; none could be filed under a county.");
+                }
+
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no OrtoDatas have been updated");
                 return StatusCode(500, "Database update returned no modified OrtoDatas IDs.");
             }
 
-            Serilog.Modify.Log("Updating to database ended. Updated OrtoDatas: {After}/{Before}", ids.Count, ortoDatas_PostgreSQL.Count);
+            // Updated counts distinct identifiers, and rows colliding on (reference, county_id) share one,
+            // so Updated < Sent on its own proves nothing. Rejected is the exact figure.
+            Serilog.Modify.Log("Updating to database ended. Updated OrtoDatas: {After}/{Before}, rejected: {Rejected}", updateItemsResult.Updated, updateItemsResult.Sent, updateItemsResult.Rejected.Count);
 
-            return Ok();
+            return Ok(updateItemsResult);
         }
 
         /// <summary>

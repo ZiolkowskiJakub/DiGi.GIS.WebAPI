@@ -247,6 +247,33 @@ public static System.IServiceProvider ServiceProvider();
 [System\.IServiceProvider](https://learn.microsoft.com/en-us/dotnet/api/system.iserviceprovider 'System\.IServiceProvider')  
 An [System\.IServiceProvider](https://learn.microsoft.com/en-us/dotnet/api/system.iserviceprovider 'System\.IServiceProvider') containing the registered services\.
 
+<a name='DiGi.GIS.WebAPI.Create.UpdateItemsResult(thisDiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult,int)'></a>
+
+## Create\.UpdateItemsResult\(this PostgreSQLUpdateResult, int\) Method
+
+Creates the response payload of a write endpoint from what the database converter reported\.
+
+```csharp
+public static DiGi.GIS.WebAPI.Classes.UpdateItemsResult? UpdateItemsResult(this DiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult, int sent);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Create.UpdateItemsResult(thisDiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult,int).postgreSQLUpdateResult'></a>
+
+`postgreSQLUpdateResult` [DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.postgresqlupdateresult 'DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult')
+
+The outcome returned by the converter's update\.
+
+<a name='DiGi.GIS.WebAPI.Create.UpdateItemsResult(thisDiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult,int).sent'></a>
+
+`sent` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The number of rows handed to the converter\.
+
+#### Returns
+[UpdateItemsResult](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.UpdateItemsResult 'DiGi\.GIS\.WebAPI\.Classes\.UpdateItemsResult')  
+A new [UpdateItemsResult](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.UpdateItemsResult 'DiGi\.GIS\.WebAPI\.Classes\.UpdateItemsResult'), or null if [postgreSQLUpdateResult](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Create.UpdateItemsResult(thisDiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult,int).postgreSQLUpdateResult 'DiGi\.GIS\.WebAPI\.Create\.UpdateItemsResult\(this DiGi\.GIS\.PostgreSQL\.Classes\.PostgreSQLUpdateResult, int\)\.postgreSQLUpdateResult') is null\.
+
 <a name='DiGi.GIS.WebAPI.Modify'></a>
 
 ## Modify Class
@@ -1134,3 +1161,43 @@ The table to update
 `building2DReferences` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dreference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
 
 The building2DReferences to use for updating
+
+<a name='DiGi.GIS.WebAPI.Query'></a>
+
+## Query Class
+
+```csharp
+public static class Query
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Query
+### Methods
+
+<a name='DiGi.GIS.WebAPI.Query.RejectionSample(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection_,int)'></a>
+
+## Query\.RejectionSample\(this IEnumerable\<Rejection\>, int\) Method
+
+Renders the first rejections of a write as a readable log fragment\.
+
+A count alone does not say what to do about a shortfall - the references identify the rows to repost, and the reason says whether reposting them unchanged would achieve anything.
+
+```csharp
+public static string RejectionSample(this System.Collections.Generic.IEnumerable<DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection>? rejections, int count=20);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Query.RejectionSample(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection_,int).rejections'></a>
+
+`rejections` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[Rejection](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection 'DiGi\.GIS\.WebAPI\.Classes\.UpdateItemsResult\.Rejection')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The rejections to render; may be null\.
+
+<a name='DiGi.GIS.WebAPI.Query.RejectionSample(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection_,int).count'></a>
+
+`count` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of rejections to include\. Defaults to 20\.
+
+#### Returns
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')  
+A comma\-separated list of `reference (reason)` entries, empty when there is nothing to render\.

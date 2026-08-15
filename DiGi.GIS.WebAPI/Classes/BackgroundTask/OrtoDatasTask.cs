@@ -145,7 +145,19 @@ namespace DiGi.GIS.WebAPI.Classes
                     }
                 }
 
-                await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatasList_PostgreSQL);
+                PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatasList_PostgreSQL);
+
+                // The result used to be discarded, so a run could walk every county reporting progress it
+                // had not made.
+                UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(ortoDatasList_PostgreSQL.Count);
+                if (updateItemsResult is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas updating could not be attempted");
+                }
+                else if (updateItemsResult.Rejected.Count != 0)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
+                }
 
                 longProgressWrapper?.Increment(ortoDatasList_PostgreSQL.Count);
 
