@@ -7,11 +7,11 @@ namespace DiGi.GIS.WebAPI
     public static partial class Create
     {
         /// <summary>
-        /// Creates and configures an <see cref="System.Net.Http.HttpClient"/> instance for the Geoportal service, including a custom User-Agent header based on the executing assembly's name and version.
+        /// Creates and configures an <see cref="HttpClient"/> instance for the Geoportal service, including a custom User-Agent header based on the executing assembly's name and version.
         /// </summary>
         /// <param name="GISWebAPIManager">The manager used to create the HTTP client instance.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static HttpClient? HttpClient_Geoportal(GISWebAPIManager GISWebAPIManager)
+        public static HttpClient? HttpClient_Geoportal(GISWebAPIManager? GISWebAPIManager)
         {
             HttpClient? result = GISWebAPIManager?.CreateHttpClient("Geoportal");
             if (result is null)
@@ -29,11 +29,11 @@ namespace DiGi.GIS.WebAPI
         }
 
         /// <summary>
-        /// Creates and configures an <see cref="System.Net.Http.HttpClient"/> instance for the "Główny Urząd Geodezji i Kartografii" service, including a custom User-Agent header based on the executing assembly's name and version.
+        /// Creates and configures an <see cref="HttpClient"/> instance for the "Główny Urząd Geodezji i Kartografii" service, including a custom User-Agent header based on the executing assembly's name and version.
         /// </summary>
         /// <param name="GISWebAPIManager">The manager used to create the HTTP client instance.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static HttpClient? HttpClient_GUGiK(GISWebAPIManager GISWebAPIManager)
+        public static HttpClient? HttpClient_GUGiK(GISWebAPIManager? GISWebAPIManager)
         {
             HttpClient? result = GISWebAPIManager?.CreateHttpClient("GUGiK");
             if (result is null)

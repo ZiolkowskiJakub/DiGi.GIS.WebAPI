@@ -456,7 +456,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("Updating to database starting");
 
-            HashSet<long>? ids = null;
+            HashSet<long>? ids;
             try
             {
                 ids = await buildingModelPostgreSQLConverter.UpdateAsync(buildingModels_PostgreSQL);

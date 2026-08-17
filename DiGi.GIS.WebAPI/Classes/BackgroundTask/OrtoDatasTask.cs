@@ -145,7 +145,7 @@ namespace DiGi.GIS.WebAPI.Classes
                     }
                 }
 
-                PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatasList_PostgreSQL);
+                PostgreSQLUpdateResult? postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatasList_PostgreSQL);
 
                 // The result used to be discarded, so a run could walk every county reporting progress it
                 // had not made.

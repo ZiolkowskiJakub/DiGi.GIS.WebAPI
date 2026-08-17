@@ -49,7 +49,7 @@ A task that represents the asynchronous operation\.
 Creates and configures an [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient') instance for the Geoportal service, including a custom User\-Agent header based on the executing assembly's name and version\.
 
 ```csharp
-public static System.Net.Http.HttpClient? HttpClient_Geoportal(DiGi.GIS.WebAPI.Classes.GISWebAPIManager GISWebAPIManager);
+public static System.Net.Http.HttpClient? HttpClient_Geoportal(DiGi.GIS.WebAPI.Classes.GISWebAPIManager? GISWebAPIManager);
 ```
 #### Parameters
 
@@ -70,7 +70,7 @@ A task that represents the asynchronous operation\.
 Creates and configures an [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient') instance for the "Główny Urząd Geodezji i Kartografii" service, including a custom User\-Agent header based on the executing assembly's name and version\.
 
 ```csharp
-public static System.Net.Http.HttpClient? HttpClient_GUGiK(DiGi.GIS.WebAPI.Classes.GISWebAPIManager GISWebAPIManager);
+public static System.Net.Http.HttpClient? HttpClient_GUGiK(DiGi.GIS.WebAPI.Classes.GISWebAPIManager? GISWebAPIManager);
 ```
 #### Parameters
 

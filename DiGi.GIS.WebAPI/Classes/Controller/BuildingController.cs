@@ -156,7 +156,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 Serilog.Modify.Log("Updating to database starting");
 
-                PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = await buildingPostgreSQLConverter.UpdateAsync(buildings);
+                PostgreSQLUpdateResult? postgreSQLUpdateResult = await buildingPostgreSQLConverter.UpdateAsync(buildings);
 
                 UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(buildings.Count);
                 if (updateItemsResult is null)

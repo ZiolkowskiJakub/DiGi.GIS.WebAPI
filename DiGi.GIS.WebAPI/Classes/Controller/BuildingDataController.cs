@@ -436,7 +436,7 @@ namespace DiGi.GIS.WebAPI.Classes
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingDataController), nameof(GetTableByFilterGroupAsync));
 
             List<string>? strings_ColumnUniqueIds = buildingDataByFilterGroupParameter.ColumnUniqueIds;
-            if (strings_ColumnUniqueIds is not null && !strings_ColumnUniqueIds.Any())
+            if (strings_ColumnUniqueIds is not null && strings_ColumnUniqueIds.Count == 0)
             {
                 strings_ColumnUniqueIds = null;
             }

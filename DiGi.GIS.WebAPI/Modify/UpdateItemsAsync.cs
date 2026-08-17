@@ -469,10 +469,10 @@ namespace DiGi.GIS.WebAPI
         /// <summary>
         /// Asynchronously updates items by sending a JSON payload to the specified request URI.
         /// </summary>
-        /// <param name="httpClient">The <see cref="System.Net.Http.HttpClient"/> used to perform the network request.</param>
+        /// <param name="httpClient">The <see cref="HttpClient"/> used to perform the network request.</param>
         /// <param name="requestUri">The target URI where the update request is sent.</param>
         /// <param name="json">The JSON string containing the data to be updated.</param>
-        /// <param name="postOptions">Optional <see cref="DiGi.WebAPI.Classes.PostOptions"/> used to configure the operation, such as specifying a delay.</param>
+        /// <param name="postOptions">Optional <see cref="PostOptions"/> used to configure the operation, such as specifying a delay.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static async Task<bool> UpdateItemsAsync(this HttpClient httpClient, string? requestUri, string? json, PostOptions? postOptions = null)
         {
@@ -488,10 +488,10 @@ namespace DiGi.GIS.WebAPI
         /// Asynchronously updates items by sending an already-serialized UTF-8 JSON payload to the specified request URI.
         /// <para>Preferred over the string overload on bulk paths: the payload never has to be materialized as a UTF-16 string and re-encoded back to UTF-8.</para>
         /// </summary>
-        /// <param name="httpClient">The <see cref="System.Net.Http.HttpClient"/> used to perform the network request.</param>
+        /// <param name="httpClient">The <see cref="HttpClient"/> used to perform the network request.</param>
         /// <param name="requestUri">The target URI where the update request is sent.</param>
         /// <param name="utf8Json">The UTF-8 encoded JSON payload containing the data to be updated.</param>
-        /// <param name="postOptions">Optional <see cref="DiGi.WebAPI.Classes.PostOptions"/> used to configure the operation, such as specifying a delay.</param>
+        /// <param name="postOptions">Optional <see cref="PostOptions"/> used to configure the operation, such as specifying a delay.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static async Task<bool> UpdateItemsAsync(this HttpClient httpClient, string? requestUri, byte[]? utf8Json, PostOptions? postOptions = null)
         {
@@ -530,7 +530,7 @@ namespace DiGi.GIS.WebAPI
         /// Asynchronously updates multiple building models via the PostgreSQL Web API.
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
-        /// <param name="buildingModels">A collection of <see cref="DiGi.Analytical.Building.Classes.BuildingModel"/> items to be updated.</param>
+        /// <param name="buildingModels">A collection of <see cref="BuildingModel"/> items to be updated.</param>
         /// <param name="code">The administrative area code the building models belong to, resolved server-side to a county identifier.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -558,7 +558,7 @@ namespace DiGi.GIS.WebAPI
         /// <para>Preferred over the <c>code</c> overload: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so a code alone leaves the server to choose one of them.</para>
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
-        /// <param name="buildingModels">A collection of <see cref="DiGi.Analytical.Building.Classes.BuildingModel"/> items to be updated.</param>
+        /// <param name="buildingModels">A collection of <see cref="BuildingModel"/> items to be updated.</param>
         /// <param name="countyId">The identifier of the county row the building models belong to.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -585,7 +585,7 @@ namespace DiGi.GIS.WebAPI
         /// Asynchronously updates multiple building items via the PostgreSQL Web API.
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
-        /// <param name="buildings">A collection of <see cref="DiGi.CityGML.Classes.Building"/> items to be updated.</param>
+        /// <param name="buildings">A collection of <see cref="Building"/> items to be updated.</param>
         /// <param name="code">An optional code used for the update operation.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -601,10 +601,10 @@ namespace DiGi.GIS.WebAPI
 
         /// <summary>
         /// Asynchronously updates building items from an already-serialized UTF-8 JSON payload via the PostgreSQL Web API.
-        /// <para>Used by <see cref="Classes.BuildingsPostTask"/>, where the batch was serialized once while being sized, so it must not be serialized again here.</para>
+        /// <para>Used by <see cref="BuildingsPostTask"/>, where the batch was serialized once while being sized, so it must not be serialized again here.</para>
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
-        /// <param name="utf8Json">The UTF-8 encoded JSON array of <see cref="DiGi.CityGML.Classes.Building"/> items to be updated.</param>
+        /// <param name="utf8Json">The UTF-8 encoded JSON array of <see cref="Building"/> items to be updated.</param>
         /// <param name="code">An optional code used for the update operation.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -632,7 +632,7 @@ namespace DiGi.GIS.WebAPI
         /// <para>Preferred over the <c>code</c> overload: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so a code alone leaves the server to choose one of them.</para>
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
-        /// <param name="buildings">A collection of <see cref="DiGi.CityGML.Classes.Building"/> items to be updated.</param>
+        /// <param name="buildings">A collection of <see cref="Building"/> items to be updated.</param>
         /// <param name="countyId">The identifier of the county row the buildings belong to.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -648,10 +648,10 @@ namespace DiGi.GIS.WebAPI
 
         /// <summary>
         /// Asynchronously updates building items for an explicitly identified county row from an already-serialized UTF-8 JSON payload via the PostgreSQL Web API.
-        /// <para>Used by <see cref="Classes.BuildingsPostTask"/>, where the batch was serialized once while being sized, so it must not be serialized again here.</para>
+        /// <para>Used by <see cref="BuildingsPostTask"/>, where the batch was serialized once while being sized, so it must not be serialized again here.</para>
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
-        /// <param name="utf8Json">The UTF-8 encoded JSON array of <see cref="DiGi.CityGML.Classes.Building"/> items to be updated.</param>
+        /// <param name="utf8Json">The UTF-8 encoded JSON array of <see cref="Building"/> items to be updated.</param>
         /// <param name="countyId">The identifier of the county row the buildings belong to.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>

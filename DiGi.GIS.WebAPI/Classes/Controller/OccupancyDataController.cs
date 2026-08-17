@@ -323,7 +323,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="reference">The unique reference string used to identify the building 2D items.</param>
         /// <param name="countyId">The optional identifier of the county associated with the building data.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
-        /// <returns>An <see cref="IActionResult"/> containing the requested building 2D items, or a <see cref="Microsoft.AspNetCore.Mvc.BadRequestResult"/> if the reference is null or whitespace.</returns>
+        /// <returns>An <see cref="IActionResult"/> containing the requested building 2D items, or a <see cref="BadRequestResult"/> if the reference is null or whitespace.</returns>
         [HttpGet("building2d/itemsbyreference")]
         public async Task<IActionResult> GetBuilding2DItemsByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {

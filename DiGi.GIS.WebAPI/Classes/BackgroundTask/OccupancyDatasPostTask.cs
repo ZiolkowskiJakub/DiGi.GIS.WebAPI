@@ -34,7 +34,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public int? CountyId { get; set; }
 
         /// <summary>
-        /// Gets or sets the collection of <see cref="DiGi.GIS.Classes.OccupancyData"/> values for administrative areal 2D.
+        /// Gets or sets the collection of <see cref="OccupancyData"/> values for administrative areal 2D.
         /// </summary>
         public IEnumerable<OccupancyData>? Values_AdministrativeAreal2D { get; set; }
 

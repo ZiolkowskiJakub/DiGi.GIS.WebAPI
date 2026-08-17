@@ -30,7 +30,7 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Creates an <see cref="System.Net.Http.HttpClient"/> instance configured for the Web API, resolving the route associated with the specified controller type.
+        /// Creates an <see cref="HttpClient"/> instance configured for the Web API, resolving the route associated with the specified controller type.
         /// </summary>
         /// <typeparam name="TControllerBase">The TControllerBase type parameter.</typeparam>
         /// <param name="route">The route.</param>
@@ -47,7 +47,7 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Creates an <see cref="System.Net.Http.HttpClient"/> instance configured for the specified controller's method and retrieves the corresponding API path.
+        /// Creates an <see cref="HttpClient"/> instance configured for the specified controller's method and retrieves the corresponding API path.
         /// </summary>
         /// <typeparam name="TControllerBase">The type of the base controller used to resolve the endpoint path.</typeparam>
         /// <param name="methodName">The name of the method within the controller to resolve.</param>
