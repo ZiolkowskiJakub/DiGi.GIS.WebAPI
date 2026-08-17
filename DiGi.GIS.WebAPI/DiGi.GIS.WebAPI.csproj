@@ -75,6 +75,14 @@
 		<Reference Include="DiGi.Geometry.Object">
 		  <HintPath>..\..\DiGi.Geometry\bin\DiGi.Geometry.Object.dll</HintPath>
 		</Reference>
+		<!-- Declared for deployment, not for compilation. DiGi.GIS.PostgreSQL took a dependency on this
+		     assembly for the terrain point store, and a HintPath reference does not carry its own
+		     references into a consumer's output - so without this entry the extension deploys into
+		     DiGi.WebAPI.WindowsService\bin\extensions\gis without it, and the host, which shares one
+		     probing set with its extensions, has no other copy to find. -->
+		<Reference Include="DiGi.Geometry.PointCloud">
+		  <HintPath>..\..\DiGi.Geometry.PointCloud\bin\DiGi.Geometry.PointCloud.dll</HintPath>
+		</Reference>
 		<Reference Include="DiGi.GIS">
 			<HintPath>..\..\DiGi.GIS\bin\DiGi.GIS.dll</HintPath>
 		</Reference>
