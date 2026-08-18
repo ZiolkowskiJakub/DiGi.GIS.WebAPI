@@ -4571,6 +4571,261 @@ public DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction SinglevalueAggre
 ### Example
 Sum
 
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController'></a>
+
+## TerrainController Class
+
+Controller responsible for handling API requests related to terrain, reconstructing a ground surface mesh from the stored elevation points of the counties a request covers\.
+
+Every mesh returned here is a two-and-a-half dimensional height field: exactly one elevation per plan position. It models ground, and cannot express a vertical face, an overhang or a canopy.
+
+```csharp
+public class TerrainController : DiGi.WebAPI.Classes.WebAPIController
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [Microsoft\.AspNetCore\.Mvc\.ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase 'Microsoft\.AspNetCore\.Mvc\.ControllerBase') → [DiGi\.WebAPI\.Classes\.WebAPIController](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.webapicontroller 'DiGi\.WebAPI\.Classes\.WebAPIController') → TerrainController
+### Constructors
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TerrainController(DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter)'></a>
+
+## TerrainController\(TerrainPointPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter\) Constructor
+
+Initializes a new instance of the [TerrainController](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TerrainController 'DiGi\.GIS\.WebAPI\.Classes\.TerrainController') class\.
+
+```csharp
+public TerrainController(DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter terrainPointPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TerrainController(DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).terrainPointPostgreSQLConverter'></a>
+
+`terrainPointPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.terrainpointpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointPostgreSQLConverter')
+
+The converter used for reading terrain points from the PostgreSQL database\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TerrainController(DiGi.GIS.PostgreSQL.Classes.TerrainPointPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).administrativeAreal2DPostgreSQLConverter'></a>
+
+`administrativeAreal2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.administrativeareal2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
+
+The converter used for resolving which counties an area covers\.
+### Methods
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CountyIdsAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.CountyIdsAsync\(BoundingBox2D, double, CancellationToken\) Method
+
+Resolves which county partitions an area covers\.
+
+This has to happen here rather than inside the terrain converter. The terrain points live in the Storage database and the administrative geometry in Main, and a PostgreSQL connection cannot reach across databases - so the only place both are available is the host, where each converter carries its own connection. The write side has always worked this way; see `PostgreSQLTerrainPointCreateTableTask`.
+
+```csharp
+private System.Threading.Tasks.Task<System.Collections.Generic.HashSet<int>?> CountyIdsAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D boundingBox2D, double tolerance, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CountyIdsAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).boundingBox2D'></a>
+
+`boundingBox2D` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+The area to resolve\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CountyIdsAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance the search area is expanded by, in metres\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CountyIdsAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The identifiers of the counties the area meets, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when it meets none\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.GetMesh3DByBoundingBoxAsync\(double, double, double, double, Nullable\<double\>, CancellationToken\) Method
+
+Asynchronously retrieves the terrain surface inside an axis aligned bounding box given by two opposite corners\.
+
+Corner order does not matter. Each side of the box is capped at twice [MaximumRadius](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.Terrain.MaximumRadius 'DiGi\.GIS\.WebAPI\.Constants\.Terrain\.MaximumRadius'), so this endpoint and the circle admit the same largest area.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetMesh3DByBoundingBoxAsync(double x_1, double y_1, double x_2, double y_2, System.Nullable<double> tolerance, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Threading.CancellationToken).x_1'></a>
+
+`x_1` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The X coordinate of the first corner, in PL\-1992 \(EPSG:2180\) metres\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Threading.CancellationToken).y_1'></a>
+
+`y_1` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The Y coordinate of the first corner, in PL\-1992 \(EPSG:2180\) metres\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Threading.CancellationToken).x_2'></a>
+
+`x_2` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The X coordinate of the second corner, in PL\-1992 \(EPSG:2180\) metres\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Threading.CancellationToken).y_2'></a>
+
+`y_2` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The Y coordinate of the second corner, in PL\-1992 \(EPSG:2180\) metres\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+An optional tolerance for the spatial query, in metres\. If not provided or NaN, a default macro distance is used\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the [DiGi\.Geometry\.Spatial\.Classes\.Mesh3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.mesh3d 'DiGi\.Geometry\.Spatial\.Classes\.Mesh3D') as JSON, or an error status\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.GetMesh3DByCircleAsync\(double, double, Nullable\<double\>, Nullable\<double\>, Nullable\<double\>, CancellationToken\) Method
+
+Asynchronously retrieves the terrain surface inside a circle centred on the given plan coordinate\.
+
+The circle is honoured: the points outside it are excluded by the database, not trimmed afterwards, so no part of the returned mesh lies further from the centre than the radius.
+
+Either [radius](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).radius 'DiGi\.GIS\.WebAPI\.Classes\.TerrainController\.GetMesh3DByCircleAsync\(double, double, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Threading\.CancellationToken\)\.radius') or [diameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).diameter 'DiGi\.GIS\.WebAPI\.Classes\.TerrainController\.GetMesh3DByCircleAsync\(double, double, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Threading\.CancellationToken\)\.diameter') must be supplied; [radius](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).radius 'DiGi\.GIS\.WebAPI\.Classes\.TerrainController\.GetMesh3DByCircleAsync\(double, double, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Threading\.CancellationToken\)\.radius') wins when both are. The radius is capped by [MaximumRadius](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.Terrain.MaximumRadius 'DiGi\.GIS\.WebAPI\.Constants\.Terrain\.MaximumRadius').
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetMesh3DByCircleAsync(double x, double y, System.Nullable<double> radius, System.Nullable<double> diameter, System.Nullable<double> tolerance, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).x'></a>
+
+`x` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The X coordinate of the centre, in PL\-1992 \(EPSG:2180\) metres, matching the coordinates the terrain points are stored in\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).y'></a>
+
+`y` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The Y coordinate of the centre, in PL\-1992 \(EPSG:2180\) metres, matching the coordinates the terrain points are stored in\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).radius'></a>
+
+`radius` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The search radius in metres\. Optional when [diameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).diameter 'DiGi\.GIS\.WebAPI\.Classes\.TerrainController\.GetMesh3DByCircleAsync\(double, double, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Threading\.CancellationToken\)\.diameter') is supplied\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).diameter'></a>
+
+`diameter` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The search diameter in metres, used only when [radius](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).radius 'DiGi\.GIS\.WebAPI\.Classes\.TerrainController\.GetMesh3DByCircleAsync\(double, double, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Nullable\<double\>, System\.Threading\.CancellationToken\)\.radius') is absent\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+An optional tolerance for the spatial query, in metres\. If not provided or NaN, a default macro distance is used\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the [DiGi\.Geometry\.Spatial\.Classes\.Mesh3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.mesh3d 'DiGi\.Geometry\.Spatial\.Classes\.Mesh3D') as JSON, or an error status\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.IsFinite(double)'></a>
+
+## TerrainController\.IsFinite\(double\) Method
+
+Determines whether a bound query string value is a usable coordinate or distance\.
+
+Model binding accepts the literals NaN and Infinity for a double, so neither is a value the caller could only have reached by mistake.
+
+```csharp
+private static bool IsFinite(double value);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.IsFinite(double).value'></a>
+
+`value` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The value to test\.
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+[true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool') when the value is neither NaN nor infinite; otherwise [false](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool')\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.Mesh3DResult(DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D)'></a>
+
+## TerrainController\.Mesh3DResult\(PointCloud3D\) Method
+
+Reconstructs the ground surface from the gathered terrain points and renders it as the JSON response body\.
+
+The three failure paths are reported separately, because "nothing stored here" and "too little stored here to triangulate" are answered by different fixes and both used to arrive as a bare 404.
+
+```csharp
+private Microsoft.AspNetCore.Mvc.IActionResult Mesh3DResult(DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D? pointCloud3D);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.Mesh3DResult(DiGi.Geometry.PointCloud.Spatial.Classes.PointCloud3D).pointCloud3D'></a>
+
+`pointCloud3D` [DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.spatial.classes.pointcloud3d 'DiGi\.Geometry\.PointCloud\.Spatial\.Classes\.PointCloud3D')
+
+The terrain points gathered for the requested area\.
+
+#### Returns
+[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the [DiGi\.Geometry\.Spatial\.Classes\.Mesh3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.mesh3d 'DiGi\.Geometry\.Spatial\.Classes\.Mesh3D') as JSON, or a not found status\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetTolerance(System.Nullable_double_,double)'></a>
+
+## TerrainController\.TryGetTolerance\(Nullable\<double\>, double\) Method
+
+Resolves the tolerance a request asked for, falling back to the default when it was not supplied\.
+
+```csharp
+private static bool TryGetTolerance(System.Nullable<double> tolerance, out double tolerance_Temp);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetTolerance(System.Nullable_double_,double).tolerance'></a>
+
+`tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The tolerance as bound from the query string\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetTolerance(System.Nullable_double_,double).tolerance_Temp'></a>
+
+`tolerance_Temp` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The resolved tolerance, in metres\.
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+[true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool') when the tolerance is usable; otherwise [false](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool')\.
+
 <a name='DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter'></a>
 
 ## UniqueValuesByColumnUniqueIdParameter Class
