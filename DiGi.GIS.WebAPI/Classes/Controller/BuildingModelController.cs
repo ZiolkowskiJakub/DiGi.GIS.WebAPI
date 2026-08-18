@@ -1,4 +1,4 @@
-using DiGi.Analytical.Building.Classes;
+﻿using DiGi.Analytical.Building.Classes;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.Analytical.Enums;
 using DiGi.GIS.PostgreSQL;
@@ -411,8 +411,10 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Writes the given building models to the partition of a single county row.
+        /// Writes the given building models to the partition of a single county row, replacing whatever those buildings already held there.
         /// <para>Shared by both update actions so the county row is resolved once, by the action, and this method never has to guess one.</para>
+        /// <para><b>A post replaces rather than adds.</b> A model row is addressed by the identifier of the model it holds, and a model is handed a fresh one whenever it is created, so the write itself always appends - see <see cref="PostgreSQL.Classes.Building2DReferencedObject{TUniqueObject}"/>. Left at that, regenerating a county would add a model to every building instead of replacing its own, so what the buildings already held is read first and removed once the write has succeeded. A building therefore ends up holding exactly the models this call sent for it.</para>
+        /// <para>The identifiers are read before the write and deleted after it, deliberately in that order: an interrupted call then leaves the building holding both its old and its new model, which is recoverable, rather than holding neither.</para>
         /// </summary>
         /// <param name="buildingModels">The building models to write.</param>
         /// <param name="countyId">The identifier of the county row the models belong to.</param>
@@ -454,6 +456,41 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("BuildingModels conversion to PostgreSQL ended. BuildingModels converted: {After}/{Before}", buildingModels_PostgreSQL.Count, buildingModels.Count);
 
+            // What the building already holds is read before the write rather than deleted before it. A
+            // model row is keyed on the model's own identifier and a model is handed a fresh one whenever it
+            // is created, so a regeneration adds a row instead of replacing one and something has to take the
+            // previous one out - without this a county regenerated twice holds two models per building.
+            // Reading first and deleting last means a run that dies in between leaves the building holding
+            // both its old and its new model, which is recoverable, rather than holding neither.
+            HashSet<string> references_Written = [];
+            foreach (PostgreSQL.Classes.BuildingModel buildingModel_PostgreSQL in buildingModels_PostgreSQL)
+            {
+                string? reference = buildingModel_PostgreSQL.Reference;
+                if (!string.IsNullOrWhiteSpace(reference))
+                {
+                    references_Written.Add(reference!);
+                }
+            }
+
+            HashSet<string>? uniqueIds_Superseded;
+            try
+            {
+                uniqueIds_Superseded = await buildingModelPostgreSQLConverter.GetUniqueIdsByReferencesAsync(references_Written, countyId);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "BuildingModels already stored for these references could not be read");
+                return StatusCode(500, "Database read failed.");
+            }
+
+            // Writing without knowing what was already there is what grows the table silently, which is the
+            // failure this whole arrangement exists to prevent. Refusing is louder and costs the caller a retry.
+            if (uniqueIds_Superseded is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "BuildingModels already stored for these references could not be read - nothing was written");
+                return StatusCode(500, "Database read returned no result.");
+            }
+
             Serilog.Modify.Log("Updating to database starting");
 
             HashSet<long>? ids;
@@ -478,6 +515,42 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             Serilog.Modify.Log("Updating to database ended. Updated BuildingModels: {After}/{Before}", ids.Count, buildingModels_PostgreSQL.Count);
+
+            // A model posted under an identifier that was already stored replaced its own row rather than
+            // adding one, so that identifier names a row that has just been written and must not be deleted.
+            foreach (PostgreSQL.Classes.BuildingModel buildingModel_PostgreSQL in buildingModels_PostgreSQL)
+            {
+                string? uniqueId = buildingModel_PostgreSQL.UniqueId;
+                if (!string.IsNullOrWhiteSpace(uniqueId))
+                {
+                    uniqueIds_Superseded.Remove(uniqueId!);
+                }
+            }
+
+            if (uniqueIds_Superseded.Count != 0)
+            {
+                // The write has already succeeded, so a failure here leaves the models stored with their
+                // predecessors still beside them. That is worth reporting loudly and is repairable, but it is
+                // not a reason to fail the request and have the caller write a third model on the retry.
+                try
+                {
+                    HashSet<long>? ids_Removed = await buildingModelPostgreSQLConverter.RemoveByUniqueIdsAsync(uniqueIds_Superseded, countyId);
+
+                    int count = ids_Removed?.Count ?? 0;
+                    if (count != uniqueIds_Superseded.Count)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Superseded BuildingModels removed: {Removed}/{Counted} - the table did not hold what was read", count, uniqueIds_Superseded.Count);
+                    }
+                    else
+                    {
+                        Serilog.Modify.Log("Superseded BuildingModels removed: {Removed}", count);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    Serilog.Modify.Log(exception, "Superseded BuildingModels could not be removed. The models were written and their predecessors are still stored beside them: {Counted} rows under CountyId {CountyId}", uniqueIds_Superseded.Count, countyId);
+                }
+            }
 
             return Ok();
         }

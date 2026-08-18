@@ -2467,9 +2467,13 @@ A task that represents the asynchronous operation\.
 
 ## BuildingModelController\.UpdateAsync\(List\<BuildingModel\>, int\) Method
 
-Writes the given building models to the partition of a single county row\.
+Writes the given building models to the partition of a single county row, replacing whatever those buildings already held there\.
 
 Shared by both update actions so the county row is resolved once, by the action, and this method never has to guess one.
+
+<b>A post replaces rather than adds.</b> A model row is addressed by the identifier of the model it holds, and a model is handed a fresh one whenever it is created, so the write itself always appends - see [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dreferencedobject-1 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObject\`1'). Left at that, regenerating a county would add a model to every building instead of replacing its own, so what the buildings already held is read first and removed once the write has succeeded. A building therefore ends up holding exactly the models this call sent for it.
+
+The identifiers are read before the write and deleted after it, deliberately in that order: an interrupted call then leaves the building holding both its old and its new model, which is recoverable, rather than holding neither.
 
 ```csharp
 private System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateAsync(System.Collections.Generic.List<DiGi.Analytical.Building.Classes.BuildingModel> buildingModels, int countyId);
