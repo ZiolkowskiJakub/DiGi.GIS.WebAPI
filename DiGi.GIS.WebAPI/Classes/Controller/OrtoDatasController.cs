@@ -129,7 +129,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             switch (administrativeAreal2DReference.AdministrativeArealType)
             {
-                case AdministrativeArealType.Subdivison:
+                case AdministrativeArealType.Subdivision:
                 case AdministrativeArealType.Municipality:
                     Serilog.Modify.Log("Calculating estimated count for {Id}", administrativeAreal2DReference.CountyId?.ToString() ?? "???");
                     count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId);
@@ -234,7 +234,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.AdministrativeAreal2DReference> administrativeAreal2DReferences_SubdivisonMunicipality = [];
+            List<PostgreSQL.Classes.AdministrativeAreal2DReference> administrativeAreal2DReferences_SubdivisionMunicipality = [];
             List<PostgreSQL.Classes.AdministrativeAreal2DReference> administrativeAreal2DReferences_County = [];
             List<PostgreSQL.Classes.AdministrativeAreal2DReference> administrativeAreal2DReferences_VoivodeshipCountry = [];
 
@@ -248,9 +248,9 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 switch (administrativeArealType)
                 {
-                    case AdministrativeArealType.Subdivison:
+                    case AdministrativeArealType.Subdivision:
                     case AdministrativeArealType.Municipality:
-                        administrativeAreal2DReferences_SubdivisonMunicipality.Add(administrativeAreal2DReference);
+                        administrativeAreal2DReferences_SubdivisionMunicipality.Add(administrativeAreal2DReference);
                         break;
 
                     case AdministrativeArealType.County:
@@ -274,7 +274,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 dictionary[administrativeAreal2DReference.Id] = (count_Building2D, count_OrtoDatas);
             }
 
-            foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_SubdivisonMunicipality)
+            foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_SubdivisionMunicipality)
             {
                 if (administrativeAreal2DReference?.CountyId is not int countyId)
                 {
