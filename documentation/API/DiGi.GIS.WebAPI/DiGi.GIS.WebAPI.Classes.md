@@ -1097,6 +1097,33 @@ The optional identifier for the county associated with the coordinates\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferenceDuplicatesAsync(int,System.Threading.CancellationToken)'></a>
+
+## Building2DController\.GetReferenceDuplicatesAsync\(int, CancellationToken\) Method
+
+Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetReferenceDuplicatesAsync(int limit=100, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferenceDuplicatesAsync(int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of duplicate references to return\. Defaults to 100\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferenceDuplicatesAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation, returning a list of duplicate building references\.
+
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_)'></a>
 
 ## Building2DController\.GetReferencesByCountyIdAsync\(int, Nullable\<int\>\) Method
@@ -1123,6 +1150,27 @@ The optional unique identifier of the subdivision used to further filter the bui
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferenceUniquenessSummaryAsync(System.Threading.CancellationToken)'></a>
+
+## Building2DController\.GetReferenceUniquenessSummaryAsync\(CancellationToken\) Method
+
+Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetReferenceUniquenessSummaryAsync(System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferenceUniquenessSummaryAsync(System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation, returning the building reference uniqueness summary\.
 
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string)'></a>
 
@@ -3523,14 +3571,14 @@ public string ColumnUniqueId { get; set; }
 
 ## HistogramRequestParameter\.CountyId Property
 
-Gets or sets the target partition identifier \(County ID\)\.
+Gets or sets the target partition identifier \(County ID\)\. If null, histogram is generated across all partitions\.
 
 ```csharp
-public int CountyId { get; set; }
+public System.Nullable<int> CountyId { get; set; }
 ```
 
 #### Property Value
-[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 ### Example
 10365
@@ -3609,14 +3657,14 @@ public string ColumnUniqueId { get; set; }
 
 ## MultivalueAggregateRequestParameter\.CountyId Property
 
-Gets or sets the target partition identifier \(County ID\)\.
+Gets or sets the target partition identifier \(County ID\)\. If null, aggregation is performed across all partitions\.
 
 ```csharp
-public int CountyId { get; set; }
+public System.Nullable<int> CountyId { get; set; }
 ```
 
 #### Property Value
-[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 ### Example
 10365
@@ -4534,14 +4582,14 @@ public string ColumnUniqueId { get; set; }
 
 ## SinglevalueAggregateRequestParameter\.CountyId Property
 
-Gets or sets the target partition identifier \(County ID\)\.
+Gets or sets the target partition identifier \(County ID\)\. If null, aggregation is performed across all partitions\.
 
 ```csharp
-public int CountyId { get; set; }
+public System.Nullable<int> CountyId { get; set; }
 ```
 
 #### Property Value
-[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 ### Example
 10365

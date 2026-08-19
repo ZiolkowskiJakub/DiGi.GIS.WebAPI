@@ -244,11 +244,7 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingDataController), nameof(GetHistogramSummaryAsync));
 
-            JsonArray? histogramArray = await buildingDataPostgreSQLConverter.GetHistogramSummaryAsync(
-                histogramRequestParameter.ColumnUniqueId,
-                histogramRequestParameter.BucketCount,
-                histogramRequestParameter.CountyId,
-                histogramRequestParameter.FilterGroup);
+            JsonArray? histogramArray = await buildingDataPostgreSQLConverter.GetHistogramSummaryAsync(histogramRequestParameter.ColumnUniqueId, histogramRequestParameter.BucketCount, histogramRequestParameter.CountyId, histogramRequestParameter.FilterGroup);
 
             if (histogramArray is null)
             {
@@ -272,12 +268,7 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingDataController), nameof(GetMultivalueAggregateSummaryAsync));
 
-            JsonNode? resultNode = await buildingDataPostgreSQLConverter.GetAggregateSummaryAsync(
-                multivalueAggregateRequestParameter.ColumnUniqueId,
-                multivalueAggregateRequestParameter.MultivalueAggregateFunction,
-                multivalueAggregateRequestParameter.CountyId,
-                multivalueAggregateRequestParameter.Separator,
-                multivalueAggregateRequestParameter.FilterGroup);
+            JsonNode? resultNode = await buildingDataPostgreSQLConverter.GetAggregateSummaryAsync(multivalueAggregateRequestParameter.ColumnUniqueId, multivalueAggregateRequestParameter.MultivalueAggregateFunction, multivalueAggregateRequestParameter.CountyId, multivalueAggregateRequestParameter.Separator, multivalueAggregateRequestParameter.FilterGroup);
 
             if (resultNode is null)
             {
@@ -301,11 +292,7 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingDataController), nameof(GetSinglevalueAggregateSummaryAsync));
 
-            JsonNode? resultNode = await buildingDataPostgreSQLConverter.GetAggregateSummaryAsync(
-                singlevalueAggregateRequestParameter.ColumnUniqueId,
-                singlevalueAggregateRequestParameter.SinglevalueAggregateFunction,
-                singlevalueAggregateRequestParameter.CountyId,
-                singlevalueAggregateRequestParameter.FilterGroup);
+            JsonNode? resultNode = await buildingDataPostgreSQLConverter.GetAggregateSummaryAsync(singlevalueAggregateRequestParameter.ColumnUniqueId, singlevalueAggregateRequestParameter.SinglevalueAggregateFunction, singlevalueAggregateRequestParameter.CountyId, singlevalueAggregateRequestParameter.FilterGroup);
 
             if (resultNode is null)
             {

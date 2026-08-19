@@ -26,11 +26,10 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Gets or sets the target partition identifier (County ID).
+        /// Gets or sets the target partition identifier (County ID). If null, histogram is generated across all partitions.
         /// </summary>
         /// <example>10365</example>
-        [Required]
-        public int CountyId { get; set; }
+        public int? CountyId { get; set; }
 
         /// <summary>
         /// Gets or sets the column unique identifier to calculate value distributions for.

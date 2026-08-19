@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiGi.GIS.WebAPI.Classes
@@ -557,6 +558,63 @@ namespace DiGi.GIS.WebAPI.Classes
             JsonArray jsonArray = [.. references];
 
             string? json = jsonArray.ToJsonString();
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending.
+        /// </summary>
+        /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation, returning a list of duplicate building references.</returns>
+        [HttpGet("referenceduplicates", Name = $"{nameof(Building2DController)}_{nameof(GetReferenceDuplicatesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReferenceDuplicate>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetReferenceDuplicatesAsync([FromQuery(Name = "limit")] int limit = 100, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferenceDuplicatesAsync));
+
+            List<PostgreSQL.Classes.Building2DReferenceDuplicate>? duplicates = await building2DPostgreSQLConverter.GetDuplicateReferencesAsync(limit, cancellationToken);
+            if (duplicates is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(duplicates);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database.
+        /// </summary>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation, returning the building reference uniqueness summary.</returns>
+        [HttpGet("referenceuniquenesssummary", Name = $"{nameof(Building2DController)}_{nameof(GetReferenceUniquenessSummaryAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(PostgreSQL.Classes.Building2DReferenceUniquenessSummary), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetReferenceUniquenessSummaryAsync(CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferenceUniquenessSummaryAsync));
+
+            PostgreSQL.Classes.Building2DReferenceUniquenessSummary? summary = await building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(cancellationToken);
+            if (summary is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(summary);
             if (string.IsNullOrWhiteSpace(json))
             {
                 return NotFound();
