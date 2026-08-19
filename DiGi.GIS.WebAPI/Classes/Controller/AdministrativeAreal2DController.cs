@@ -333,23 +333,26 @@ namespace DiGi.GIS.WebAPI.Classes
             return Ok(id.Value);
         }
 
-        /// <summary> Retrieves an administrative area item by its code. </summary>
+        /// <summary> Retrieves an administrative area item by its code and optional type. </summary>
         /// <param name="code">The unique code of the administrative area to retrieve.</param>
+        /// <param name="administrativeArealType">The optional type of the administrative area to filter the search.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itembycode", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemByCodeAsync)}")]
         [ProducesResponseType(typeof(GIS.Classes.AdministrativeAreal2D), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemByCodeAsync([FromQuery(Name = "code")] string code)
+        public async Task<IActionResult> GetItemByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
             if (string.IsNullOrWhiteSpace(code))
             {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid code provided");
                 return BadRequest();
             }
 
-            AdministrativeAreal2D? administrativeAreal2D_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByCodeAsync(code);
+            AdministrativeAreal2D? administrativeAreal2D_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByCodeAsync(code, administrativeArealType);
             if (administrativeAreal2D_PostgreSQL is null)
             {
                 return NotFound();
