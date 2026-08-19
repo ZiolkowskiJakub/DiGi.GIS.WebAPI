@@ -21,6 +21,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="buildingDataBySubdivisionIdsParameter">The parameter object to copy data from.</param>
         public BuildingDataBySubdivisionIdsParameter(BuildingDataBySubdivisionIdsParameter buildingDataBySubdivisionIdsParameter)
+            : base(buildingDataBySubdivisionIdsParameter)
         {
             if (buildingDataBySubdivisionIdsParameter is not null)
             {

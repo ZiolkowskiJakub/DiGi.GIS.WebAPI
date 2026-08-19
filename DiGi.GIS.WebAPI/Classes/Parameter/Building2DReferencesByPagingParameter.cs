@@ -30,6 +30,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="building2DReferencesByPagingParameter">The parameter instance to copy properties from.</param>
         public Building2DReferencesByPagingParameter(Building2DReferencesByPagingParameter building2DReferencesByPagingParameter)
+            : base(building2DReferencesByPagingParameter)
         {
             if (building2DReferencesByPagingParameter is not null)
             {

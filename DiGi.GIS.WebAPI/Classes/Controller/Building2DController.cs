@@ -204,7 +204,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves a building 2D item at or near a specified point. </summary>
         /// <param name="x">The X coordinate of the search point.</param>
         /// <param name="y">The Y coordinate of the search point.</param>
-        /// <param name="tolerance">The optional tolerance distance to use when searching for the item near the specified point.</param>
+        /// <param name="tolerance">The optional tolerance distance in meters to use when searching for the item near the specified point. If not provided, NaN, or non-positive, a default tolerance of 0.5 meters is used.</param>
         /// <returns>An <see cref="IActionResult" /> containing the building 2D item if found, or an error response.</returns>
         [HttpGet("itembypoint", Name = $"{nameof(Building2DController)}_{nameof(GetItemByPointAsync)}")]
         [ProducesResponseType(typeof(PostgreSQL.Classes.Building2D), StatusCodes.Status200OK)]
@@ -218,9 +218,9 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            if (tolerance is null || double.IsNaN(tolerance.Value))
+            if (tolerance is null || double.IsNaN(tolerance.Value) || tolerance.Value <= 0)
             {
-                tolerance = Core.Constants.Tolerance.MacroDistance;
+                tolerance = 0.5;
             }
 
             PostgreSQL.Classes.Building2D? building2D_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(new Point2D(x, y), tolerance.Value);

@@ -21,6 +21,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="buildingDataByReferencesParameter">The parameter object to copy data from.</param>
         public BuildingDataByReferencesParameter(BuildingDataByReferencesParameter buildingDataByReferencesParameter)
+            : base(buildingDataByReferencesParameter)
         {
             if (buildingDataByReferencesParameter is not null)
             {

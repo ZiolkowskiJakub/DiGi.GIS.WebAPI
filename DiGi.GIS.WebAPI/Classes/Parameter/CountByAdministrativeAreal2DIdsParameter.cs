@@ -30,6 +30,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="countByAdministrativeAreal2DIdsParameter">The source instance from which to copy the administrative areal 2D identifiers.</param>
         public CountByAdministrativeAreal2DIdsParameter(CountByAdministrativeAreal2DIdsParameter countByAdministrativeAreal2DIdsParameter)
+            : base(countByAdministrativeAreal2DIdsParameter)
         {
             if (countByAdministrativeAreal2DIdsParameter is not null)
             {
