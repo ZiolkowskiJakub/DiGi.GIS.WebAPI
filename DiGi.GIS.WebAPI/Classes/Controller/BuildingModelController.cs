@@ -224,7 +224,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Updates multiple building model items in the database, keyed by administrative area code.
-        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer <see cref="UpdateItemsByCountyIdAsync"/>, which leaves the server nothing to guess.</para>
+        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each model is filed under the part it actually belongs to - see <see cref="UpdateItemsByCountyIdsAsync"/> for how that is decided.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building models to be updated. This value can be null.</param>
         /// <param name="code">The administrative area code the building models belong to, resolved server-side to a county identifier.</param>
@@ -271,6 +271,57 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
+            int[] countyIds_Resolved = [.. countyIds.OrderBy(x => x)];
+
+            // Collapsing an ambiguous code onto one row is what left sibling parts reading back empty while
+            // the upload reported success. Every part is passed on instead, and the batch is split between
+            // them per model.
+            if (countyIds_Resolved.Length > 1)
+            {
+                Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each model is being filed under the part its Building2D is stored in", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
+            }
+
+            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved);
+        }
+
+        /// <summary>
+        /// Updates multiple building model items in the database for the given county rows.
+        /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.</para>
+        /// <para>A single identifier is taken as stated and every model is filed under it. Several identifiers are the polygon parts of one multi-part county, and each model is then filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
+        /// <para>A model whose reference no part holds is not written: nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
+        /// </summary>
+        /// <param name="jsonArray">The JSON array containing the building models to be updated. This value can be null.</param>
+        /// <param name="countyIds">The identifiers of the county rows the building models belong to. Normally every polygon part of one county.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpPost("updateitemsbycountyids", Name = $"{nameof(BuildingModelController)}_{nameof(UpdateItemsByCountyIdsAsync)}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingModelController), nameof(UpdateItemsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingModel)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModel update not allowed");
+                return Unauthorized();
+            }
+
+            if (countyIds is null || countyIds.Length == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CountyIds cannot be null or empty");
+                return BadRequest();
+            }
+
+            if (jsonArray is null || jsonArray.Count == 0)
+            {
+                Serilog.Modify.Log("No BuildingModels to update");
+                return NoContent();
+            }
+
             List<BuildingModel>? buildingModels = Core.Create.SerializableObjects<BuildingModel>(jsonArray);
             if (buildingModels is null)
             {
@@ -278,17 +329,12 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            if (countyIds.Count == 1)
+            List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
+
+            if (countyIds_Candidate.Count == 1)
             {
-                return await UpdateAsync(buildingModels, countyIds.Min());
+                return await UpdateAsync(buildingModels, countyIds_Candidate[0]);
             }
-
-            // A code names every polygon part of a multi-part county, so which part a model belongs to is
-            // read from the 2D building it was created from rather than guessed. Filing the whole batch
-            // under one part is what left sibling parts reading back empty while the upload reported success.
-            List<int> countyIds_Sorted = [.. countyIds.OrderBy(x => x)];
-
-            Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each model is being filed under the part its Building2D is stored in", code, countyIds.Count, string.Join(", ", countyIds_Sorted));
 
             Dictionary<string, List<BuildingModel>> buildingModels_ByReference = [];
             foreach (BuildingModel buildingModel in buildingModels)
@@ -307,49 +353,33 @@ namespace DiGi.GIS.WebAPI.Classes
                 buildingModels_Reference.Add(buildingModel);
             }
 
+            Dictionary<string, int> countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(buildingModels_ByReference.Keys, countyIds_Candidate);
+
             Dictionary<int, List<BuildingModel>> buildingModels_ByCountyId = [];
-            HashSet<string> references_Unresolved = [.. buildingModels_ByReference.Keys];
+            List<string> references_Unresolved = [];
 
-            // One batched lookup per part, lowest part first, so a reference held by more than one part
-            // resolves to the same one every run.
-            foreach (int countyId in countyIds_Sorted)
+            foreach (KeyValuePair<string, List<BuildingModel>> keyValuePair in buildingModels_ByReference)
             {
-                if (references_Unresolved.Count == 0)
+                if (!countyIds_ByReference.TryGetValue(keyValuePair.Key, out int countyId))
                 {
-                    break;
-                }
-
-                List<PostgreSQL.Classes.Building2DReference> building2DReferences_Requested = [.. references_Unresolved.Select(x => new PostgreSQL.Classes.Building2DReference() { Reference = x, CountyId = countyId })];
-
-                List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesAsync(building2DReferences_Requested);
-                if (building2DReferences is null)
-                {
+                    references_Unresolved.Add(keyValuePair.Key);
                     continue;
                 }
 
-                foreach (PostgreSQL.Classes.Building2DReference building2DReference in building2DReferences)
+                if (!buildingModels_ByCountyId.TryGetValue(countyId, out List<BuildingModel>? buildingModels_County) || buildingModels_County is null)
                 {
-                    string? reference = building2DReference.Reference;
-                    if (string.IsNullOrWhiteSpace(reference) || !references_Unresolved.Remove(reference!))
-                    {
-                        continue;
-                    }
-
-                    if (!buildingModels_ByCountyId.TryGetValue(countyId, out List<BuildingModel>? buildingModels_County))
-                    {
-                        buildingModels_County = [];
-                        buildingModels_ByCountyId[countyId] = buildingModels_County;
-                    }
-
-                    buildingModels_County.AddRange(buildingModels_ByReference[reference!]);
+                    buildingModels_County = [];
+                    buildingModels_ByCountyId[countyId] = buildingModels_County;
                 }
+
+                buildingModels_County.AddRange(keyValuePair.Value);
             }
 
             if (references_Unresolved.Count != 0)
             {
-                // No Building2D anywhere under this code means nothing states where the model belongs, and
+                // No Building2D under any of these parts means nothing states where the model belongs, and
                 // storing it under a guessed part is exactly the state being repaired here.
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModels not written because no Building2D under code '{Code}' carries their reference: {Count}/{Total}. References: {References}", references_Unresolved.Count, buildingModels.Count, string.Join(", ", references_Unresolved.Take(20)));
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModels not written because no Building2D under the given parts carries their reference: {Count}/{Total}. References: {References}", references_Unresolved.Count, buildingModels.Count, string.Join(", ", references_Unresolved.Take(20)));
             }
 
             if (buildingModels_ByCountyId.Count == 0)
@@ -368,46 +398,6 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             return Ok();
-        }
-
-        /// <summary>
-        /// Updates multiple building model items in the database for an explicitly identified county row.
-        /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.</para>
-        /// </summary>
-        /// <param name="jsonArray">The JSON array containing the building models to be updated. This value can be null.</param>
-        /// <param name="countyId">The identifier of the county row the building models belong to.</param>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpPost("updateitemsbycountyid", Name = $"{nameof(BuildingModelController)}_{nameof(UpdateItemsByCountyIdAsync)}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyid")] int countyId)
-        {
-            Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingModelController), nameof(UpdateItemsByCountyIdAsync));
-            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
-
-            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingModel)
-            {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModel update not allowed");
-                return Unauthorized();
-            }
-
-            if (jsonArray is null || jsonArray.Count == 0)
-            {
-                Serilog.Modify.Log("No BuildingModels to update");
-                return NoContent();
-            }
-
-            List<BuildingModel>? buildingModels = Core.Create.SerializableObjects<BuildingModel>(jsonArray);
-            if (buildingModels is null)
-            {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "BuildingModels could not be converted from json");
-                return BadRequest();
-            }
-
-            return await UpdateAsync(buildingModels, countyId);
         }
 
         /// <summary>

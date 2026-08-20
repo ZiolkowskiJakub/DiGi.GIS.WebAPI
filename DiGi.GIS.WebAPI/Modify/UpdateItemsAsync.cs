@@ -170,28 +170,28 @@ namespace DiGi.GIS.WebAPI
 
         /// <summary>
         /// Asynchronously updates multiple year built data items for an explicitly identified county row via the PostgreSQL Web API.
-        /// <para>Preferred over the <c>code</c> overload: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so a code alone leaves the server to choose one of them.</para>
+        /// <para>The counterpart of the <c>code</c> overload, for a caller that already holds the identifiers: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so pass every part rather than picking one - the server files each item under the part it belongs to.</para>
         /// </summary>
         /// <param name="GISWebAPIManager">The manager instance used to facilitate the web API communication.</param>
         /// <param name="yearBuiltDatas">A collection of <see cref="T:DiGi.GIS.Classes.YearBuiltData"/> objects to be updated.</param>
-        /// <param name="countyId">The identifier of the county row the year built data belong to.</param>
+        /// <param name="countyIds">The identifiers of the county rows the year built data belong to. Normally every polygon part of one county.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<YearBuiltData>? yearBuiltDatas, int countyId, PostOptions? postOptions = null)
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<YearBuiltData>? yearBuiltDatas, IEnumerable<int>? countyIds, PostOptions? postOptions = null)
         {
             if (GISWebAPIManager is null || yearBuiltDatas is null)
             {
                 return false;
             }
 
-            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<YearBuiltDataController>(nameof(YearBuiltDataController.UpdateItemsByCountyIdAsync), out string? path);
+            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<YearBuiltDataController>(nameof(YearBuiltDataController.UpdateItemsByCountyIdsAsync), out string? path);
             if (httpClient is null || string.IsNullOrWhiteSpace(path))
             {
                 return false;
             }
 
             UrlBuilder urlBuilder = new(path);
-            urlBuilder.AddParameter("countyid", countyId);
+            urlBuilder.AddParameter("countyids", countyIds);
 
             return await UpdateItemsAsync(httpClient, urlBuilder, Core.Convert.ToSystem_String(yearBuiltDatas), postOptions);
         }
@@ -225,28 +225,28 @@ namespace DiGi.GIS.WebAPI
 
         /// <summary>
         /// Asynchronously updates multiple building 2D occupancy data items for an explicitly identified county row via the Web API.
-        /// <para>Preferred over the <c>code</c> overload: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so a code alone leaves the server to choose one of them.</para>
+        /// <para>The counterpart of the <c>code</c> overload, for a caller that already holds the identifiers: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so pass every part rather than picking one - the server files each item under the part it belongs to.</para>
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to create the HTTP client for the request.</param>
         /// <param name="occupancyDatas">A collection of <see cref="OccupancyData"/> items to be updated.</param>
-        /// <param name="countyId">The identifier of the county row the occupancy data belong to.</param>
+        /// <param name="countyIds">The identifiers of the county rows the occupancy data belong to. Normally every polygon part of one county.</param>
         /// <param name="postOptions">Optional configuration settings for the HTTP POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<OccupancyData>? occupancyDatas, int countyId, PostOptions? postOptions = null)
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<OccupancyData>? occupancyDatas, IEnumerable<int>? countyIds, PostOptions? postOptions = null)
         {
             if (GISWebAPIManager is null || occupancyDatas is null)
             {
                 return false;
             }
 
-            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<OccupancyDataController>(nameof(OccupancyDataController.Building2DUpdateItemsByCountyIdAsync), out string? path);
+            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<OccupancyDataController>(nameof(OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync), out string? path);
             if (httpClient is null || string.IsNullOrWhiteSpace(path))
             {
                 return false;
             }
 
             UrlBuilder urlBuilder = new(path);
-            urlBuilder.AddParameter("countyid", countyId);
+            urlBuilder.AddParameter("countyids", countyIds);
 
             return await UpdateItemsAsync(httpClient, urlBuilder, Core.Convert.ToSystem_String(occupancyDatas), postOptions);
         }
@@ -281,24 +281,24 @@ namespace DiGi.GIS.WebAPI
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
         /// <param name="ortoDatas">The collection of <see cref="OrtoDatas"/> items to be updated.</param>
-        /// <param name="countyId">The unique identifier of the county for which the items are being updated.</param>
+        /// <param name="countyIds">The identifiers of the county rows the items belong to. Normally every polygon part of one county.</param>
         /// <param name="postOptions">Optional configuration options for the HTTP POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<OrtoDatas>? ortoDatas, int countyId, PostOptions? postOptions = null)
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<OrtoDatas>? ortoDatas, IEnumerable<int>? countyIds, PostOptions? postOptions = null)
         {
             if (GISWebAPIManager is null || ortoDatas is null)
             {
                 return false;
             }
 
-            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<OrtoDatasController>(nameof(OrtoDatasController.UpdateItemsByCountyIdAsync), out string? path);
+            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<OrtoDatasController>(nameof(OrtoDatasController.UpdateItemsByCountyIdsAsync), out string? path);
             if (httpClient is null || string.IsNullOrWhiteSpace(path))
             {
                 return false;
             }
 
             UrlBuilder urlBuilder = new(path);
-            urlBuilder.AddParameter("countyid", countyId);
+            urlBuilder.AddParameter("countyids", countyIds);
 
             return await UpdateItemsAsync(httpClient, urlBuilder, Core.Convert.ToSystem_String(ortoDatas), postOptions);
         }
@@ -555,28 +555,28 @@ namespace DiGi.GIS.WebAPI
 
         /// <summary>
         /// Asynchronously updates multiple building models for an explicitly identified county row via the PostgreSQL Web API.
-        /// <para>Preferred over the <c>code</c> overload: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so a code alone leaves the server to choose one of them.</para>
+        /// <para>The counterpart of the <c>code</c> overload, for a caller that already holds the identifiers: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so pass every part rather than picking one - the server files each item under the part it belongs to.</para>
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
         /// <param name="buildingModels">A collection of <see cref="BuildingModel"/> items to be updated.</param>
-        /// <param name="countyId">The identifier of the county row the building models belong to.</param>
+        /// <param name="countyIds">The identifiers of the county rows the building models belong to. Normally every polygon part of one county.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<BuildingModel>? buildingModels, int countyId, PostOptions? postOptions = null)
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<BuildingModel>? buildingModels, IEnumerable<int>? countyIds, PostOptions? postOptions = null)
         {
             if (GISWebAPIManager is null || buildingModels is null)
             {
                 return false;
             }
 
-            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<BuildingModelController>(nameof(BuildingModelController.UpdateItemsByCountyIdAsync), out string? path);
+            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<BuildingModelController>(nameof(BuildingModelController.UpdateItemsByCountyIdsAsync), out string? path);
             if (httpClient is null || string.IsNullOrWhiteSpace(path))
             {
                 return false;
             }
 
             UrlBuilder urlBuilder = new(path);
-            urlBuilder.AddParameter("countyid", countyId);
+            urlBuilder.AddParameter("countyids", countyIds);
 
             return await UpdateItemsAsync(httpClient, urlBuilder, Core.Convert.ToSystem_String(buildingModels), postOptions);
         }
@@ -629,21 +629,21 @@ namespace DiGi.GIS.WebAPI
 
         /// <summary>
         /// Asynchronously updates multiple building items for an explicitly identified county row via the PostgreSQL Web API.
-        /// <para>Preferred over the <c>code</c> overload: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so a code alone leaves the server to choose one of them.</para>
+        /// <para>The counterpart of the <c>code</c> overload, for a caller that already holds the identifiers: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so pass every part rather than picking one - the server files each item under the part it belongs to.</para>
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
         /// <param name="buildings">A collection of <see cref="Building"/> items to be updated.</param>
-        /// <param name="countyId">The identifier of the county row the buildings belong to.</param>
+        /// <param name="countyIds">The identifiers of the county rows the buildings belong to. Normally every polygon part of one county.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<Building>? buildings, int countyId, PostOptions? postOptions = null)
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<Building>? buildings, IEnumerable<int>? countyIds, PostOptions? postOptions = null)
         {
             if (buildings is null)
             {
                 return false;
             }
 
-            return await UpdateItemsAsync(GISWebAPIManager, Core.Convert.ToSystem_Bytes(buildings), countyId, postOptions);
+            return await UpdateItemsAsync(GISWebAPIManager, Core.Convert.ToSystem_Bytes(buildings), countyIds, postOptions);
         }
 
         /// <summary>
@@ -652,26 +652,110 @@ namespace DiGi.GIS.WebAPI
         /// </summary>
         /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
         /// <param name="utf8Json">The UTF-8 encoded JSON array of <see cref="Building"/> items to be updated.</param>
-        /// <param name="countyId">The identifier of the county row the buildings belong to.</param>
+        /// <param name="countyIds">The identifiers of the county rows the buildings belong to. Normally every polygon part of one county.</param>
         /// <param name="postOptions">Optional configuration options for the POST request.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, byte[]? utf8Json, int countyId, PostOptions? postOptions = null)
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, byte[]? utf8Json, IEnumerable<int>? countyIds, PostOptions? postOptions = null)
         {
             if (GISWebAPIManager is null || utf8Json is null)
             {
                 return false;
             }
 
-            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<BuildingController>(nameof(BuildingController.UpdateItemsByCountyIdAsync), out string? path);
+            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<BuildingController>(nameof(BuildingController.UpdateItemsByCountyIdsAsync), out string? path);
             if (httpClient is null || string.IsNullOrWhiteSpace(path))
             {
                 return false;
             }
 
             UrlBuilder urlBuilder = new(path);
-            urlBuilder.AddParameter("countyid", countyId);
+            urlBuilder.AddParameter("countyids", countyIds);
 
             return await UpdateItemsAsync(httpClient, urlBuilder, utf8Json, postOptions);
+        }
+
+        /// <summary>
+        /// Asynchronously updates multiple year built data items for one explicitly identified county row via the PostgreSQL Web API.
+        /// <para>For a county stored as several polygon parts, pass every part to the <see cref="IEnumerable{T}"/> overload instead - naming one part files the whole batch there whether or not the data belong to it.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The manager instance used to facilitate the web API communication.</param>
+        /// <param name="yearBuiltDatas">A collection of <see cref="T:DiGi.GIS.Classes.YearBuiltData"/> objects to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the year built data belong to.</param>
+        /// <param name="postOptions">Optional configuration options for the POST request.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<YearBuiltData>? yearBuiltDatas, int countyId, PostOptions? postOptions = null)
+        {
+            return await UpdateItemsAsync(GISWebAPIManager, yearBuiltDatas, (IEnumerable<int>)[countyId], postOptions);
+        }
+
+        /// <summary>
+        /// Asynchronously updates multiple building 2D occupancy data items for one explicitly identified county row via the Web API.
+        /// <para>For a county stored as several polygon parts, pass every part to the <see cref="IEnumerable{T}"/> overload instead - naming one part files the whole batch there whether or not the data belong to it.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to create the HTTP client for the request.</param>
+        /// <param name="occupancyDatas">A collection of <see cref="OccupancyData"/> items to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the occupancy data belong to.</param>
+        /// <param name="postOptions">Optional configuration settings for the HTTP POST request.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<OccupancyData>? occupancyDatas, int countyId, PostOptions? postOptions = null)
+        {
+            return await UpdateItemsAsync(GISWebAPIManager, occupancyDatas, (IEnumerable<int>)[countyId], postOptions);
+        }
+
+        /// <summary>
+        /// Updates multiple ortho data items for one explicitly identified county row.
+        /// <para>For a county stored as several polygon parts, pass every part to the <see cref="IEnumerable{T}"/> overload instead - naming one part files the whole batch there whether or not the data belong to it.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
+        /// <param name="ortoDatas">The collection of <see cref="OrtoDatas"/> items to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the items belong to.</param>
+        /// <param name="postOptions">Optional configuration options for the HTTP POST request.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<OrtoDatas>? ortoDatas, int countyId, PostOptions? postOptions = null)
+        {
+            return await UpdateItemsAsync(GISWebAPIManager, ortoDatas, (IEnumerable<int>)[countyId], postOptions);
+        }
+
+        /// <summary>
+        /// Asynchronously updates multiple building models for one explicitly identified county row via the PostgreSQL Web API.
+        /// <para>For a county stored as several polygon parts, pass every part to the <see cref="IEnumerable{T}"/> overload instead - naming one part files the whole batch there whether or not the models belong to it.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
+        /// <param name="buildingModels">A collection of <see cref="BuildingModel"/> items to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the building models belong to.</param>
+        /// <param name="postOptions">Optional configuration options for the POST request.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<BuildingModel>? buildingModels, int countyId, PostOptions? postOptions = null)
+        {
+            return await UpdateItemsAsync(GISWebAPIManager, buildingModels, (IEnumerable<int>)[countyId], postOptions);
+        }
+
+        /// <summary>
+        /// Asynchronously updates multiple building items for one explicitly identified county row via the PostgreSQL Web API.
+        /// <para>For a county stored as several polygon parts, pass every part to the <see cref="IEnumerable{T}"/> overload instead - naming one part files the whole batch there whether or not the buildings belong to it.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
+        /// <param name="buildings">A collection of <see cref="Building"/> items to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the buildings belong to.</param>
+        /// <param name="postOptions">Optional configuration options for the POST request.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<Building>? buildings, int countyId, PostOptions? postOptions = null)
+        {
+            return await UpdateItemsAsync(GISWebAPIManager, buildings, (IEnumerable<int>)[countyId], postOptions);
+        }
+
+        /// <summary>
+        /// Asynchronously updates building items for one explicitly identified county row from an already-serialized UTF-8 JSON payload via the PostgreSQL Web API.
+        /// <para>For a county stored as several polygon parts, pass every part to the <see cref="IEnumerable{T}"/> overload instead - naming one part files the whole batch there whether or not the buildings belong to it.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The <see cref="GISWebAPIManager"/> instance used to perform the update operation.</param>
+        /// <param name="utf8Json">The UTF-8 encoded JSON array of <see cref="Building"/> items to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the buildings belong to.</param>
+        /// <param name="postOptions">Optional configuration options for the POST request.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, byte[]? utf8Json, int countyId, PostOptions? postOptions = null)
+        {
+            return await UpdateItemsAsync(GISWebAPIManager, utf8Json, (IEnumerable<int>)[countyId], postOptions);
         }
     }
 }

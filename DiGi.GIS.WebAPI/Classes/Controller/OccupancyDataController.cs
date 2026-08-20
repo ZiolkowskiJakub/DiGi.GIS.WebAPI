@@ -20,6 +20,7 @@ namespace DiGi.GIS.WebAPI.Classes
         private readonly AdministrativeAreal2DOccupancyDataPostgreSQLConverter administrativeAreal2DOccupancyDataPostgreSQLConverter;
         private readonly AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
         private readonly Building2DOccupancyDataPostgreSQLConverter building2DOccupancyDataPostgreSQLConverter;
+        private readonly Building2DPostgreSQLConverter building2DPostgreSQLConverter; //States which polygon part of a multi-part county a datum belongs to, from the 2D building already stored under it.
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
 
         /// <summary>
@@ -28,11 +29,13 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="GISWebAPIConfigurationFileWatcher">The configuration file watcher used to monitor settings for the GIS PostgreSQL Web API.</param>
         /// <param name="building2DOccupancyDataPostgreSQLConverter">The converter used for building 2D occupancy data operations in the PostgreSQL database.</param>
         /// <param name="administrativeAreal2DOccupancyDataPostgreSQLConverter">The converter used for administrative areal 2D occupancy data operations in the PostgreSQL database.</param>
+        /// <param name="building2DPostgreSQLConverter">The converter for Building2D objects, used to read which county row a reference is already filed under.</param>
         /// <param name="administrativeAreal2DPostgreSQLConverter">The converter used for administrative areal 2D data operations in the PostgreSQL database.</param>
-        public OccupancyDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, Building2DOccupancyDataPostgreSQLConverter building2DOccupancyDataPostgreSQLConverter, AdministrativeAreal2DOccupancyDataPostgreSQLConverter administrativeAreal2DOccupancyDataPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
+        public OccupancyDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, Building2DOccupancyDataPostgreSQLConverter building2DOccupancyDataPostgreSQLConverter, AdministrativeAreal2DOccupancyDataPostgreSQLConverter administrativeAreal2DOccupancyDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.building2DOccupancyDataPostgreSQLConverter = building2DOccupancyDataPostgreSQLConverter;
+            this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
             this.administrativeAreal2DOccupancyDataPostgreSQLConverter = administrativeAreal2DOccupancyDataPostgreSQLConverter;
         }
@@ -121,7 +124,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Asynchronously updates building 2D items based on the provided JSON data and identification code.
-        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer <see cref="Building2DUpdateItemsByCountyIdAsync"/>, which leaves the server nothing to guess.</para>
+        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each datum is filed under the part it actually belongs to - see <see cref="Building2DUpdateItemsByCountyIdsAsync"/> for how that is decided.</para>
         /// </summary>
         /// <param name="jsonArray">The <see cref="JsonArray"/> containing the item data to be updated.</param>
         /// <param name="code">The identification code used to validate or categorize the update request.</param>
@@ -167,38 +170,47 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            int countyId_Resolved = countyIds.Min();
+            int[] countyIds_Resolved = [.. countyIds.OrderBy(x => x)];
 
-            // Resolving an ambiguous code silently is what let the skew in this table go unnoticed: the
-            // upload reported success while everything filed under a sibling row read back empty.
-            if (countyIds.Count > 1)
+            // Collapsing an ambiguous code onto one row is what let the skew in this table go unnoticed:
+            // the upload reported success while everything filed under a sibling row read back empty.
+            // Every part is passed on instead, and the batch is split between them per datum.
+            if (countyIds_Resolved.Length > 1)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. The whole batch is being filed under {CountyId}; post to 'building2d/updateitemsbycountyid' to pick the part yourself", code, countyIds.Count, string.Join(", ", countyIds.OrderBy(x => x)), countyId_Resolved);
+                Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each datum is being filed under the part its Building2D is stored in", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
             }
 
-            return await Building2DUpdateItemsByCountyIdAsync(jsonArray, countyId_Resolved);
+            return await Building2DUpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved);
         }
 
         /// <summary>
-        /// Asynchronously updates building 2D occupancy items in the database for an explicitly identified county row.
-        /// <para>The unambiguous counterpart of <see cref="Building2DUpdateItemsAsync"/>: a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.</para>
+        /// Asynchronously updates building 2D occupancy items in the database for the given county rows.
+        /// <para>The unambiguous counterpart of <see cref="Building2DUpdateItemsAsync"/>: it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.</para>
+        /// <para>A single identifier is taken as stated and every datum is filed under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
+        /// <para>A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
         /// </summary>
         /// <param name="jsonArray">The <see cref="JsonArray"/> containing the item data to be updated.</param>
-        /// <param name="countyId">The identifier of the county row the occupancy data belong to.</param>
+        /// <param name="countyIds">The identifiers of the county rows the occupancy data belong to. Normally every polygon part of one county.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpPost("building2d/updateitemsbycountyid")]
+        [HttpPost("building2d/updateitemsbycountyids")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Building2DUpdateItemsByCountyIdAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyid")] int countyId)
+        public async Task<IActionResult> Building2DUpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds)
         {
-            Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(Building2DUpdateItemsByCountyIdAsync));
-            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(Building2DUpdateItemsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OccupancyData update not allowed");
+                return BadRequest();
+            }
+
+            if (countyIds is null || countyIds.Length == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CountyIds cannot be null or empty");
                 return BadRequest();
             }
 
@@ -217,15 +229,47 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("OccupancyDatas conversion to PostgreSQL started. OccupancyDatas count: {Count}", occupancyDatas_GIS.Count);
 
-            int count = 0;
+            List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
+
+            // Left unset while there is more than one candidate, so the part is decided per item below.
+            int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
+
+            Dictionary<string, int>? countyIds_ByReference = null;
+            if (countyId_Single is null)
+            {
+                countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(occupancyDatas_GIS.ConvertAll(x => x?.Reference), countyIds_Candidate);
+            }
+
+            List<string> references_Unresolved = [];
 
             List<Building2DOccupancyData> building2DOccupancyDatas_PostgreSQL = [];
             foreach (GIS.Classes.OccupancyData occupancyData_GIS in occupancyDatas_GIS)
             {
+                int? countyId = countyId_Single;
+
+                if (countyId is null)
+                {
+                    // A datum carries no geometry, so the 2D building its reference names is the only thing
+                    // that can say which part it belongs to. One that names none is left unwritten rather
+                    // than filed under a guessed part.
+                    if (occupancyData_GIS?.Reference is null || countyIds_ByReference is null || !countyIds_ByReference.TryGetValue(occupancyData_GIS.Reference, out int countyId_Reference))
+                    {
+                        references_Unresolved.Add(occupancyData_GIS?.Reference ?? string.Empty);
+                        continue;
+                    }
+
+                    countyId = countyId_Reference;
+                }
+
                 if (PostgreSQL.Convert.ToPostgreSQL(occupancyData_GIS, countyId) is Building2DOccupancyData building2DOccupancyData_PostgreSQL)
                 {
                     building2DOccupancyDatas_PostgreSQL.Add(building2DOccupancyData_PostgreSQL);
                 }
+            }
+
+            if (references_Unresolved.Count != 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OccupancyDatas not written because no Building2D under the given parts carries their reference: {Count}/{Total}. References: {References}", references_Unresolved.Count, occupancyDatas_GIS.Count, string.Join(", ", references_Unresolved.Take(20)));
             }
 
             if (building2DOccupancyDatas_PostgreSQL is null || building2DOccupancyDatas_PostgreSQL.Count == 0)
@@ -234,7 +278,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            Serilog.Modify.Log("OccupancyDatas conversion to PostgreSQL ended. OccupancyDatas converted: {After}/{Before}", building2DOccupancyDatas_PostgreSQL.Count, count);
+            Serilog.Modify.Log("OccupancyDatas conversion to PostgreSQL ended. OccupancyDatas converted: {After}/{Before}", building2DOccupancyDatas_PostgreSQL.Count, occupancyDatas_GIS.Count);
 
             Serilog.Modify.Log("Updating to database starting");
 

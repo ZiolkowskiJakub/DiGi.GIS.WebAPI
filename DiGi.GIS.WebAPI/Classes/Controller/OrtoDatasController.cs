@@ -451,7 +451,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Updates items identified by a specific code using the provided JSON array.
-        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer <see cref="UpdateItemsByCountyIdAsync"/>, which leaves the server nothing to guess.</para>
+        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each entry is filed under the part it actually belongs to - see <see cref="UpdateItemsByCountyIdsAsync"/> for how that is decided.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the updated item data.</param>
         /// <param name="code">The unique identifier or code used to identify the items for update.</param>
@@ -497,37 +497,47 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            int countyId = countyIds.Min();
+            int[] countyIds_Resolved = [.. countyIds.OrderBy(x => x)];
 
-            // Resolving an ambiguous code silently is what let the skew in this table go unnoticed: the
-            // upload reported success while everything filed under a sibling row read back empty.
-            if (countyIds.Count > 1)
+            // Collapsing an ambiguous code onto one row is what let the skew in this table go unnoticed:
+            // the upload reported success while everything filed under a sibling row read back empty.
+            // Every part is passed on instead, and the batch is split between them per entry.
+            if (countyIds_Resolved.Length > 1)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. The whole batch is being filed under {CountyId}; post to 'updateitemsbycountyid' to pick the part yourself", code, countyIds.Count, string.Join(", ", countyIds.OrderBy(x => x)), countyId);
+                Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each entry is being filed under the part it belongs to", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
             }
 
-            return await UpdateItemsByCountyIdAsync(jsonArray, countyId);
+            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved);
         }
 
         /// <summary>
-        /// Updates orthodata items associated with a specific county identifier.
+        /// Updates orthodata items associated with the given county rows.
+        /// <para>A single identifier is taken as stated and every entry is filed under it. Several identifiers are the polygon parts of one multi-part county, and each entry is then filed under the part it belongs to, decided in two steps:</para>
+        /// <para>1. the part already holding the entry's <c>building_2d</c> row, probed lowest part first. That row was filed by geometry when it was imported, and reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair - orthodata filed under a part its building is not stored in reads back as missing.</para>
+        /// <para>2. geometry, for an entry no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops an entry it cannot place rather than filing it under a guess.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the orthodata items to be updated.</param>
-        /// <param name="countyId">The unique identifier of the county for which the updates are applied.</param>
+        /// <param name="countyIds">The identifiers of the county rows the entries belong to. Normally every polygon part of one county.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpPost("updateitemsbycountyid")]
+        [HttpPost("updateitemsbycountyids")]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyId")] int countyId)
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds)
         {
-            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(UpdateItemsByCountyIdAsync));
-            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId.ToString());
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(UpdateItemsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateOrtoDatas)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas update not allowed");
+                return BadRequest();
+            }
+
+            if (countyIds is null || countyIds.Length == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CountyIds cannot be null or empty");
                 return BadRequest();
             }
 
@@ -546,10 +556,16 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("OrtoDatas conversion to PostgreSQL started. OrtoDatas count: {Count}", ortoDatas.Count);
 
+            List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
+
+            // Left unset while there is more than one candidate, so the county is decided below rather than
+            // baked in here.
+            int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
+
             List<PostgreSQL.Classes.OrtoDatas> ortoDatas_PostgreSQL = [];
             foreach (OrtoDatas ortoDatas_Temp in ortoDatas)
             {
-                PostgreSQL.Classes.OrtoDatas? ortoDatas_PostgreSQL_Temp = ortoDatas_Temp.ToPostgreSQL(countyId);
+                PostgreSQL.Classes.OrtoDatas? ortoDatas_PostgreSQL_Temp = ortoDatas_Temp.ToPostgreSQL(countyId_Single);
                 if (ortoDatas_PostgreSQL_Temp is null)
                 {
                     continue;
@@ -564,6 +580,30 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
+            if (countyId_Single is null)
+            {
+                Dictionary<string, int> countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(ortoDatas_PostgreSQL.ConvertAll(x => x.Reference), countyIds_Candidate);
+
+                List<string> references_Unresolved = [];
+                foreach (PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL_Temp in ortoDatas_PostgreSQL)
+                {
+                    if (ortoDatas_PostgreSQL_Temp.Reference is not null && countyIds_ByReference.TryGetValue(ortoDatas_PostgreSQL_Temp.Reference, out int countyId))
+                    {
+                        ortoDatas_PostgreSQL_Temp.CountyId = countyId;
+                        continue;
+                    }
+
+                    references_Unresolved.Add(ortoDatas_PostgreSQL_Temp.Reference ?? string.Empty);
+                }
+
+                if (references_Unresolved.Count != 0)
+                {
+                    // Not a failure: these fall through to the converter, which decides them by geometry and
+                    // rejects only what it cannot place at all.
+                    Serilog.Modify.Log("OrtoDatas with no Building2D under the given parts, left to be decided by geometry: {Count}/{Total}. References: {References}", references_Unresolved.Count, ortoDatas_PostgreSQL.Count, string.Join(", ", references_Unresolved.Take(20)));
+                }
+            }
+
             Serilog.Modify.Log("OrtoDatas conversion to PostgreSQL ended. OrtoDatas converted: {After}/{Before}", ortoDatas_PostgreSQL.Count, ortoDatas.Count);
 
             Serilog.Modify.Log("Updating to database starting");
@@ -571,7 +611,7 @@ namespace DiGi.GIS.WebAPI.Classes
             PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = null;
             try
             {
-                postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatas_PostgreSQL);
+                postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatas_PostgreSQL, countyIds_Candidate);
             }
             catch (Exception exception)
             {
@@ -586,9 +626,8 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Database update failed.");
             }
 
-            // The county is stated by the caller here, so a drop means the row carried no geometry or its
-            // partition could not be created - never that resolution failed. It is still a partial write,
-            // and it used to leave no trace.
+            // A drop means the row carried no geometry, no part could be decided for it, or a partition
+            // could not be created. It is still a partial write, and it used to leave no trace.
             if (updateItemsResult.Rejected.Count != 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());

@@ -20,6 +20,7 @@ namespace DiGi.GIS.WebAPI.Classes
     public class BuildingController : DiGi.WebAPI.Classes.WebAPIController
     {
         private readonly AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
+        private readonly Building2DPostgreSQLConverter building2DPostgreSQLConverter; //States which polygon part of a multi-part county a building belongs to, from the 2D building already stored under it.
         private readonly BuildingPostgreSQLConverter buildingPostgreSQLConverter;
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
 
@@ -28,17 +29,19 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="GISWebAPIConfigurationFileWatcher">The configuration file watcher used to monitor changes to the PostgreSQL Web API configuration.</param>
         /// <param name="buildingPostgreSQLConverter">The converter for Building objects when interacting with a PostgreSQL database.</param>
+        /// <param name="building2DPostgreSQLConverter">The converter for Building2D objects, used to read which county row a reference is already filed under.</param>
         /// <param name="administrativeAreal2DPostgreSQLConverter">The converter for administrative areal 2D data when interacting with a PostgreSQL database.</param>
-        public BuildingController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, BuildingPostgreSQLConverter buildingPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
+        public BuildingController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, BuildingPostgreSQLConverter buildingPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.buildingPostgreSQLConverter = buildingPostgreSQLConverter;
+            this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
         }
 
         /// <summary>
         /// Updates multiple building items based on the provided JSON array and identification code.
-        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer <see cref="UpdateItemsByCountyIdAsync"/>, which leaves the server nothing to guess.</para>
+        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each building is filed under the part it actually belongs to - see <see cref="UpdateItemsByCountyIdsAsync"/> for how that is decided.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building items to be updated.</param>
         /// <param name="code">The identification code required for the update operation.</param>
@@ -85,39 +88,49 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            int countyId_Resolved = countyIds.Min();
+            int[] countyIds_Resolved = [.. countyIds.OrderBy(x => x)];
 
-            // Resolving an ambiguous code silently is what let the skew in this table go unnoticed: the
-            // upload reported success while everything filed under a sibling row read back empty.
-            if (countyIds.Count > 1)
+            // Collapsing an ambiguous code onto one row is what let the skew in this table go unnoticed:
+            // the upload reported success while everything filed under a sibling row read back empty.
+            // Every part is passed on instead, and the batch is split between them per building.
+            if (countyIds_Resolved.Length > 1)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. The whole batch is being filed under {CountyId}; post to 'updateitemsbycountyid' to pick the part yourself", code, countyIds.Count, string.Join(", ", countyIds.OrderBy(x => x)), countyId_Resolved);
+                Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each building is being filed under the part it belongs to", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
             }
 
-            return await UpdateItemsByCountyIdAsync(jsonArray, countyId_Resolved);
+            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved);
         }
 
         /// <summary>
-        /// Updates multiple building items in the database for an explicitly identified county row.
-        /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.</para>
+        /// Updates multiple building items in the database for the given county rows.
+        /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.</para>
+        /// <para>A single identifier is taken as stated and every building is filed under it. Several identifiers are the polygon parts of one multi-part county, and each building is then filed under the part it belongs to, decided in two steps:</para>
+        /// <para>1. the part already holding the building's <c>building_2d</c> row, probed lowest part first. That row was filed by geometry when it was imported, and reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair - a building filed under a part its footprint is not stored in reads back as missing.</para>
+        /// <para>2. geometry, for a building no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops a building it cannot place rather than filing it under a guess - such a building is reported as a rejection, not silently omitted.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building items to be updated.</param>
-        /// <param name="countyId">The identifier of the county row the buildings belong to.</param>
+        /// <param name="countyIds">The identifiers of the county rows the buildings belong to. Normally every polygon part of one county.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation.</returns>
-        [HttpPost("updateitemsbycountyid", Name = $"{nameof(BuildingController)}_{nameof(UpdateItemsByCountyIdAsync)}")]
+        [HttpPost("updateitemsbycountyids", Name = $"{nameof(BuildingController)}_{nameof(UpdateItemsByCountyIdsAsync)}")]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyid")] int countyId)
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds)
         {
-            Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingController), nameof(UpdateItemsByCountyIdAsync));
-            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingController), nameof(UpdateItemsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuilding)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building update not allowed");
+                return BadRequest();
+            }
+
+            if (countyIds is null || countyIds.Length == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CountyIds cannot be null or empty");
                 return BadRequest();
             }
 
@@ -129,6 +142,8 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
+                List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
+
                 List<CityGML.Classes.Building>? cityGMLBuildings = Core.Create.SerializableObjects<CityGML.Classes.Building>(jsonArray);
                 if (cityGMLBuildings is null)
                 {
@@ -138,10 +153,14 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 Serilog.Modify.Log("Buildings conversion to PostgreSQL started. Buildings count: {Count}", cityGMLBuildings.Count);
 
+                // Left unset while there is more than one candidate, so the county is decided below rather
+                // than baked in here.
+                int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
+
                 List<Building> buildings = [];
                 foreach (CityGML.Classes.Building cityGMLBuilding in cityGMLBuildings)
                 {
-                    Building? building = cityGMLBuilding.ToPostgreSQL(countyId);
+                    Building? building = cityGMLBuilding.ToPostgreSQL(countyId_Single);
                     if (building is not null)
                     {
                         buildings.Add(building);
@@ -154,9 +173,33 @@ namespace DiGi.GIS.WebAPI.Classes
                     return NoContent();
                 }
 
+                if (countyId_Single is null)
+                {
+                    Dictionary<string, int> countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(buildings.ConvertAll(x => x.Reference), countyIds_Candidate);
+
+                    List<string> references_Unresolved = [];
+                    foreach (Building building in buildings)
+                    {
+                        if (building.Reference is not null && countyIds_ByReference.TryGetValue(building.Reference, out int countyId))
+                        {
+                            building.CountyId = countyId;
+                            continue;
+                        }
+
+                        references_Unresolved.Add(building.Reference ?? string.Empty);
+                    }
+
+                    if (references_Unresolved.Count != 0)
+                    {
+                        // Not a failure: these fall through to the converter, which decides them by geometry
+                        // and rejects only what it cannot place at all.
+                        Serilog.Modify.Log("Buildings with no Building2D under the given parts, left to be decided by geometry: {Count}/{Total}. References: {References}", references_Unresolved.Count, buildings.Count, string.Join(", ", references_Unresolved.Take(20)));
+                    }
+                }
+
                 Serilog.Modify.Log("Updating to database starting");
 
-                PostgreSQLUpdateResult? postgreSQLUpdateResult = await buildingPostgreSQLConverter.UpdateAsync(buildings);
+                PostgreSQLUpdateResult? postgreSQLUpdateResult = await buildingPostgreSQLConverter.UpdateAsync(buildings, countyIds_Candidate);
 
                 UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(buildings.Count);
                 if (updateItemsResult is null)
@@ -165,9 +208,8 @@ namespace DiGi.GIS.WebAPI.Classes
                     return StatusCode(500, "Database update failed.");
                 }
 
-                // The county is stated by the caller here, so a drop means the row carried no geometry or
-                // its partition could not be created - never that resolution failed. It is still a partial
-                // write, and it used to leave no trace.
+                // A drop means the row carried no geometry, no part could be decided for it, or a partition
+                // could not be created. It is still a partial write, and it used to leave no trace.
                 if (updateItemsResult.Rejected.Count != 0)
                 {
                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Buildings rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
@@ -191,7 +233,7 @@ namespace DiGi.GIS.WebAPI.Classes
             }
             catch (Exception exception)
             {
-                Serilog.Modify.Log(exception, "Unhandled error during BuildingController.UpdateItemsByCountyIdAsync");
+                Serilog.Modify.Log(exception, "Unhandled error during BuildingController.UpdateItemsByCountyIdsAsync");
                 return StatusCode(500, exception.Message);
             }
         }

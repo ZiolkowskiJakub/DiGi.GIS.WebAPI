@@ -1423,30 +1423,36 @@ public class BuildingController : DiGi.WebAPI.Classes.WebAPIController
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [Microsoft\.AspNetCore\.Mvc\.ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase 'Microsoft\.AspNetCore\.Mvc\.ControllerBase') → [DiGi\.WebAPI\.Classes\.WebAPIController](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.webapicontroller 'DiGi\.WebAPI\.Classes\.WebAPIController') → BuildingController
 ### Constructors
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter)'></a>
 
-## BuildingController\(GISWebAPIConfigurationFileWatcher, BuildingPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter\) Constructor
+## BuildingController\(GISWebAPIConfigurationFileWatcher, BuildingPostgreSQLConverter, Building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter\) Constructor
 
 Initializes a new instance of the BuildingController class\.
 
 ```csharp
-public BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter buildingPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter);
+public BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter buildingPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).GISWebAPIConfigurationFileWatcher'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).GISWebAPIConfigurationFileWatcher'></a>
 
 `GISWebAPIConfigurationFileWatcher` [GISWebAPIConfigurationFileWatcher](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher')
 
 The configuration file watcher used to monitor changes to the PostgreSQL Web API configuration\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).buildingPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).buildingPostgreSQLConverter'></a>
 
 `buildingPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.buildingpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingPostgreSQLConverter')
 
 The converter for Building objects when interacting with a PostgreSQL database\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).administrativeAreal2DPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).building2DPostgreSQLConverter'></a>
+
+`building2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
+
+The converter for Building2D objects, used to read which county row a reference is already filed under\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.BuildingController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).administrativeAreal2DPostgreSQLConverter'></a>
 
 `administrativeAreal2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.administrativeareal2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
 
@@ -1617,7 +1623,7 @@ A task that represents the asynchronous operation\.
 
 Updates multiple building items based on the provided JSON array and identification code\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [UpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each building is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\]\)') for how that is decided.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code);
@@ -1640,30 +1646,36 @@ The identification code required for the update operation\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the update operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[])'></a>
 
-## BuildingController\.UpdateItemsByCountyIdAsync\(JsonArray, int\) Method
+## BuildingController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\) Method
 
-Updates multiple building items in the database for an explicitly identified county row\.
+Updates multiple building items in the database for the given county rows\.
 
-The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.
+The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
+
+A single identifier is taken as stated and every building is filed under it. Several identifiers are the polygon parts of one multi-part county, and each building is then filed under the part it belongs to, decided in two steps:
+
+1. the part already holding the building's `building_2d` row, probed lowest part first. That row was filed by geometry when it was imported, and reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair - a building filed under a part its footprint is not stored in reads back as missing.
+
+2. geometry, for a building no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops a building it cannot place rather than filing it under a guess - such a building is reported as a rejection, not silently omitted.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int countyId);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the building items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).countyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).countyIds'></a>
 
-`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
-The identifier of the county row the buildings belong to\.
+The identifiers of the county rows the buildings belong to\. Normally every polygon part of one county\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -2568,7 +2580,7 @@ A task that represents the asynchronous operation\.
 
 Updates multiple building model items in the database, keyed by administrative area code\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [UpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each model is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\]\)') for how that is decided.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code);
@@ -2591,30 +2603,34 @@ The administrative area code the building models belong to, resolved server\-sid
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[])'></a>
 
-## BuildingModelController\.UpdateItemsByCountyIdAsync\(JsonArray, int\) Method
+## BuildingModelController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\) Method
 
-Updates multiple building model items in the database for an explicitly identified county row\.
+Updates multiple building model items in the database for the given county rows\.
 
-The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.
+The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
+
+A single identifier is taken as stated and every model is filed under it. Several identifiers are the polygon parts of one multi-part county, and each model is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
+
+A model whose reference no part holds is not written: nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int countyId);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the building models to be updated\. This value can be null\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).countyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).countyIds'></a>
 
-`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
-The identifier of the county row the building models belong to\.
+The identifiers of the county rows the building models belong to\. Normally every polygon part of one county\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -3745,36 +3761,42 @@ public class OccupancyDataController : DiGi.WebAPI.Classes.WebAPIController
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [Microsoft\.AspNetCore\.Mvc\.ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase 'Microsoft\.AspNetCore\.Mvc\.ControllerBase') → [DiGi\.WebAPI\.Classes\.WebAPIController](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.webapicontroller 'DiGi\.WebAPI\.Classes\.WebAPIController') → OccupancyDataController
 ### Constructors
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter)'></a>
 
-## OccupancyDataController\(GISWebAPIConfigurationFileWatcher, Building2DOccupancyDataPostgreSQLConverter, AdministrativeAreal2DOccupancyDataPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter\) Constructor
+## OccupancyDataController\(GISWebAPIConfigurationFileWatcher, Building2DOccupancyDataPostgreSQLConverter, AdministrativeAreal2DOccupancyDataPostgreSQLConverter, Building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter\) Constructor
 
 Initializes a new instance of the OccupancyDataController class\.
 
 ```csharp
-public OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter building2DOccupancyDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter administrativeAreal2DOccupancyDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter);
+public OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter building2DOccupancyDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter administrativeAreal2DOccupancyDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).GISWebAPIConfigurationFileWatcher'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).GISWebAPIConfigurationFileWatcher'></a>
 
 `GISWebAPIConfigurationFileWatcher` [GISWebAPIConfigurationFileWatcher](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher')
 
 The configuration file watcher used to monitor settings for the GIS PostgreSQL Web API\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).building2DOccupancyDataPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).building2DOccupancyDataPostgreSQLConverter'></a>
 
 `building2DOccupancyDataPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DOccupancyDataPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2doccupancydatapostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DOccupancyDataPostgreSQLConverter')
 
 The converter used for building 2D occupancy data operations in the PostgreSQL database\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).administrativeAreal2DOccupancyDataPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).administrativeAreal2DOccupancyDataPostgreSQLConverter'></a>
 
 `administrativeAreal2DOccupancyDataPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DOccupancyDataPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.administrativeareal2doccupancydatapostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DOccupancyDataPostgreSQLConverter')
 
 The converter used for administrative areal 2D occupancy data operations in the PostgreSQL database\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).administrativeAreal2DPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).building2DPostgreSQLConverter'></a>
+
+`building2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
+
+The converter for Building2D objects, used to read which county row a reference is already filed under\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.OccupancyDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DOccupancyDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).administrativeAreal2DPostgreSQLConverter'></a>
 
 `administrativeAreal2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.administrativeareal2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
 
@@ -3808,7 +3830,7 @@ An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us
 
 Asynchronously updates building 2D items based on the provided JSON data and identification code\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [Building2DUpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each datum is filed under the part it actually belongs to - see [Building2DUpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\]\)') for how that is decided.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code);
@@ -3831,30 +3853,34 @@ The identification code used to validate or categorize the update request\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[])'></a>
 
-## OccupancyDataController\.Building2DUpdateItemsByCountyIdAsync\(JsonArray, int\) Method
+## OccupancyDataController\.Building2DUpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\) Method
 
-Asynchronously updates building 2D occupancy items in the database for an explicitly identified county row\.
+Asynchronously updates building 2D occupancy items in the database for the given county rows\.
 
-The unambiguous counterpart of [Building2DUpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.
+The unambiguous counterpart of [Building2DUpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
+
+A single identifier is taken as stated and every datum is filed under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
+
+A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int countyId);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray') containing the item data to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).countyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).countyIds'></a>
 
-`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
-The identifier of the county row the occupancy data belong to\.
+The identifiers of the county rows the occupancy data belong to\. Normally every polygon part of one county\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -4209,7 +4235,7 @@ A task that represents the asynchronous operation\.
 
 Updates items identified by a specific code using the provided JSON array\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [UpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasController\.UpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each entry is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]) 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\]\)') for how that is decided.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code);
@@ -4232,28 +4258,34 @@ The unique identifier or code used to identify the items for update\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[])'></a>
 
-## OrtoDatasController\.UpdateItemsByCountyIdAsync\(JsonArray, int\) Method
+## OrtoDatasController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\) Method
 
-Updates orthodata items associated with a specific county identifier\.
+Updates orthodata items associated with the given county rows\.
+
+A single identifier is taken as stated and every entry is filed under it. Several identifiers are the polygon parts of one multi-part county, and each entry is then filed under the part it belongs to, decided in two steps:
+
+1. the part already holding the entry's `building_2d` row, probed lowest part first. That row was filed by geometry when it was imported, and reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair - orthodata filed under a part its building is not stored in reads back as missing.
+
+2. geometry, for an entry no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops an entry it cannot place rather than filing it under a guess.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int countyId);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the orthodata items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).countyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).countyIds'></a>
 
-`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
-The unique identifier of the county for which the updates are applied\.
+The identifiers of the county rows the entries belong to\. Normally every polygon part of one county\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -5121,30 +5153,36 @@ public class YearBuiltDataController : DiGi.WebAPI.Classes.WebAPIController
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [Microsoft\.AspNetCore\.Mvc\.ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase 'Microsoft\.AspNetCore\.Mvc\.ControllerBase') → [DiGi\.WebAPI\.Classes\.WebAPIController](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.webapicontroller 'DiGi\.WebAPI\.Classes\.WebAPIController') → YearBuiltDataController
 ### Constructors
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter)'></a>
 
-## YearBuiltDataController\(GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter\) Constructor
+## YearBuiltDataController\(GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter, Building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter\) Constructor
 
 Initializes a new instance of the YearBuiltDataController class\.
 
 ```csharp
-public YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter);
+public YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).GISWebAPIConfigurationFileWatcher'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).GISWebAPIConfigurationFileWatcher'></a>
 
 `GISWebAPIConfigurationFileWatcher` [GISWebAPIConfigurationFileWatcher](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher')
 
 The configuration file watcher used to monitor changes to the PostgreSQL Web API configuration\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).yearBuiltDataPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).yearBuiltDataPostgreSQLConverter'></a>
 
 `yearBuiltDataPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.yearbuiltdatapostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter')
 
 The converter for YearBuiltData objects when interacting with a PostgreSQL database\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).administrativeAreal2DPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).building2DPostgreSQLConverter'></a>
+
+`building2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
+
+The converter for Building2D objects, used to read which county row a reference is already filed under\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter).administrativeAreal2DPostgreSQLConverter'></a>
 
 `administrativeAreal2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.administrativeareal2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
 
@@ -5190,7 +5228,7 @@ A task that represents the asynchronous operation\.
 
 Updates multiple year built data items based on the provided JSON array and identification code\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer [UpdateItemsByCountyIdAsync\(JsonArray, int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsByCountyIdAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\)'), which leaves the server nothing to guess.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each datum is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\]\)') for how that is decided.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code);
@@ -5213,30 +5251,34 @@ The identification code required for the update operation\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the update operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[])'></a>
 
-## YearBuiltDataController\.UpdateItemsByCountyIdAsync\(JsonArray, int\) Method
+## YearBuiltDataController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\) Method
 
-Updates multiple year built data items in the database for an explicitly identified county row\.
+Updates multiple year built data items in the database for the given county rows\.
 
-The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.
+The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
+
+A single identifier is taken as stated and every datum is filed under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
+
+A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int countyId);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the data items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdAsync(System.Text.Json.Nodes.JsonArray,int).countyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).countyIds'></a>
 
-`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
-The identifier of the county row the year built data belong to\.
+The identifiers of the county rows the year built data belong to\. Normally every polygon part of one county\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  

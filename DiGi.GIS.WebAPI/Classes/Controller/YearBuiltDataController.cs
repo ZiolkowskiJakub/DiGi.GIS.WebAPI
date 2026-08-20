@@ -18,6 +18,7 @@ namespace DiGi.GIS.WebAPI.Classes
     public class YearBuiltDataController : DiGi.WebAPI.Classes.WebAPIController
     {
         private readonly AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
+        private readonly Building2DPostgreSQLConverter building2DPostgreSQLConverter; //States which polygon part of a multi-part county a datum belongs to, from the 2D building already stored under it.
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
         private readonly YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter;
 
@@ -26,17 +27,19 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="GISWebAPIConfigurationFileWatcher">The configuration file watcher used to monitor changes to the PostgreSQL Web API configuration.</param>
         /// <param name="yearBuiltDataPostgreSQLConverter">The converter for YearBuiltData objects when interacting with a PostgreSQL database.</param>
+        /// <param name="building2DPostgreSQLConverter">The converter for Building2D objects, used to read which county row a reference is already filed under.</param>
         /// <param name="administrativeAreal2DPostgreSQLConverter">The converter for administrative areal 2D data when interacting with a PostgreSQL database.</param>
-        public YearBuiltDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
+        public YearBuiltDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.yearBuiltDataPostgreSQLConverter = yearBuiltDataPostgreSQLConverter;
+            this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
         }
 
         /// <summary>
         /// Updates multiple year built data items based on the provided JSON array and identification code.
-        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. This action files the whole batch under the lowest matching row and warns when the code was ambiguous. Prefer <see cref="UpdateItemsByCountyIdAsync"/>, which leaves the server nothing to guess.</para>
+        /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each datum is filed under the part it actually belongs to - see <see cref="UpdateItemsByCountyIdsAsync"/> for how that is decided.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the data items to be updated.</param>
         /// <param name="code">The identification code required for the update operation.</param>
@@ -82,38 +85,47 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            int countyId_Resolved = countyIds.Min();
+            int[] countyIds_Resolved = [.. countyIds.OrderBy(x => x)];
 
-            // Resolving an ambiguous code silently is what let the skew in this table go unnoticed: the
-            // upload reported success while everything filed under a sibling row read back empty.
-            if (countyIds.Count > 1)
+            // Collapsing an ambiguous code onto one row is what let the skew in this table go unnoticed:
+            // the upload reported success while everything filed under a sibling row read back empty.
+            // Every part is passed on instead, and the batch is split between them per datum.
+            if (countyIds_Resolved.Length > 1)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. The whole batch is being filed under {CountyId}; post to 'updateitemsbycountyid' to pick the part yourself", code, countyIds.Count, string.Join(", ", countyIds.OrderBy(x => x)), countyId_Resolved);
+                Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each datum is being filed under the part its Building2D is stored in", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
             }
 
-            return await UpdateItemsByCountyIdAsync(jsonArray, countyId_Resolved);
+            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved);
         }
 
         /// <summary>
-        /// Updates multiple year built data items in the database for an explicitly identified county row.
-        /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: a multi-part county holds one row per polygon part, and passing the identifier states which part the batch belongs to rather than leaving the server to choose one.</para>
+        /// Updates multiple year built data items in the database for the given county rows.
+        /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.</para>
+        /// <para>A single identifier is taken as stated and every datum is filed under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
+        /// <para>A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the data items to be updated.</param>
-        /// <param name="countyId">The identifier of the county row the year built data belong to.</param>
+        /// <param name="countyIds">The identifiers of the county rows the year built data belong to. Normally every polygon part of one county.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation.</returns>
-        [HttpPost("updateitemsbycountyid")]
+        [HttpPost("updateitemsbycountyids")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyid")] int countyId)
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds)
         {
-            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(UpdateItemsByCountyIdAsync));
-            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(UpdateItemsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "YearBuiltData update not allowed");
+                return BadRequest();
+            }
+
+            if (countyIds is null || countyIds.Length == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CountyIds cannot be null or empty");
                 return BadRequest();
             }
 
@@ -132,15 +144,47 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("YearBuiltDatas conversion to PostgreSQL started. YearBuiltDatas count: {Count}", yearBuiltDatas_GIS.Count);
 
-            int count = 0;
+            List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
+
+            // Left unset while there is more than one candidate, so the part is decided per item below.
+            int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
+
+            Dictionary<string, int>? countyIds_ByReference = null;
+            if (countyId_Single is null)
+            {
+                countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(yearBuiltDatas_GIS.ConvertAll(x => x?.Reference), countyIds_Candidate);
+            }
+
+            List<string> references_Unresolved = [];
 
             List<YearBuiltData> yearBuiltDatas_PostgreSQL = [];
             foreach (GIS.Classes.YearBuiltData yearBuiltData_GIS in yearBuiltDatas_GIS)
             {
+                int? countyId = countyId_Single;
+
+                if (countyId is null)
+                {
+                    // A datum carries no geometry, so the 2D building its reference names is the only thing
+                    // that can say which part it belongs to. One that names none is left unwritten rather
+                    // than filed under a guessed part.
+                    if (yearBuiltData_GIS?.Reference is null || countyIds_ByReference is null || !countyIds_ByReference.TryGetValue(yearBuiltData_GIS.Reference, out int countyId_Reference))
+                    {
+                        references_Unresolved.Add(yearBuiltData_GIS?.Reference ?? string.Empty);
+                        continue;
+                    }
+
+                    countyId = countyId_Reference;
+                }
+
                 if (PostgreSQL.Convert.ToPostgreSQL(yearBuiltData_GIS, countyId) is YearBuiltData yearBuiltData_PostgreSQL)
                 {
                     yearBuiltDatas_PostgreSQL.Add(yearBuiltData_PostgreSQL);
                 }
+            }
+
+            if (references_Unresolved.Count != 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "YearBuiltDatas not written because no Building2D under the given parts carries their reference: {Count}/{Total}. References: {References}", references_Unresolved.Count, yearBuiltDatas_GIS.Count, string.Join(", ", references_Unresolved.Take(20)));
             }
 
             if (yearBuiltDatas_PostgreSQL is null || yearBuiltDatas_PostgreSQL.Count == 0)
@@ -149,7 +193,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            Serilog.Modify.Log("YearBuiltDatas conversion to PostgreSQL ended. YearBuiltDatas converted: {After}/{Before}", yearBuiltDatas_PostgreSQL.Count, count);
+            Serilog.Modify.Log("YearBuiltDatas conversion to PostgreSQL ended. YearBuiltDatas converted: {After}/{Before}", yearBuiltDatas_PostgreSQL.Count, yearBuiltDatas_GIS.Count);
 
             Serilog.Modify.Log("Updating to database starting");
 
