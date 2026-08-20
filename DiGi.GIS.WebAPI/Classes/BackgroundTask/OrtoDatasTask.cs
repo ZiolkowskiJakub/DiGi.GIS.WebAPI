@@ -84,7 +84,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 Core.Query.Filter(building2DReferences, x => x?.CountyId == countyId, out List<Building2DReference>? building2DReferences_In, out List<Building2DReference>? building2DReferences_Out);
                 building2DReferences = building2DReferences_Out ?? [];
 
-                List<GIS.Classes.OrtoDatas> ortoDatasList = [];
+                Dictionary<int, List<GIS.Classes.OrtoDatas>> dictionary_OrtoDatas = [];
 
                 if (building2DReferences_In != null && building2DReferences_In.Count != 0 && countyId is not null && countyId.HasValue)
                 {
@@ -92,7 +92,7 @@ namespace DiGi.GIS.WebAPI.Classes
                     {
                         Serilog.Modify.Log("PostgreSQL Building2Ds extraction starting");
 
-                        List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences_In);
+                        List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences_In, fallbackByReference: true);
                         if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
                         {
                             Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No PostgreSQL Building2Ds found");
@@ -115,10 +115,18 @@ namespace DiGi.GIS.WebAPI.Classes
                                 continue;
                             }
 
-                            ortoDatasList.Add(ortoDatas);
+                            int countyId_Temp = building2D_PostgreSQL?.CountyId ?? -1;
+
+                            if(!dictionary_OrtoDatas.TryGetValue(countyId_Temp, out List<GIS.Classes.OrtoDatas>? value))
+                            {
+                                value = [];
+                                dictionary_OrtoDatas[countyId_Temp] = value;
+                            }
+
+                            value.Add(ortoDatas);
                         }
 
-                        Serilog.Modify.Log("OrtoDatas extracted {Count}", ortoDatasList.Count);
+                        Serilog.Modify.Log("OrtoDatas extracted {Count}", dictionary_OrtoDatas.Count);
                     }
                     catch (OperationCanceledException)
                     {
@@ -137,11 +145,14 @@ namespace DiGi.GIS.WebAPI.Classes
                 Serilog.Modify.Log("OrtoDatas updating starting");
 
                 List<PostgreSQL.Classes.OrtoDatas> ortoDatasList_PostgreSQL = [];
-                foreach (GIS.Classes.OrtoDatas ortoDatas in ortoDatasList)
+                foreach (KeyValuePair<int, List<GIS.Classes.OrtoDatas>> keyValuePair in dictionary_OrtoDatas)
                 {
-                    if (ortoDatas?.ToPostgreSQL(countyId) is PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL)
+                    foreach(GIS.Classes.OrtoDatas ortoDatas in keyValuePair.Value)
                     {
-                        ortoDatasList_PostgreSQL.Add(ortoDatas_PostgreSQL);
+                        if (ortoDatas?.ToPostgreSQL(countyId) is PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL)
+                        {
+                            ortoDatasList_PostgreSQL.Add(ortoDatas_PostgreSQL);
+                        }
                     }
                 }
 
