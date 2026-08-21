@@ -464,8 +464,8 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetTableByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId = null)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingDataController), nameof(GetTableByReferenceAsync));
-            Serilog.Modify.Log("Reference provided: {Id}", reference.ToString() ?? string.Empty);
-            Serilog.Modify.Log("CountyId provided: {Id}", countyId?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
 
             if (string.IsNullOrWhiteSpace(reference))
             {

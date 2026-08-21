@@ -75,8 +75,6 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("OccupancyDatas conversion to PostgreSQL started. OccupancyDatas count: {Count}", occupancyDatas_GIS.Count);
 
-            int count = 0;
-
             List<AdministrativeAreal2DOccupancyData> administrativeAreal2DBuilding2DOccupancyDatas_PostgreSQL = [];
             foreach (GIS.Classes.OccupancyData occupancyData_GIS in occupancyDatas_GIS)
             {
@@ -92,7 +90,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            Serilog.Modify.Log("OccupancyDatas conversion to PostgreSQL ended. OccupancyDatas converted: {After}/{Before}", administrativeAreal2DBuilding2DOccupancyDatas_PostgreSQL.Count, count);
+            Serilog.Modify.Log("OccupancyDatas conversion to PostgreSQL ended. OccupancyDatas converted: {After}/{Before}", administrativeAreal2DBuilding2DOccupancyDatas_PostgreSQL.Count, occupancyDatas_GIS.Count);
 
             Serilog.Modify.Log("Updating to database starting");
 
@@ -327,9 +325,9 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            if (building2DOccupancyDataPostgreSQLConverter is null)
+            if (administrativeAreal2DOccupancyDataPostgreSQLConverter is null)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OccupancyDataPostgreSQLConverter is null");
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "AdministrativeAreal2DOccupancyDataPostgreSQLConverter is null");
                 return BadRequest();
             }
 

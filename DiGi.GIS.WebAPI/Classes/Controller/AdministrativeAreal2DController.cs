@@ -382,6 +382,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetAdministrativeAreal2DReferencesByIdsAsync([FromBody] List<int> ids, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferencesByIdsAsync));
+            Serilog.Modify.Log("Ids count: {Count}", ids?.Count ?? 0);
 
             if (ids is null || ids.Count == 0)
             {
@@ -502,6 +503,7 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetIdByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
 
             if (string.IsNullOrWhiteSpace(code) || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -536,6 +538,7 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetIdsByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
 
             if (string.IsNullOrWhiteSpace(code) || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -702,7 +705,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NotFound();
             }
 
-            Serilog.Modify.Log("content found: {Count} items", administrativeAreal2Ds_PostgreSQL.Count);
+            Serilog.Modify.Log("Content found: {Count} items", administrativeAreal2Ds_PostgreSQL.Count);
 
             List<GIS.Classes.AdministrativeAreal2D> administrativeAreal2Ds = [];
             foreach (AdministrativeAreal2D administrativeAreal2D_PostgreSQL in administrativeAreal2Ds_PostgreSQL)
@@ -756,6 +759,9 @@ namespace DiGi.GIS.WebAPI.Classes
             CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByBoundingBoxAsync));
+            Serilog.Modify.Log("BoundingBox provided: X_1={X_1}, Y_1={Y_1}, X_2={X_2}, Y_2={Y_2}", x_1, y_1, x_2, y_2);
+            Serilog.Modify.Log("Tolerance provided: {Tolerance}", tolerance?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
 
             if (double.IsNaN(x_1) || double.IsNaN(y_1) || double.IsNaN(x_2) || double.IsNaN(y_2) || (tolerance.HasValue && (double.IsNaN(tolerance.Value) || tolerance.Value < 0)) || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -834,6 +840,10 @@ namespace DiGi.GIS.WebAPI.Classes
             CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByCircleAsync));
+            Serilog.Modify.Log("Coordinates provided: X={X}, Y={Y}", x, y);
+            Serilog.Modify.Log("Radius provided: {Radius}, Diameter provided: {Diameter}", radius?.ToString() ?? string.Empty, diameter?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("Tolerance provided: {Tolerance}", tolerance?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
 
             if (double.IsNaN(x) || double.IsNaN(y) || (tolerance.HasValue && (double.IsNaN(tolerance.Value) || tolerance.Value < 0)) || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -927,6 +937,7 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
 
             if (string.IsNullOrWhiteSpace(code) || administrativeArealType == AdministrativeArealType.Undefined)
             {
@@ -981,6 +992,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemsByCodesAsync([FromBody] List<string> codes, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByCodesAsync));
+            Serilog.Modify.Log("Codes count: {Count}", codes?.Count ?? 0);
 
             if (codes == null || codes.Count == 0)
             {
@@ -1035,6 +1047,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemsByIdsAsync([FromBody] List<int> ids, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByIdsAsync));
+            Serilog.Modify.Log("Ids count: {Count}", ids?.Count ?? 0);
 
             if (ids is null || ids.Count == 0)
             {
@@ -1092,6 +1105,9 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemsByPointAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByPointAsync));
+            Serilog.Modify.Log("Coordinates provided: X={X}, Y={Y}", x, y);
+            Serilog.Modify.Log("Tolerance provided: {Tolerance}", tolerance?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
 
             if (double.IsNaN(x) || double.IsNaN(y) || (tolerance.HasValue && (double.IsNaN(tolerance.Value) || tolerance.Value < 0)) || administrativeArealType == AdministrativeArealType.Undefined)
             {

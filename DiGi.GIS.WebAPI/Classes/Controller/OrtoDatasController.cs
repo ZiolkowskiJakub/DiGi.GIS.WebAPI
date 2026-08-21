@@ -95,7 +95,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetEstimatedCoverageFactorAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetEstimatedCoverageFactorAsync));
-            Serilog.Modify.Log("AdministrativeAeral2D Id provided: {Id}", administrativeAreal2DId.ToString() ?? string.Empty);
+            Serilog.Modify.Log("AdministrativeAreal2D Id provided: {Id}", administrativeAreal2DId);
 
             if (administrativeAreal2DPostgreSQLConverter is null)
             {
@@ -122,7 +122,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            Serilog.Modify.Log("AdministrativeAeral2D found: {Name}, type: {AdministrativeArealType}", administrativeAreal2DReference.Name ?? "???", administrativeAreal2DReference.AdministrativeArealType.ToString());
+            Serilog.Modify.Log("AdministrativeAreal2D found: {Name}, type: {AdministrativeArealType}", administrativeAreal2DReference.Name ?? "???", administrativeAreal2DReference.AdministrativeArealType.ToString());
 
             long count_Building2D = -1;
             long count_OrtoDatas = -1;
@@ -198,8 +198,8 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetEstimatedCoverageFactorsAsync([FromBody] IEnumerable<int> administrativeAreal2DIds, bool? analyze)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetEstimatedCoverageFactorsAsync));
-            Serilog.Modify.Log("AdministrativeAeral2D Ids provided: {Ids}", string.Join(",", administrativeAreal2DIds ?? []));
-            Serilog.Modify.Log("AdministrativeAeral2Ds data type:", administrativeAreal2DIds?.GetType()?.FullName ?? "???");
+            Serilog.Modify.Log("AdministrativeAreal2D Ids provided: {Ids}", string.Join(",", administrativeAreal2DIds ?? []));
+            Serilog.Modify.Log("AdministrativeAreal2D data type: {DataType}", administrativeAreal2DIds?.GetType()?.FullName ?? "???");
 
             if (administrativeAreal2DIds is null || !administrativeAreal2DIds.Any())
             {
@@ -386,7 +386,7 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetItemByReferenceAsync));
             Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
-            Serilog.Modify.Log("Countyid provided: {CountyId}", countyId?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
 
             if (string.IsNullOrWhiteSpace(reference))
             {
@@ -493,7 +493,7 @@ namespace DiGi.GIS.WebAPI.Classes
             HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, AdministrativeArealType.County);
             if (countyIds is null || countyIds.Count == 0)
             {
-                Serilog.Modify.Log("County with given code not found");
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' was not found in database", code);
                 return BadRequest();
             }
 
@@ -672,7 +672,7 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetImageByReferenceAsync));
             Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
-            Serilog.Modify.Log("Countyid provided: {CountyId}", countyId?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
             Serilog.Modify.Log("Year provided: {Year}", year.ToString());
 
             if (string.IsNullOrWhiteSpace(reference))

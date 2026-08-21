@@ -53,6 +53,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> CountAsync([FromBody] CountByAdministrativeAreal2DIdsParameter countByAdministrativeAreal2DIdsParameter, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(CountAsync));
+            Serilog.Modify.Log("AdministrativeAreal2DIds count: {Count}", countByAdministrativeAreal2DIdsParameter?.AdministrativeAreal2DIds?.Count() ?? 0);
 
             if (countByAdministrativeAreal2DIdsParameter is null || countByAdministrativeAreal2DIdsParameter.AdministrativeAreal2DIds is null)
             {
@@ -86,6 +87,8 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetBuilding2DReferenceByIdAsync([FromQuery(Name = "id")] long id, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetBuilding2DReferenceByIdAsync));
+            Serilog.Modify.Log("Id provided: {Id}", id);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
 
             if (id <= 0 || (countyId is not null && countyId <= 0))
             {
@@ -125,6 +128,8 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetBuilding2DReferenceByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetBuilding2DReferenceByReferenceAsync));
+            Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
 
             if (string.IsNullOrWhiteSpace(reference) || (countyId is not null && countyId <= 0))
             {
@@ -163,6 +168,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetBuilding2DReferencesByAdministrativeAreal2DIdAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetBuilding2DReferencesByAdministrativeAreal2DIdAsync));
+            Serilog.Modify.Log("AdministrativeAreal2DId provided: {AdministrativeAreal2DId}", administrativeAreal2DId);
 
             if (administrativeAreal2DId <= 0)
             {
@@ -198,6 +204,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetBuilding2DReferencesByPagingParameterAsync([FromBody] Building2DReferencesByPagingParameter building2DReferencesByPagingParameter, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetBuilding2DReferencesByPagingParameterAsync));
+            Serilog.Modify.Log("Paging parameter provided: CountyId={CountyId}, PageSize={PageSize}, Cursor={Cursor}", building2DReferencesByPagingParameter?.CountyId ?? 0, building2DReferencesByPagingParameter?.PageSize ?? 0, building2DReferencesByPagingParameter?.Cursor ?? string.Empty);
 
             if (building2DReferencesByPagingParameter is null || building2DReferencesByPagingParameter.CountyId <= 0 || building2DReferencesByPagingParameter.PageSize <= 0)
             {
@@ -248,6 +255,8 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemByIdAsync([FromQuery(Name = "id")] long id, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemByIdAsync));
+            Serilog.Modify.Log("Id provided: {Id}", id);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
 
             if (id <= 0 || (countyId is not null && countyId <= 0))
             {
@@ -293,6 +302,9 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemByPointAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "tolerance")] double? tolerance, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemByPointAsync));
+            Serilog.Modify.Log("Coordinates provided: X={X}, Y={Y}", x, y);
+            Serilog.Modify.Log("Tolerance provided: {Tolerance}", tolerance?.ToString() ?? string.Empty);
+
             if (double.IsNaN(x) || double.IsNaN(y))
             {
                 return BadRequest();
@@ -340,6 +352,8 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemByReferenceAsync));
+            Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
 
             if (string.IsNullOrWhiteSpace(reference) || (countyId is not null && countyId <= 0))
             {
@@ -381,6 +395,9 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemsByBoundingBoxAsync([FromQuery(Name = "x_1")] double x_1, [FromQuery(Name = "y_1")] double y_1, [FromQuery(Name = "x_2")] double x_2, [FromQuery(Name = "y_2")] double y_2, [FromQuery(Name = "tolerance")] double? tolerance, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemsByBoundingBoxAsync));
+            Serilog.Modify.Log("BoundingBox provided: X_1={X_1}, Y_1={Y_1}, X_2={X_2}, Y_2={Y_2}", x_1, y_1, x_2, y_2);
+            Serilog.Modify.Log("Tolerance provided: {Tolerance}", tolerance?.ToString() ?? string.Empty);
+
             if (double.IsNaN(x_1) || double.IsNaN(y_1) || double.IsNaN(x_2) || double.IsNaN(y_2))
             {
                 return BadRequest();
@@ -439,6 +456,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemsByBuilding2DReferencesAsync([FromBody] JsonArray? jsonArray, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemsByBuilding2DReferencesAsync));
+            Serilog.Modify.Log("Building2DReferences count: {Count}", jsonArray?.Count ?? 0);
 
             if (jsonArray is null || jsonArray.Count == 0)
             {
@@ -508,6 +526,10 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemsByCircleAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "radius")] double? radius, [FromQuery(Name = "diameter")] double? diameter, [FromQuery(Name = "tolerance")] double? tolerance, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemsByCircleAsync));
+            Serilog.Modify.Log("Coordinates provided: X={X}, Y={Y}", x, y);
+            Serilog.Modify.Log("Radius provided: {Radius}, Diameter provided: {Diameter}", radius?.ToString() ?? string.Empty, diameter?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("Tolerance provided: {Tolerance}", tolerance?.ToString() ?? string.Empty);
+
             if (double.IsNaN(x) || double.IsNaN(y))
             {
                 return BadRequest();
@@ -592,6 +614,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetItemsByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemsByCountyIdAsync));
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
 
             if (countyId <= 0)
             {
@@ -711,6 +734,8 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetPoint2DsByReferencesAsync([FromBody] IEnumerable<string>? references, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetPoint2DsByReferencesAsync));
+            Serilog.Modify.Log("References count: {Count}", references?.Count() ?? 0);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
 
             if (references is null || (countyId is not null && countyId <= 0))
             {
@@ -752,6 +777,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetReferenceDuplicatesAsync([FromQuery(Name = "limit")] int limit = 100, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferenceDuplicatesAsync));
+            Serilog.Modify.Log("Limit provided: {Limit}, CommandTimeout provided: {CommandTimeout}", limit, commandTimeout);
 
             if (limit <= 0 || commandTimeout < 0)
             {
@@ -791,6 +817,8 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetReferencesByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "subdivisionid")] int? subdivisionId = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferencesByCountyIdAsync));
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
+            Serilog.Modify.Log("SubdivisionId provided: {SubdivisionId}", subdivisionId?.ToString() ?? string.Empty);
 
             if (countyId <= 0 || (subdivisionId is not null && subdivisionId <= 0))
             {
@@ -841,6 +869,7 @@ namespace DiGi.GIS.WebAPI.Classes
         public async Task<IActionResult> GetReferenceUniquenessSummaryAsync([FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferenceUniquenessSummaryAsync));
+            Serilog.Modify.Log("CommandTimeout provided: {CommandTimeout}", commandTimeout);
 
             if (commandTimeout < 0)
             {
