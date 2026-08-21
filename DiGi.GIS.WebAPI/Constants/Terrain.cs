@@ -18,5 +18,29 @@ namespace DiGi.GIS.WebAPI.Constants
         /// <para>The value has to clear the diagonal of the coarsest lattice cell or it would shred genuine data: a regular 100 m lattice needs edges of 141.4 m. The cost of clearing it is that on a 10 m lattice a real gap of up to this width is still bridged.</para>
         /// </summary>
         public static readonly double MaximumEdgeLength = 150;
+
+        /// <summary>
+        /// The finest lattice, in model units, a coverage or gap request may be measured against.
+        /// <para>The work of those endpoints rises with the square of how fine the lattice is: they generate every node of a county and decide each one against its outlines. A county of 1 000 square kilometres is 100 000 nodes at 100 m and 10 million at 10 m, and below that the request stops being a diagnostic and becomes a denial of service that anyone can send.</para>
+        /// </summary>
+        public static readonly double MinimumGridSize = 10;
+
+        /// <summary>
+        /// The largest number of lattice nodes a single coverage or gap request may generate.
+        /// <para>Checked against the requested area before any node is built, so an area and a lattice that would together exceed it are refused rather than started. This is the cap that holds when a large county meets a fine lattice, both of which are individually allowed.</para>
+        /// </summary>
+        public static readonly long MaximumNodeCount = 5000000;
+
+        /// <summary>
+        /// The longest side, in model units, a gap request may ask for.
+        /// <para>Larger than the mesh endpoints admit, because a gap request returns coordinates rather than a triangulated surface and is meant for looking over a region at once. It is still bounded by <see cref="MaximumNodeCount"/> at any given lattice.</para>
+        /// </summary>
+        public static readonly double MaximumGapExtent = 50000;
+
+        /// <summary>
+        /// The largest number of counties a single density request may name.
+        /// <para>A density costs the reading of every subdivision outline of the county it is asked for, so this is what keeps one request from pulling the administrative geometry of the whole country. Sweeping every county means several requests, which is also what makes the sweep interruptible.</para>
+        /// </summary>
+        public static readonly int MaximumDensityCountyCount = 50;
     }
 }

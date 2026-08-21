@@ -1,8 +1,10 @@
+using DiGi.Geometry.Planar;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.Geometry.PointCloud.Core.Enums;
 using DiGi.Geometry.PointCloud.Spatial;
 using DiGi.Geometry.PointCloud.Spatial.Classes;
 using DiGi.Geometry.Spatial.Classes;
+using DiGi.GIS.PostgreSQL;
 using DiGi.GIS.PostgreSQL.Classes;
 using DiGi.GIS.PostgreSQL.Enums;
 using Microsoft.AspNetCore.Http;
@@ -22,6 +24,12 @@ namespace DiGi.GIS.WebAPI.Classes
     [Route("gis/[controller]")]
     public class TerrainController : DiGi.WebAPI.Classes.WebAPIController
     {
+        /// <summary>
+        /// The edge of one work tile of a coverage walk, counted in lattice steps.
+        /// <para>The default the sampling task writes with, so a coverage tile lines up with a sampled tile and a shortfall is reported against the same batches the run worked in.</para>
+        /// </summary>
+        private const int tileSize = 128;
+
         private readonly TerrainPointPostgreSQLConverter terrainPointPostgreSQLConverter;
         private readonly AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
 
@@ -100,6 +108,12 @@ namespace DiGi.GIS.WebAPI.Classes
             PointCloud3D? pointCloud3D;
             try
             {
+                if (!await TerrainPointTableExistsAsync())
+                {
+                    Serilog.Modify.Log("No terrain point table exists, so nothing has ever been sampled");
+                    return NotFound();
+                }
+
                 HashSet<int>? countyIds = await CountyIdsAsync(boundingBox2D, tolerance_Temp, cancellationToken);
                 if (countyIds is null)
                 {
@@ -161,6 +175,12 @@ namespace DiGi.GIS.WebAPI.Classes
             PointCloud3D? pointCloud3D;
             try
             {
+                if (!await TerrainPointTableExistsAsync())
+                {
+                    Serilog.Modify.Log("No terrain point table exists, so nothing has ever been sampled");
+                    return NotFound();
+                }
+
                 HashSet<int>? countyIds = await CountyIdsAsync(boundingBox2D, tolerance_Temp, cancellationToken);
                 if (countyIds is null)
                 {
@@ -177,6 +197,342 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             return Mesh3DResult(pointCloud3D);
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the number of terrain points stored for one county partition.
+        /// <para>The cheapest question that can be asked of the store, and the one that separates a county that was never sampled from one that was sampled and holds nothing.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county partition to count.</param>
+        /// <param name="estimated">Reads the planner's row estimate instead of counting the rows. Far faster on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the count, or 404 when the county has no partition.</returns>
+        [HttpGet("countbycountyid", Name = $"{nameof(TerrainController)}_{nameof(GetCountByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetCountByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(TerrainController), nameof(GetCountByCountyIdAsync), countyId);
+
+            long count;
+            try
+            {
+                count = estimated
+                    ? await terrainPointPostgreSQLConverter.GetEstimatedCountAsync(countyId, false, cancellationToken)
+                    : await terrainPointPostgreSQLConverter.GetCountAsync(countyId, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            // A missing partition answers -1 rather than zero, and the two mean different things: never imported
+            // against imported and empty. Reporting both as zero would hide a county a run never reached.
+            if (count < 0)
+            {
+                Serilog.Modify.Log("County {CountyId} has no terrain point partition", countyId);
+                return NotFound();
+            }
+
+            return Ok(count);
+        }
+
+        /// <summary>
+        /// Asynchronously summarises what each of the named county partitions holds: how many points, over what extent, at what elevations, filed under how many subdivisions, and when they were written.
+        /// <para>The account a sampling run leaves behind. The run keeps its tallies in memory and discards them when it ends, so this is what remains to read afterwards - and ordering the result by <see cref="TerrainPointCountyResult.CreatedAt_First"/> reconstructs how far a run got, because a run walks the counties in ascending identifier order.</para>
+        /// <para>Naming no county summarises every partition. Counties holding no point are absent from the result rather than present with a zero.</para>
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the county partitions to summarise, repeated once per county. Omit to summarise every one.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the summaries as JSON, or an error status.</returns>
+        [HttpGet("summariesbycountyids", Name = $"{nameof(TerrainController)}_{nameof(GetSummariesByCountyIdsAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<TerrainPointCountyResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetSummariesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for {CountyCount} counties", nameof(TerrainController), nameof(GetSummariesByCountyIdsAsync), countyIds?.Count ?? 0);
+
+            List<TerrainPointCountyResult>? terrainPointCountyResults;
+            try
+            {
+                terrainPointCountyResults = await terrainPointPostgreSQLConverter.GetSummariesByCountyIdsAsync(countyIds is null || countyIds.Count == 0 ? null : countyIds, commandTimeout, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            if (terrainPointCountyResults is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(terrainPointCountyResults);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            Serilog.Modify.Log("Number of TerrainPointCountyResults to be returned: {Count}", terrainPointCountyResults.Count);
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously reports how densely each of the named county partitions is sampled: the points it holds divided by the area of its subdivisions.
+        /// <para>The cheap sweep. It costs one aggregate per partition and the outlines of the counties named, where deciding the same question node by node costs the generating and the looking up of the whole lattice - so this is what narrows a country down to the few counties worth <see cref="GetCoverageByCountyIdAsync"/>.</para>
+        /// <para>Supplying <paramref name="gridSize"/> is what turns the density into a completeness. Without it the figure to read is the spacing, which needs no knowledge of what a run was asked for.</para>
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the county partitions to measure, repeated once per county. At least one and at most <see cref="Constants.Terrain.MaximumDensityCountyCount"/>.</param>
+        /// <param name="gridSize">The lattice spacing a sampling run used, in metres, when it is known.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the densities as JSON, or an error status.</returns>
+        [HttpGet("densitiesbycountyids", Name = $"{nameof(TerrainController)}_{nameof(GetDensitiesByCountyIdsAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<TerrainPointDensityResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetDensitiesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [FromQuery(Name = "gridsize")] double? gridSize, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for {CountyCount} counties", nameof(TerrainController), nameof(GetDensitiesByCountyIdsAsync), countyIds?.Count ?? 0);
+
+            if (countyIds is null || countyIds.Count == 0 || countyIds.Count > Constants.Terrain.MaximumDensityCountyCount)
+            {
+                return BadRequest();
+            }
+
+            if (gridSize.HasValue && (!IsFinite(gridSize.Value) || gridSize.Value <= 0))
+            {
+                return BadRequest();
+            }
+
+            List<TerrainPointDensityResult> terrainPointDensityResults = [];
+            try
+            {
+                Dictionary<int, long>? counts_ByCountyId = await terrainPointPostgreSQLConverter.GetCountsByCountyIdsAsync(countyIds, commandTimeout, cancellationToken);
+                if (counts_ByCountyId is null)
+                {
+                    return NotFound();
+                }
+
+                foreach (int countyId in countyIds)
+                {
+                    Dictionary<int, PolygonalFace2D>? polygonalFace2Ds_ById = await PolygonalFace2DsByIdAsync(countyId, cancellationToken);
+                    if (polygonalFace2Ds_ById is null)
+                    {
+                        Serilog.Modify.Log("County {CountyId} has no subdivision outline, so there is no area to measure a density against", countyId);
+                        continue;
+                    }
+
+                    double area = 0;
+                    foreach (PolygonalFace2D polygonalFace2D in polygonalFace2Ds_ById.Values)
+                    {
+                        area += polygonalFace2D.GetArea();
+                    }
+
+                    // A county with no partition is absent from the counts and contributes a zero here, which is
+                    // the answer wanted: a county a run never reached reports a density of nothing rather than
+                    // dropping out of a sweep that was asked about it.
+                    counts_ByCountyId.TryGetValue(countyId, out long count);
+
+                    if (PostgreSQL.Create.TerrainPointDensityResult(countyId, count, area, gridSize) is TerrainPointDensityResult terrainPointDensityResult)
+                    {
+                        terrainPointDensityResults.Add(terrainPointDensityResult);
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            string? json = Core.Convert.ToSystem_String(terrainPointDensityResults);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            Serilog.Modify.Log("Number of TerrainPointDensityResults to be returned: {Count}", terrainPointDensityResults.Count);
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously compares what one county partition holds against what a sampling run on the given lattice should have put there.
+        /// <para>The question a density cannot answer. A density says how much of a county is missing; this says which nodes, so a run that stepped over a batch can be sent back for exactly those.</para>
+        /// <para>The expected nodes are derived from the same subdivision outlines and the same lattice the sampling run itself decides against, so the two agree by construction. Nodes of the county's bounding rectangle that fall outside its land are not expected and not counted.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county partition to measure.</param>
+        /// <param name="gridSize">The lattice spacing, in metres. Not finer than <see cref="Constants.Terrain.MinimumGridSize"/>.</param>
+        /// <param name="originX">The X coordinate the lattice is anchored at. Leave at zero unless a run used something else.</param>
+        /// <param name="originY">The Y coordinate the lattice is anchored at. Leave at zero unless a run used something else.</param>
+        /// <param name="tolerance">The distance a stored point may lie from a node and still be counted as that node, in metres. Capped at half a step.</param>
+        /// <param name="limit">The largest number of missing coordinates returned. The count itself is reported in full regardless.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the <see cref="TerrainPointCoverageResult"/> as JSON, or an error status.</returns>
+        [HttpGet("coveragebycountyid", Name = $"{nameof(TerrainController)}_{nameof(GetCoverageByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(TerrainPointCoverageResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetCoverageByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "limit")] int limit = 1000, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId} at grid {GridSize}", nameof(TerrainController), nameof(GetCoverageByCountyIdAsync), countyId, gridSize);
+
+            if (!TryGetLatticeParameters(gridSize, originX, originY, tolerance, limit, out Point2D? origin, out double tolerance_Temp) || origin is null)
+            {
+                return BadRequest();
+            }
+
+            TerrainPointCoverageResult? terrainPointCoverageResult;
+            try
+            {
+                if (!await TerrainPointTableExistsAsync())
+                {
+                    Serilog.Modify.Log("No terrain point table exists, so nothing has ever been sampled");
+                    return NotFound();
+                }
+
+                Dictionary<int, PolygonalFace2D>? polygonalFace2Ds_ById = await PolygonalFace2DsByIdAsync(countyId, cancellationToken);
+                if (polygonalFace2Ds_ById is null)
+                {
+                    Serilog.Modify.Log("County {CountyId} has no subdivision outline, so there is nothing to measure a coverage against", countyId);
+                    return NotFound();
+                }
+
+                terrainPointCoverageResult = await CoverageAsync(countyId, polygonalFace2Ds_ById, null, gridSize, origin, tolerance_Temp, limit, commandTimeout, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            // A null result is the node ceiling rather than an absent county: the county was found, and the
+            // lattice asked for over its extent would have generated more nodes than a single request may.
+            if (terrainPointCoverageResult is null)
+            {
+                Serilog.Modify.Log("County {CountyId} at grid {GridSize} exceeds the {MaximumNodeCount} node ceiling", countyId, gridSize, Constants.Terrain.MaximumNodeCount);
+                return BadRequest();
+            }
+
+            string? json = Core.Convert.ToSystem_String(terrainPointCoverageResult);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            Serilog.Modify.Log("County {CountyId}: {ExpectedCount} expected, {StoredCount} stored, {MissingCount} missing", countyId, terrainPointCoverageResult.ExpectedCount, terrainPointCoverageResult.StoredCount, terrainPointCoverageResult.MissingCount);
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the lattice nodes inside a rectangle that lie on a county's land and that the terrain point table holds no point for.
+        /// <para>Where <see cref="GetCoverageByCountyIdAsync"/> answers for a whole county, this answers for an area - which is what a coverage reporting a shortfall is followed by. Every county the rectangle meets is measured, so a hole spanning a county boundary is reported once and whole.</para>
+        /// </summary>
+        /// <param name="x_1">The X coordinate of the first corner, in PL-1992 (EPSG:2180) metres.</param>
+        /// <param name="y_1">The Y coordinate of the first corner, in PL-1992 (EPSG:2180) metres.</param>
+        /// <param name="x_2">The X coordinate of the second corner, in PL-1992 (EPSG:2180) metres.</param>
+        /// <param name="y_2">The Y coordinate of the second corner, in PL-1992 (EPSG:2180) metres.</param>
+        /// <param name="gridSize">The lattice spacing, in metres. Not finer than <see cref="Constants.Terrain.MinimumGridSize"/>.</param>
+        /// <param name="originX">The X coordinate the lattice is anchored at. Leave at zero unless a run used something else.</param>
+        /// <param name="originY">The Y coordinate the lattice is anchored at. Leave at zero unless a run used something else.</param>
+        /// <param name="tolerance">The distance a stored point may lie from a node and still be counted as that node, in metres. Capped at half a step.</param>
+        /// <param name="limit">The largest number of missing coordinates returned.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the missing coordinates as JSON, or an error status.</returns>
+        [HttpGet("gapsbyboundingbox", Name = $"{nameof(TerrainController)}_{nameof(GetGapsByBoundingBoxAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<Point2D>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGapsByBoundingBoxAsync([FromQuery(Name = "x_1")] double x_1, [FromQuery(Name = "y_1")] double y_1, [FromQuery(Name = "x_2")] double x_2, [FromQuery(Name = "y_2")] double y_2, [FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "limit")] int limit = 1000, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started at grid {GridSize}", nameof(TerrainController), nameof(GetGapsByBoundingBoxAsync), gridSize);
+
+            if (!IsFinite(x_1) || !IsFinite(y_1) || !IsFinite(x_2) || !IsFinite(y_2))
+            {
+                return BadRequest();
+            }
+
+            if (Math.Abs(x_2 - x_1) > Constants.Terrain.MaximumGapExtent || Math.Abs(y_2 - y_1) > Constants.Terrain.MaximumGapExtent)
+            {
+                return BadRequest();
+            }
+
+            if (!TryGetLatticeParameters(gridSize, originX, originY, tolerance, limit, out Point2D? origin, out double tolerance_Temp) || origin is null)
+            {
+                return BadRequest();
+            }
+
+            BoundingBox2D boundingBox2D = new(new Core.Classes.Range<double>(x_1, x_2), new Core.Classes.Range<double>(y_1, y_2));
+
+            List<Point2D> point2Ds_Missing = [];
+            try
+            {
+                if (!await TerrainPointTableExistsAsync())
+                {
+                    Serilog.Modify.Log("No terrain point table exists, so nothing has ever been sampled");
+                    return NotFound();
+                }
+
+                HashSet<int>? countyIds = await CountyIdsAsync(boundingBox2D, tolerance_Temp, cancellationToken);
+                if (countyIds is null)
+                {
+                    Serilog.Modify.Log("No county covers the requested area");
+                    return NotFound();
+                }
+
+                foreach (int countyId in countyIds)
+                {
+                    if (point2Ds_Missing.Count >= limit)
+                    {
+                        break;
+                    }
+
+                    Dictionary<int, PolygonalFace2D>? polygonalFace2Ds_ById = await PolygonalFace2DsByIdAsync(countyId, cancellationToken);
+                    if (polygonalFace2Ds_ById is null)
+                    {
+                        continue;
+                    }
+
+                    TerrainPointCoverageResult? terrainPointCoverageResult = await CoverageAsync(countyId, polygonalFace2Ds_ById, boundingBox2D, gridSize, origin, tolerance_Temp, limit - point2Ds_Missing.Count, commandTimeout, cancellationToken);
+                    if (terrainPointCoverageResult is null)
+                    {
+                        Serilog.Modify.Log("The requested area at grid {GridSize} exceeds the {MaximumNodeCount} node ceiling", gridSize, Constants.Terrain.MaximumNodeCount);
+                        return BadRequest();
+                    }
+
+                    point2Ds_Missing.AddRange(terrainPointCoverageResult.Point2Ds_Missing);
+                }
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            string? json = Core.Convert.ToSystem_String(point2Ds_Missing);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            Serilog.Modify.Log("Number of missing nodes to be returned: {Count}", point2Ds_Missing.Count);
+            return Content(json, "application/json");
         }
 
         /// <summary>
@@ -243,6 +599,287 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Reports whether anything has ever been written to the terrain point store.
+        /// <para>Asked once per request, before a walk that would otherwise send a query per tile against a table
+        /// that does not exist. An undefined relation reaches a caller as a server fault, where the plain fact is
+        /// that nothing has been sampled yet - which is an answer, and one a fresh deployment gives.</para>
+        /// </summary>
+        /// <returns><see langword="true"/> when the terrain point table exists; otherwise <see langword="false"/>.</returns>
+        private async Task<bool> TerrainPointTableExistsAsync()
+        {
+            return await DiGi.PostgreSQL.Query.TableExistsAsync(terrainPointPostgreSQLConverter.ConnectionData, PostgreSQL.Constants.TableName.TerrainPoint);
+        }
+
+        /// <summary>
+        /// Reads the outlines of a county's subdivisions, keyed by subdivision identifier.
+        /// <para>Read from the administrative database rather than the terrain one, and derived through the same helper the sampling task uses, so an area measured here is the area a run would have sampled.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county whose subdivisions are wanted.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>The outlines keyed by subdivision identifier, or <see langword="null"/> when the county has none.</returns>
+        private async Task<Dictionary<int, PolygonalFace2D>?> PolygonalFace2DsByIdAsync(int countyId, CancellationToken cancellationToken)
+        {
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(AdministrativeArealType.Subdivision, countyId, cancellationToken);
+            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            {
+                return null;
+            }
+
+            Dictionary<int, PolygonalFace2D> polygonalFace2Ds_ById = administrativeAreal2Ds.PolygonalFace2DsById();
+            if (polygonalFace2Ds_ById.Count == 0)
+            {
+                return null;
+            }
+
+            return polygonalFace2Ds_ById;
+        }
+
+        /// <summary>
+        /// Compares the nodes of a lattice lying on a county's land against the points the terrain point table holds for it.
+        /// <para>Walked in tiles rather than in one pass, the same way the sampling task walks a county: a county at a fine spacing is millions of nodes, and holding all of them and all of their stored counterparts at once is what a tile exists to avoid. The tiles are cut from the shared lattice in index space, so a node belongs to exactly one of them.</para>
+        /// <para>The membership test, the node generation and the lattice all come from the helpers the sampling task itself uses. Deriving them again here would let the two drift, and a coverage that disagrees with the run it measures reports holes where nothing was ever going to be sampled.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county partition to measure.</param>
+        /// <param name="polygonalFace2Ds_ById">The outlines of the county's subdivisions, keyed by subdivision identifier.</param>
+        /// <param name="boundingBox2D_Limit">An area to confine the measurement to, or null for the whole county.</param>
+        /// <param name="gridSize">The lattice spacing.</param>
+        /// <param name="origin">The point the lattice is anchored at.</param>
+        /// <param name="tolerance">The distance a stored point may lie from a node and still be counted as that node.</param>
+        /// <param name="limit">The largest number of missing coordinates to carry back.</param>
+        /// <param name="commandTimeout">The timeout in seconds for each read of what a tile already holds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>The coverage, or <see langword="null"/> when the area and the lattice together exceed <see cref="Constants.Terrain.MaximumNodeCount"/>.</returns>
+        private async Task<TerrainPointCoverageResult?> CoverageAsync(int countyId, Dictionary<int, PolygonalFace2D> polygonalFace2Ds_ById, BoundingBox2D? boundingBox2D_Limit, double gridSize, Point2D origin, double tolerance, int limit, int commandTimeout, CancellationToken cancellationToken)
+        {
+            List<BoundingBox2D> boundingBox2Ds_Subdivision = [];
+            foreach (PolygonalFace2D polygonalFace2D in polygonalFace2Ds_ById.Values)
+            {
+                if (polygonalFace2D.GetBoundingBox() is BoundingBox2D boundingBox2D_Subdivision)
+                {
+                    boundingBox2Ds_Subdivision.Add(boundingBox2D_Subdivision);
+                }
+            }
+
+            if (boundingBox2Ds_Subdivision.Count == 0)
+            {
+                return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, 0, 0, 0, 0, null);
+            }
+
+            BoundingBox2D boundingBox2D_County = new(boundingBox2Ds_Subdivision);
+
+            double x_Min = boundingBox2D_County.Min.X;
+            double x_Max = boundingBox2D_County.Max.X;
+            double y_Min = boundingBox2D_County.Min.Y;
+            double y_Max = boundingBox2D_County.Max.Y;
+
+            if (boundingBox2D_Limit is not null)
+            {
+                x_Min = Math.Max(x_Min, boundingBox2D_Limit.Min.X);
+                x_Max = Math.Min(x_Max, boundingBox2D_Limit.Max.X);
+                y_Min = Math.Max(y_Min, boundingBox2D_Limit.Min.Y);
+                y_Max = Math.Min(y_Max, boundingBox2D_Limit.Max.Y);
+
+                if (x_Max < x_Min || y_Max < y_Min)
+                {
+                    return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, 0, 0, 0, 0, null);
+                }
+            }
+
+            double index_X_Min_Double = Math.Ceiling((x_Min - origin.X - tolerance) / gridSize);
+            double index_X_Max_Double = Math.Floor((x_Max - origin.X + tolerance) / gridSize);
+            double index_Y_Min_Double = Math.Ceiling((y_Min - origin.Y - tolerance) / gridSize);
+            double index_Y_Max_Double = Math.Floor((y_Max - origin.Y + tolerance) / gridSize);
+
+            if (double.IsNaN(index_X_Min_Double) || double.IsNaN(index_X_Max_Double) || double.IsNaN(index_Y_Min_Double) || double.IsNaN(index_Y_Max_Double))
+            {
+                return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, 0, 0, 0, 0, null);
+            }
+
+            if (index_X_Max_Double < index_X_Min_Double || index_Y_Max_Double < index_Y_Min_Double)
+            {
+                return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, 0, 0, 0, 0, null);
+            }
+
+            // Checked in double and before a single node is built. The whole rectangle is the ceiling rather than
+            // the land inside it, because knowing how much of it is land is itself the work being guarded against.
+            if ((index_X_Max_Double - index_X_Min_Double + 1) * (index_Y_Max_Double - index_Y_Min_Double + 1) > Constants.Terrain.MaximumNodeCount)
+            {
+                return null;
+            }
+
+            int index_X_Min = System.Convert.ToInt32(index_X_Min_Double);
+            int index_X_Max = System.Convert.ToInt32(index_X_Max_Double);
+            int index_Y_Min = System.Convert.ToInt32(index_Y_Min_Double);
+            int index_Y_Max = System.Convert.ToInt32(index_Y_Max_Double);
+
+            long expectedCount = 0;
+            long storedCount = 0;
+            long missingCount = 0;
+            long offGridCount = 0;
+            List<Point2D> point2Ds_Missing = [];
+
+            int block_X_Min = FloorDivide(index_X_Min, tileSize);
+            int block_X_Max = FloorDivide(index_X_Max, tileSize);
+            int block_Y_Min = FloorDivide(index_Y_Min, tileSize);
+            int block_Y_Max = FloorDivide(index_Y_Max, tileSize);
+
+            for (int block_X = block_X_Min; block_X <= block_X_Max; block_X++)
+            {
+                for (int block_Y = block_Y_Min; block_Y <= block_Y_Max; block_Y++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    int index_X_Low = Math.Max(index_X_Min, block_X * tileSize);
+                    int index_X_High = Math.Min(index_X_Max, ((block_X + 1) * tileSize) - 1);
+                    int index_Y_Low = Math.Max(index_Y_Min, block_Y * tileSize);
+                    int index_Y_High = Math.Min(index_Y_Max, ((block_Y + 1) * tileSize) - 1);
+
+                    if (index_X_High < index_X_Low || index_Y_High < index_Y_Low)
+                    {
+                        continue;
+                    }
+
+                    BoundingBox2D boundingBox2D_Tile = new(
+                        new Point2D(origin.X + (index_X_Low * gridSize), origin.Y + (index_Y_Low * gridSize)),
+                        new Point2D(origin.X + (index_X_High * gridSize), origin.Y + (index_Y_High * gridSize)));
+
+                    bool intersects = false;
+                    foreach (BoundingBox2D boundingBox2D_Subdivision in boundingBox2Ds_Subdivision)
+                    {
+                        if (boundingBox2D_Tile.InRange(boundingBox2D_Subdivision, tolerance))
+                        {
+                            intersects = true;
+                            break;
+                        }
+                    }
+
+                    if (!intersects)
+                    {
+                        continue;
+                    }
+
+                    List<Point2D>? point2Ds_Tile = boundingBox2D_Tile.Point2Ds(origin, gridSize, gridSize, tolerance);
+                    if (point2Ds_Tile is null || point2Ds_Tile.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    int?[]? subdivisionIds = polygonalFace2Ds_ById.IdsByPoint2Ds(point2Ds_Tile, tolerance);
+                    if (subdivisionIds is null)
+                    {
+                        continue;
+                    }
+
+                    HashSet<(int, int)> indexes_Stored = [];
+                    PointCloud3D? pointCloud3D = await terrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(boundingBox2D_Tile, countyId, null, tolerance, commandTimeout, cancellationToken);
+                    if (pointCloud3D is not null)
+                    {
+                        for (int i = 0; i < pointCloud3D.Count; i++)
+                        {
+                            if (!pointCloud3D.TryGetPoint(i, out double x, out double y, out double _))
+                            {
+                                continue;
+                            }
+
+                            if (new Point2D(x, y).TryGetGridIndex(origin, gridSize, gridSize, out int index_X_Stored, out int index_Y_Stored, tolerance))
+                            {
+                                indexes_Stored.Add((index_X_Stored, index_Y_Stored));
+                            }
+                            else
+                            {
+                                offGridCount++;
+                            }
+                        }
+                    }
+
+                    for (int i = 0; i < point2Ds_Tile.Count; i++)
+                    {
+                        // A node in no subdivision is outside the county's land. A rectangle laid over an irregular
+                        // outline always holds some, and a run was never going to sample them.
+                        if (subdivisionIds[i] is not int)
+                        {
+                            continue;
+                        }
+
+                        expectedCount++;
+
+                        Point2D point2D = point2Ds_Tile[i];
+                        if (point2D.TryGetGridIndex(origin, gridSize, gridSize, out int index_X_Point, out int index_Y_Point, tolerance) && indexes_Stored.Contains((index_X_Point, index_Y_Point)))
+                        {
+                            storedCount++;
+                            continue;
+                        }
+
+                        missingCount++;
+
+                        if (point2Ds_Missing.Count < limit)
+                        {
+                            point2Ds_Missing.Add(point2D);
+                        }
+                    }
+                }
+            }
+
+            return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, expectedCount, storedCount, missingCount, offGridCount, point2Ds_Missing);
+        }
+
+        /// <summary>
+        /// Resolves and checks the lattice a coverage or gap request asked to be measured against.
+        /// </summary>
+        /// <param name="gridSize">The lattice spacing as bound from the query string.</param>
+        /// <param name="originX">The X coordinate the lattice is anchored at.</param>
+        /// <param name="originY">The Y coordinate the lattice is anchored at.</param>
+        /// <param name="tolerance">The tolerance as bound from the query string.</param>
+        /// <param name="limit">The largest number of coordinates the request asked to be returned.</param>
+        /// <param name="origin">The resolved anchor of the lattice.</param>
+        /// <param name="tolerance_Temp">The resolved tolerance, capped at half a step so that a point can never be taken for a node of the neighbouring cell.</param>
+        /// <returns><see langword="true"/> when the lattice is usable; otherwise <see langword="false"/>.</returns>
+        private static bool TryGetLatticeParameters(double gridSize, double originX, double originY, double? tolerance, int limit, out Point2D? origin, out double tolerance_Temp)
+        {
+            origin = null;
+            tolerance_Temp = Core.Constants.Tolerance.MacroDistance;
+
+            if (!IsFinite(gridSize) || gridSize < Constants.Terrain.MinimumGridSize)
+            {
+                return false;
+            }
+
+            if (!IsFinite(originX) || !IsFinite(originY) || limit < 0)
+            {
+                return false;
+            }
+
+            if (!TryGetTolerance(tolerance, out tolerance_Temp))
+            {
+                return false;
+            }
+
+            // The same cap the sampling task applies. Anything larger would let a point of one cell answer for the
+            // node of the next, and a coverage would report stored what is in fact missing.
+            if (tolerance_Temp > gridSize / 2)
+            {
+                tolerance_Temp = gridSize / 2;
+            }
+
+            origin = new Point2D(originX, originY);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Divides rounding towards negative infinity, so that indexes below the origin fall into tiles the same way indexes above it do.
+        /// </summary>
+        /// <param name="value">The value to divide.</param>
+        /// <param name="divisor">The divisor, which has to be greater than zero.</param>
+        /// <returns>The quotient rounded towards negative infinity.</returns>
+        private static int FloorDivide(int value, int divisor)
+        {
+            int quotient = value / divisor;
+
+            return value % divisor != 0 && value < 0 ? quotient - 1 : quotient;
         }
 
         /// <summary>

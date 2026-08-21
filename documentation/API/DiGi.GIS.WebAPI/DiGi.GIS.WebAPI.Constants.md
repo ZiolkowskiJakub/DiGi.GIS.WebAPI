@@ -96,6 +96,21 @@ public static class Terrain
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Terrain
 ### Fields
 
+<a name='DiGi.GIS.WebAPI.Constants.Terrain.MaximumDensityCountyCount'></a>
+
+## Terrain\.MaximumDensityCountyCount Field
+
+The largest number of counties a single density request may name\.
+
+A density costs the reading of every subdivision outline of the county it is asked for, so this is what keeps one request from pulling the administrative geometry of the whole country. Sweeping every county means several requests, which is also what makes the sweep interruptible.
+
+```csharp
+public static readonly int MaximumDensityCountyCount;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
 <a name='DiGi.GIS.WebAPI.Constants.Terrain.MaximumEdgeLength'></a>
 
 ## Terrain\.MaximumEdgeLength Field
@@ -113,6 +128,36 @@ public static readonly double MaximumEdgeLength;
 #### Field Value
 [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
+<a name='DiGi.GIS.WebAPI.Constants.Terrain.MaximumGapExtent'></a>
+
+## Terrain\.MaximumGapExtent Field
+
+The longest side, in model units, a gap request may ask for\.
+
+Larger than the mesh endpoints admit, because a gap request returns coordinates rather than a triangulated surface and is meant for looking over a region at once. It is still bounded by [MaximumNodeCount](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.Terrain.MaximumNodeCount 'DiGi\.GIS\.WebAPI\.Constants\.Terrain\.MaximumNodeCount') at any given lattice.
+
+```csharp
+public static readonly double MaximumGapExtent;
+```
+
+#### Field Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.WebAPI.Constants.Terrain.MaximumNodeCount'></a>
+
+## Terrain\.MaximumNodeCount Field
+
+The largest number of lattice nodes a single coverage or gap request may generate\.
+
+Checked against the requested area before any node is built, so an area and a lattice that would together exceed it are refused rather than started. This is the cap that holds when a large county meets a fine lattice, both of which are individually allowed.
+
+```csharp
+public static readonly long MaximumNodeCount;
+```
+
+#### Field Value
+[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
 <a name='DiGi.GIS.WebAPI.Constants.Terrain.MaximumRadius'></a>
 
 ## Terrain\.MaximumRadius Field
@@ -125,6 +170,21 @@ The cap is a half-extent, so the largest search area is 4 km by 4 km. Counties a
 
 ```csharp
 public static readonly double MaximumRadius;
+```
+
+#### Field Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+<a name='DiGi.GIS.WebAPI.Constants.Terrain.MinimumGridSize'></a>
+
+## Terrain\.MinimumGridSize Field
+
+The finest lattice, in model units, a coverage or gap request may be measured against\.
+
+The work of those endpoints rises with the square of how fine the lattice is: they generate every node of a county and decide each one against its outlines. A county of 1 000 square kilometres is 100 000 nodes at 100 m and 10 million at 10 m, and below that the request stops being a diagnostic and becomes a denial of service that anyone can send.
+
+```csharp
+public static readonly double MinimumGridSize;
 ```
 
 #### Field Value

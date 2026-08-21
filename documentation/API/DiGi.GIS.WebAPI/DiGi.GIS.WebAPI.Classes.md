@@ -4710,6 +4710,22 @@ The converter used for reading terrain points from the PostgreSQL database\.
 `administrativeAreal2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.administrativeareal2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
 
 The converter used for resolving which counties an area covers\.
+### Fields
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.tileSize'></a>
+
+## TerrainController\.tileSize Field
+
+The edge of one work tile of a coverage walk, counted in lattice steps\.
+
+The default the sampling task writes with, so a coverage tile lines up with a sampled tile and a shortfall is reported against the same batches the run worked in.
+
+```csharp
+private const int tileSize = 128;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 ### Methods
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.CountyIdsAsync(DiGi.Geometry.Planar.Classes.BoundingBox2D,double,System.Threading.CancellationToken)'></a>
@@ -4746,6 +4762,340 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 The identifiers of the counties the area meets, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when it meets none\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.CoverageAsync\(int, Dictionary\<int,PolygonalFace2D\>, BoundingBox2D, double, Point2D, double, int, int, CancellationToken\) Method
+
+Compares the nodes of a lattice lying on a county's land against the points the terrain point table holds for it\.
+
+Walked in tiles rather than in one pass, the same way the sampling task walks a county: a county at a fine spacing is millions of nodes, and holding all of them and all of their stored counterparts at once is what a tile exists to avoid. The tiles are cut from the shared lattice in index space, so a node belongs to exactly one of them.
+
+The membership test, the node generation and the lattice all come from the helpers the sampling task itself uses. Deriving them again here would let the two drift, and a coverage that disagrees with the run it measures reports holes where nothing was ever going to be sampled.
+
+```csharp
+private System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.TerrainPointCoverageResult?> CoverageAsync(int countyId, System.Collections.Generic.Dictionary<int,DiGi.Geometry.Planar.Classes.PolygonalFace2D> polygonalFace2Ds_ById, DiGi.Geometry.Planar.Classes.BoundingBox2D? boundingBox2D_Limit, double gridSize, DiGi.Geometry.Planar.Classes.Point2D origin, double tolerance, int limit, int commandTimeout, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to measure\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken).polygonalFace2Ds_ById'></a>
+
+`polygonalFace2Ds_ById` [System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')
+
+The outlines of the county's subdivisions, keyed by subdivision identifier\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken).boundingBox2D_Limit'></a>
+
+`boundingBox2D_Limit` [DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.boundingbox2d 'DiGi\.Geometry\.Planar\.Classes\.BoundingBox2D')
+
+An area to confine the measurement to, or null for the whole county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken).gridSize'></a>
+
+`gridSize` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The lattice spacing\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken).origin'></a>
+
+`origin` [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')
+
+The point the lattice is anchored at\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The distance a stored point may lie from a node and still be counted as that node\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of missing coordinates to carry back\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each read of what a tile already holds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.CoverageAsync(int,System.Collections.Generic.Dictionary_int,DiGi.Geometry.Planar.Classes.PolygonalFace2D_,DiGi.Geometry.Planar.Classes.BoundingBox2D,double,DiGi.Geometry.Planar.Classes.Point2D,double,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCoverageResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.terrainpointcoverageresult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCoverageResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The coverage, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the area and the lattice together exceed [MaximumNodeCount](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.Terrain.MaximumNodeCount 'DiGi\.GIS\.WebAPI\.Constants\.Terrain\.MaximumNodeCount')\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.FloorDivide(int,int)'></a>
+
+## TerrainController\.FloorDivide\(int, int\) Method
+
+Divides rounding towards negative infinity, so that indexes below the origin fall into tiles the same way indexes above it do\.
+
+```csharp
+private static int FloorDivide(int value, int divisor);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.FloorDivide(int,int).value'></a>
+
+`value` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The value to divide\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.FloorDivide(int,int).divisor'></a>
+
+`divisor` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The divisor, which has to be greater than zero\.
+
+#### Returns
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')  
+The quotient rounded towards negative infinity\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.GetCountByCountyIdAsync\(int, bool, int, CancellationToken\) Method
+
+Asynchronously retrieves the number of terrain points stored for one county partition\.
+
+The cheapest question that can be asked of the store, and the one that separates a county that was never sampled from one that was sampled and holds nothing.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCountByCountyIdAsync(int countyId, bool estimated=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to count\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken).estimated'></a>
+
+`estimated` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Reads the planner's row estimate instead of counting the rows\. Far faster on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the count, or 404 when the county has no partition\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.GetCoverageByCountyIdAsync\(int, double, double, double, Nullable\<double\>, int, int, CancellationToken\) Method
+
+Asynchronously compares what one county partition holds against what a sampling run on the given lattice should have put there\.
+
+The question a density cannot answer. A density says how much of a county is missing; this says which nodes, so a run that stepped over a batch can be sent back for exactly those.
+
+The expected nodes are derived from the same subdivision outlines and the same lattice the sampling run itself decides against, so the two agree by construction. Nodes of the county's bounding rectangle that fall outside its land are not expected and not counted.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCoverageByCountyIdAsync(int countyId, double gridSize, double originX, double originY, System.Nullable<double> tolerance, int limit=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county partition to measure\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).gridSize'></a>
+
+`gridSize` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The lattice spacing, in metres\. Not finer than [MinimumGridSize](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.Terrain.MinimumGridSize 'DiGi\.GIS\.WebAPI\.Constants\.Terrain\.MinimumGridSize')\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).originX'></a>
+
+`originX` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The X coordinate the lattice is anchored at\. Leave at zero unless a run used something else\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).originY'></a>
+
+`originY` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The Y coordinate the lattice is anchored at\. Leave at zero unless a run used something else\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The distance a stored point may lie from a node and still be counted as that node, in metres\. Capped at half a step\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of missing coordinates returned\. The count itself is reported in full regardless\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the [DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCoverageResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.terrainpointcoverageresult 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCoverageResult') as JSON, or an error status\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetDensitiesByCountyIdsAsync(System.Collections.Generic.List_int_,System.Nullable_double_,int,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.GetDensitiesByCountyIdsAsync\(List\<int\>, Nullable\<double\>, int, CancellationToken\) Method
+
+Asynchronously reports how densely each of the named county partitions is sampled: the points it holds divided by the area of its subdivisions\.
+
+The cheap sweep. It costs one aggregate per partition and the outlines of the counties named, where deciding the same question node by node costs the generating and the looking up of the whole lattice - so this is what narrows a country down to the few counties worth [GetCoverageByCountyIdAsync\(int, double, double, double, Nullable&lt;double&gt;, int, int, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.TerrainController\.GetCoverageByCountyIdAsync\(int, double, double, double, System\.Nullable\<double\>, int, int, System\.Threading\.CancellationToken\)').
+
+Supplying [gridSize](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TerrainController.GetDensitiesByCountyIdsAsync(System.Collections.Generic.List_int_,System.Nullable_double_,int,System.Threading.CancellationToken).gridSize 'DiGi\.GIS\.WebAPI\.Classes\.TerrainController\.GetDensitiesByCountyIdsAsync\(System\.Collections\.Generic\.List\<int\>, System\.Nullable\<double\>, int, System\.Threading\.CancellationToken\)\.gridSize') is what turns the density into a completeness. Without it the figure to read is the spacing, which needs no knowledge of what a run was asked for.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetDensitiesByCountyIdsAsync(System.Collections.Generic.List<int>? countyIds, System.Nullable<double> gridSize, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetDensitiesByCountyIdsAsync(System.Collections.Generic.List_int_,System.Nullable_double_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+The identifiers of the county partitions to measure, repeated once per county\. At least one and at most [MaximumDensityCountyCount](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.Terrain.MaximumDensityCountyCount 'DiGi\.GIS\.WebAPI\.Constants\.Terrain\.MaximumDensityCountyCount')\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetDensitiesByCountyIdsAsync(System.Collections.Generic.List_int_,System.Nullable_double_,int,System.Threading.CancellationToken).gridSize'></a>
+
+`gridSize` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The lattice spacing a sampling run used, in metres, when it is known\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetDensitiesByCountyIdsAsync(System.Collections.Generic.List_int_,System.Nullable_double_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetDensitiesByCountyIdsAsync(System.Collections.Generic.List_int_,System.Nullable_double_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the densities as JSON, or an error status\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.GetGapsByBoundingBoxAsync\(double, double, double, double, double, double, double, Nullable\<double\>, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the lattice nodes inside a rectangle that lie on a county's land and that the terrain point table holds no point for\.
+
+Where [GetCoverageByCountyIdAsync\(int, double, double, double, Nullable&lt;double&gt;, int, int, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.TerrainController\.GetCoverageByCountyIdAsync\(int, double, double, double, System\.Nullable\<double\>, int, int, System\.Threading\.CancellationToken\)') answers for a whole county, this answers for an area - which is what a coverage reporting a shortfall is followed by. Every county the rectangle meets is measured, so a hole spanning a county boundary is reported once and whole.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetGapsByBoundingBoxAsync(double x_1, double y_1, double x_2, double y_2, double gridSize, double originX, double originY, System.Nullable<double> tolerance, int limit=1000, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).x_1'></a>
+
+`x_1` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The X coordinate of the first corner, in PL\-1992 \(EPSG:2180\) metres\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).y_1'></a>
+
+`y_1` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The Y coordinate of the first corner, in PL\-1992 \(EPSG:2180\) metres\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).x_2'></a>
+
+`x_2` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The X coordinate of the second corner, in PL\-1992 \(EPSG:2180\) metres\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).y_2'></a>
+
+`y_2` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The Y coordinate of the second corner, in PL\-1992 \(EPSG:2180\) metres\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).gridSize'></a>
+
+`gridSize` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The lattice spacing, in metres\. Not finer than [MinimumGridSize](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.Terrain.MinimumGridSize 'DiGi\.GIS\.WebAPI\.Constants\.Terrain\.MinimumGridSize')\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).originX'></a>
+
+`originX` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The X coordinate the lattice is anchored at\. Leave at zero unless a run used something else\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).originY'></a>
+
+`originY` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The Y coordinate the lattice is anchored at\. Leave at zero unless a run used something else\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).tolerance'></a>
+
+`tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The distance a stored point may lie from a node and still be counted as that node, in metres\. Capped at half a step\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of missing coordinates returned\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the missing coordinates as JSON, or an error status\.
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetMesh3DByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Threading.CancellationToken)'></a>
 
@@ -4855,6 +5205,43 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the [DiGi\.Geometry\.Spatial\.Classes\.Mesh3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.mesh3d 'DiGi\.Geometry\.Spatial\.Classes\.Mesh3D') as JSON, or an error status\.
 
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetSummariesByCountyIdsAsync(System.Collections.Generic.List_int_,int,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.GetSummariesByCountyIdsAsync\(List\<int\>, int, CancellationToken\) Method
+
+Asynchronously summarises what each of the named county partitions holds: how many points, over what extent, at what elevations, filed under how many subdivisions, and when they were written\.
+
+The account a sampling run leaves behind. The run keeps its tallies in memory and discards them when it ends, so this is what remains to read afterwards - and ordering the result by [DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCountyResult\.CreatedAt\_First](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.terrainpointcountyresult.createdat_first 'DiGi\.GIS\.PostgreSQL\.Classes\.TerrainPointCountyResult\.CreatedAt\_First') reconstructs how far a run got, because a run walks the counties in ascending identifier order.
+
+Naming no county summarises every partition. Counties holding no point are absent from the result rather than present with a zero.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetSummariesByCountyIdsAsync(System.Collections.Generic.List<int>? countyIds, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetSummariesByCountyIdsAsync(System.Collections.Generic.List_int_,int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+The identifiers of the county partitions to summarise, repeated once per county\. Omit to summarise every one\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetSummariesByCountyIdsAsync(System.Collections.Generic.List_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetSummariesByCountyIdsAsync(System.Collections.Generic.List_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the summaries as JSON, or an error status\.
+
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.IsFinite(double)'></a>
 
 ## TerrainController\.IsFinite\(double\) Method
@@ -4900,6 +5287,110 @@ The terrain points gathered for the requested area\.
 #### Returns
 [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the [DiGi\.Geometry\.Spatial\.Classes\.Mesh3D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.spatial.classes.mesh3d 'DiGi\.Geometry\.Spatial\.Classes\.Mesh3D') as JSON, or a not found status\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.PolygonalFace2DsByIdAsync(int,System.Threading.CancellationToken)'></a>
+
+## TerrainController\.PolygonalFace2DsByIdAsync\(int, CancellationToken\) Method
+
+Reads the outlines of a county's subdivisions, keyed by subdivision identifier\.
+
+Read from the administrative database rather than the terrain one, and derived through the same helper the sampling task uses, so an area measured here is the area a run would have sampled.
+
+```csharp
+private System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,DiGi.Geometry.Planar.Classes.PolygonalFace2D>?> PolygonalFace2DsByIdAsync(int countyId, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.PolygonalFace2DsByIdAsync(int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county whose subdivisions are wanted\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.PolygonalFace2DsByIdAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The outlines keyed by subdivision identifier, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when the county has none\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TerrainPointTableExistsAsync()'></a>
+
+## TerrainController\.TerrainPointTableExistsAsync\(\) Method
+
+Reports whether anything has ever been written to the terrain point store\.
+
+Asked once per request, before a walk that would otherwise send a query per tile against a table
+            that does not exist. An undefined relation reaches a caller as a server fault, where the plain fact is
+            that nothing has been sampled yet - which is an answer, and one a fresh deployment gives.
+
+```csharp
+private System.Threading.Tasks.Task<bool> TerrainPointTableExistsAsync();
+```
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+[true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool') when the terrain point table exists; otherwise [false](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool')\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetLatticeParameters(double,double,double,System.Nullable_double_,int,DiGi.Geometry.Planar.Classes.Point2D,double)'></a>
+
+## TerrainController\.TryGetLatticeParameters\(double, double, double, Nullable\<double\>, int, Point2D, double\) Method
+
+Resolves and checks the lattice a coverage or gap request asked to be measured against\.
+
+```csharp
+private static bool TryGetLatticeParameters(double gridSize, double originX, double originY, System.Nullable<double> tolerance, int limit, out DiGi.Geometry.Planar.Classes.Point2D? origin, out double tolerance_Temp);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetLatticeParameters(double,double,double,System.Nullable_double_,int,DiGi.Geometry.Planar.Classes.Point2D,double).gridSize'></a>
+
+`gridSize` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The lattice spacing as bound from the query string\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetLatticeParameters(double,double,double,System.Nullable_double_,int,DiGi.Geometry.Planar.Classes.Point2D,double).originX'></a>
+
+`originX` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The X coordinate the lattice is anchored at\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetLatticeParameters(double,double,double,System.Nullable_double_,int,DiGi.Geometry.Planar.Classes.Point2D,double).originY'></a>
+
+`originY` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The Y coordinate the lattice is anchored at\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetLatticeParameters(double,double,double,System.Nullable_double_,int,DiGi.Geometry.Planar.Classes.Point2D,double).tolerance'></a>
+
+`tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The tolerance as bound from the query string\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetLatticeParameters(double,double,double,System.Nullable_double_,int,DiGi.Geometry.Planar.Classes.Point2D,double).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of coordinates the request asked to be returned\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetLatticeParameters(double,double,double,System.Nullable_double_,int,DiGi.Geometry.Planar.Classes.Point2D,double).origin'></a>
+
+`origin` [DiGi\.Geometry\.Planar\.Classes\.Point2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.point2d 'DiGi\.Geometry\.Planar\.Classes\.Point2D')
+
+The resolved anchor of the lattice\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetLatticeParameters(double,double,double,System.Nullable_double_,int,DiGi.Geometry.Planar.Classes.Point2D,double).tolerance_Temp'></a>
+
+`tolerance_Temp` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The resolved tolerance, capped at half a step so that a point can never be taken for a node of the neighbouring cell\.
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+[true](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool') when the lattice is usable; otherwise [false](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/bool 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/builtin\-types/bool')\.
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.TryGetTolerance(System.Nullable_double_,double)'></a>
 
