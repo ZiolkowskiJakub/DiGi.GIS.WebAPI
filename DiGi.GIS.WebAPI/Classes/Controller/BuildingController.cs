@@ -45,6 +45,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building items to be updated.</param>
         /// <param name="code">The identification code required for the update operation.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation.</returns>
         [HttpPost("updateitems", Name = $"{nameof(BuildingController)}_{nameof(UpdateItemsAsync)}")]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
@@ -52,7 +53,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string? code)
+        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string? code, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingController), nameof(UpdateItemsAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
@@ -66,7 +67,7 @@ namespace DiGi.GIS.WebAPI.Classes
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuilding)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building update not allowed");
-                return BadRequest();
+                return Unauthorized();
             }
 
             if (administrativeAreal2DPostgreSQLConverter is null)
@@ -81,7 +82,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, PostgreSQL.Enums.AdministrativeArealType.County);
+            HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, PostgreSQL.Enums.AdministrativeArealType.County, cancellationToken);
             if (countyIds is null || countyIds.Count == 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' was not found in database", code);
@@ -98,7 +99,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each building is being filed under the part it belongs to", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
             }
 
-            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved);
+            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved, cancellationToken);
         }
 
         /// <summary>
@@ -110,6 +111,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building items to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the buildings belong to. Normally every polygon part of one county.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation.</returns>
         [HttpPost("updateitemsbycountyids", Name = $"{nameof(BuildingController)}_{nameof(UpdateItemsByCountyIdsAsync)}")]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
@@ -117,7 +119,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds)
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingController), nameof(UpdateItemsByCountyIdsAsync));
             Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
@@ -125,7 +127,7 @@ namespace DiGi.GIS.WebAPI.Classes
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuilding)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building update not allowed");
-                return BadRequest();
+                return Unauthorized();
             }
 
             if (countyIds is null || countyIds.Length == 0)
@@ -239,6 +241,106 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
+        /// Asynchronously checks for the existence of a collection of building references, optionally filtered by a county identifier.
+        /// </summary>
+        /// <param name="references">A list of strings representing the building references to be checked.</param>
+        /// <param name="countyId">The optional county identifier used to filter the search.</param>
+        /// <param name="inverted">A boolean indicating whether to return missing references (true) or existing references (false).</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>An <see cref="IActionResult"/> containing the set of matching reference strings.</returns>
+        [HttpPost("containsbyreferences", Name = $"{nameof(BuildingController)}_{nameof(ContainsByReferencesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(HashSet<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ContainsByReferencesAsync([FromBody] List<string>? references, [FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "inverted")] bool? inverted, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingController), nameof(ContainsByReferencesAsync));
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("Inverted: {Inverted}", (inverted ?? false).ToString());
+
+            if (references is null || references.Count == 0)
+            {
+                Serilog.Modify.Log("No references to check");
+                return BadRequest("The references list cannot be empty.");
+            }
+
+            if (buildingPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "BuildingPostgreSQLConverter is null");
+                return BadRequest();
+            }
+
+            HashSet<string> uniqueReferences = [.. references.Where(r => !string.IsNullOrWhiteSpace(r))];
+            if (uniqueReferences.Count == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "References could not be converted or are empty");
+                return BadRequest("Provided list contains only empty values.");
+            }
+
+            Serilog.Modify.Log("References count: {Count}", uniqueReferences.Count);
+            Serilog.Modify.Log("Query database starting");
+
+            try
+            {
+                HashSet<string>? referencesExisting = await buildingPostgreSQLConverter.ContainsByReferencesAsync(uniqueReferences, countyId, inverted ?? false, cancellationToken: cancellationToken);
+                referencesExisting ??= [];
+
+                return Ok(referencesExisting);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the count of building records from the database, optionally filtered by a county identifier.
+        /// </summary>
+        /// <param name="countyId">The optional integer identifier of the county to filter the count; if null, the count is retrieved across all counties.</param>
+        /// <param name="estimated">A boolean value indicating whether to read the estimated count from database statistics for faster execution on large partitions.</param>
+        /// <param name="analyze">A boolean value indicating whether to run an analysis operation before fetching the estimated count to ensure higher accuracy.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>An <see cref="IActionResult"/> containing the row count as a long integer, or 404 when the county partition does not exist.</returns>
+        [HttpGet("count", Name = $"{nameof(BuildingController)}_{nameof(GetCountAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetCountAsync([FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(BuildingController), nameof(GetCountAsync), countyId?.ToString() ?? string.Empty);
+
+            if (buildingPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "BuildingPostgreSQLConverter is null");
+                return BadRequest();
+            }
+
+            long count;
+            try
+            {
+                count = estimated
+                    ? await buildingPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, cancellationToken)
+                    : await buildingPostgreSQLConverter.GetCountAsync(countyId, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            if (count < 0)
+            {
+                Serilog.Modify.Log("County {CountyId} has no building partition", countyId?.ToString() ?? string.Empty);
+                return NotFound();
+            }
+
+            return Ok(count);
+        }
+
+        /// <summary>
         /// Asynchronously retrieves buildings based on a provided reference and an optional county identifier.
         /// </summary>
         /// <param name="reference">The unique reference string used to identify the buildings.</param>
@@ -246,10 +348,11 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itemsbyreference", Name = $"{nameof(BuildingController)}_{nameof(GetItemsByReferenceAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<CityGML.Classes.Building>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> GetItemsByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetItemsByReferenceAsync([FromQuery(Name = "reference")] string? reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingController), nameof(GetItemsByReferenceAsync));
 
@@ -310,10 +413,11 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itembyreference", Name = $"{nameof(BuildingController)}_{nameof(GetItemByReferenceAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(CityGML.Classes.Building), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> GetItemByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "x")] double? x = null, [FromQuery(Name = "y")] double? y = null, [FromQuery(Name = "z")] double? z = null, [FromQuery(Name = "maxdistance")] double? maxDistance = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetItemByReferenceAsync([FromQuery(Name = "reference")] string? reference, [FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "x")] double? x = null, [FromQuery(Name = "y")] double? y = null, [FromQuery(Name = "z")] double? z = null, [FromQuery(Name = "maxdistance")] double? maxDistance = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingController), nameof(GetItemByReferenceAsync));
 
@@ -390,6 +494,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("itemsbyreferences", Name = $"{nameof(BuildingController)}_{nameof(GetItemsByReferencesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<CityGML.Classes.Building>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetItemsByReferencesAsync([FromBody] IEnumerable<string>? references, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
@@ -471,6 +576,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="cancellationToken">The <see cref="T:System.Threading.CancellationToken" /> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itembylatestcreatedat", Name = $"{nameof(BuildingController)}_{nameof(GetItemByLatestCreatedAtAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(CityGML.Classes.Building), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
