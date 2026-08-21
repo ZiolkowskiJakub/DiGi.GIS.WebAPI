@@ -1,4 +1,4 @@
-﻿using DiGi.Analytical.Building.Classes;
+using DiGi.Analytical.Building.Classes;
 using DiGi.Geometry.Planar.Classes;
 using DiGi.GIS.Analytical.Enums;
 using DiGi.GIS.PostgreSQL;
@@ -190,7 +190,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, limit, cancellationToken);
+            List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, limit, true, cancellationToken);
             if (buildingModels_PostgreSQL is null || buildingModels_PostgreSQL.Count == 0)
             {
                 return NotFound();

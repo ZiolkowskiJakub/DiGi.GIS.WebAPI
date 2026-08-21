@@ -388,7 +388,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<Building2DOccupancyData>? building2DOccupancyDatas_PostgreSQL = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferenceAsync(reference, countyId, null, cancellationToken);
+            List<Building2DOccupancyData>? building2DOccupancyDatas_PostgreSQL = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferenceAsync(reference, countyId, null, true, cancellationToken);
 
             if (building2DOccupancyDatas_PostgreSQL is null || building2DOccupancyDatas_PostgreSQL.Count == 0)
             {

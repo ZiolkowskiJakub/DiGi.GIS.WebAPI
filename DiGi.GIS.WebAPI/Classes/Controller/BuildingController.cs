@@ -268,7 +268,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<Building>? buildings_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingsByReferenceAsync(reference, countyId, cancellationToken);
+            List<Building>? buildings_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingsByReferenceAsync(reference, countyId, true, cancellationToken);
 
             if (buildings_PostgreSQL is null || buildings_PostgreSQL.Count == 0)
             {
@@ -409,7 +409,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<Building>? buildings_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingsByReferencesAsync(references, countyId, cancellationToken);
+            List<Building>? buildings_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingsByReferencesAsync(references, countyId, true, cancellationToken);
 
             List<CityGML.Classes.Building> buildings = [];
 
