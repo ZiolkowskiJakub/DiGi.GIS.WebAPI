@@ -46,6 +46,39 @@ ALL complex functionalities, including operations on classes, interfaces, and en
 
 ---
 
+## 🗻 Terrain Meshes — What a Served Surface Does and Does Not Mean
+
+`gis/terrain/mesh3dbycircle` and `gis/terrain/mesh3dbyboundingbox` triangulate the stored elevation points
+with `HeightFieldPointCloud3DMeshSolver`. Long triangles that merely span the convex hull are removed by
+eroding inwards from the boundary — `Constants.Terrain.EdgeLengthFactor` (**2.5**, a multiple of local point
+spacing rather than a fixed distance, so it survives a lattice that is sampled more finely in some places
+than others).
+
+**A served terrain mesh therefore never contains a hole, and that is a deliberate trade:**
+
+* A node the sampling run failed to store is **spanned**, and reads as a slight flat spot rather than
+  tearing a gap in the surface. This is the intended behaviour — the store does lose the occasional point,
+  and one absent node used to open a visible hole roughly 200 m across.
+* The same is true of a void that is genuinely empty and fully enclosed by data — a lake, or a pocket the
+  elevation service has no coverage for. It is spanned flat, because nothing over it ever reaches the
+  boundary to be removed.
+
+So the mesh is a surface to **render**, not evidence that ground was measured everywhere it has vertices.
+Where that distinction matters, check coverage directly rather than inferring it from the mesh:
+
+* `gis/terrain/coveragebycountyid` — expected, stored, missing and off-grid node counts for a county.
+* `gis/terrain/gapsbyboundingbox` — the coordinates of the nodes actually missing from an area.
+* `gis/terrain/summariesbycountyids` — includes `ZeroElevationCount`, the points sitting at exactly
+  `z = 0` because the upstream service answers zero outside its own coverage. 52 222 of the 33.4 M stored
+  points are such sentinels, so open water currently renders as a flat plateau at sea level rather than as
+  a gap — tracked in [DiGi.GIS.PostgreSQL#25](https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/25).
+
+Emptiness that reaches the outer edge of the request *is* still cleared: at a real coverage edge the
+erosion removes a 2 759 m span across open water while capping the longest surviving edge at 224 m. Full
+description of the rule and its trade-off lives with the solver, in the `DiGi.Geometry.PointCloud` README.
+
+---
+
 ## 💻 Coding Guidelines for Developers & AI Agents
 
 To maintain codebase health, performance, and compatibility within Visual Studio 2026 / C# 10+ environments, all developers and AI agents must strictly comply with these guidelines.

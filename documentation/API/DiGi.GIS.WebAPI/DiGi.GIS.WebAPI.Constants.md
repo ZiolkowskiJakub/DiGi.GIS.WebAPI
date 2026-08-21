@@ -96,6 +96,27 @@ public static class Terrain
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Terrain
 ### Fields
 
+<a name='DiGi.GIS.WebAPI.Constants.Terrain.EdgeLengthFactor'></a>
+
+## Terrain\.EdgeLengthFactor Field
+
+How many times its own vertex spacing a terrain mesh triangle's longest edge may reach before it is treated as bridging no data\.
+
+A Delaunay triangulation covers the convex hull of its sites, so without a limit the mesh bridges county edges, no-data gaps and concave outlines with a skirt of long thin triangles that look like terrain and are not.
+
+Expressed as a multiple of local spacing rather than as a distance, because the stored lattice is not the only sampling this has to survive: points added where the ground moves sharply make one area denser than another, and any fixed distance is then simultaneously too tight for the coarse part and too loose for the fine part. A factor measures each triangle against its own vertices and needs no retuning when the sampling changes.
+
+The consequence to know when reading a served mesh: an empty area entirely enclosed by terrain - a lake, or a pocket the elevation service has no data for - is now spanned flat rather than left open, because nothing over it reaches the boundary to be removed. That is acceptable for a surface that is rendered; it is not a licence to treat the mesh as measured ground everywhere it has vertices.
+
+On the present 100 m lattice this behaves like a limit of about 250 m. It only governs the outer edge: [DiGi\.Geometry\.PointCloud\.Core\.Query\.ErodedIndexes\(System\.Double\[\],System\.Double\[\],System\.Collections\.Generic\.List\{System\.Int32\[\]\},System\.Double\)](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.pointcloud.core.query.erodedindexes#digi-geometry-pointcloud-core-query-erodedindexes(system-double[]-system-double[]-system-collections-generic-list{system-int32[]}-system-double) 'DiGi\.Geometry\.PointCloud\.Core\.Query\.ErodedIndexes\(System\.Double\[\],System\.Double\[\],System\.Collections\.Generic\.List\{System\.Int32\[\]\},System\.Double\)') removes triangles from the boundary inwards, so a point missing from the interior keeps the triangles around it and reads as a flat spot rather than a hole.
+
+```csharp
+public static readonly double EdgeLengthFactor;
+```
+
+#### Field Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
 <a name='DiGi.GIS.WebAPI.Constants.Terrain.MaximumDensityCountyCount'></a>
 
 ## Terrain\.MaximumDensityCountyCount Field
@@ -110,23 +131,6 @@ public static readonly int MaximumDensityCountyCount;
 
 #### Field Value
 [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
-
-<a name='DiGi.GIS.WebAPI.Constants.Terrain.MaximumEdgeLength'></a>
-
-## Terrain\.MaximumEdgeLength Field
-
-The longest edge, in model units, a terrain mesh triangle may have\.
-
-A Delaunay triangulation covers the convex hull of its sites, so without a limit the mesh bridges county edges, no-data gaps and concave outlines with a skirt of long thin triangles that look like terrain and are not.
-
-The value has to clear the diagonal of the coarsest lattice cell or it would shred genuine data: a regular 100 m lattice needs edges of 141.4 m. The cost of clearing it is that on a 10 m lattice a real gap of up to this width is still bridged.
-
-```csharp
-public static readonly double MaximumEdgeLength;
-```
-
-#### Field Value
-[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 <a name='DiGi.GIS.WebAPI.Constants.Terrain.MaximumGapExtent'></a>
 

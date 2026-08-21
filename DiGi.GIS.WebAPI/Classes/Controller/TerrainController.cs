@@ -411,7 +411,7 @@ namespace DiGi.GIS.WebAPI.Classes
                     return NotFound();
                 }
 
-                terrainPointCoverageResult = await CoverageAsync(countyId, polygonalFace2Ds_ById, null, gridSize, origin, tolerance_Temp, limit, commandTimeout, cancellationToken);
+                terrainPointCoverageResult = await terrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(countyId, polygonalFace2Ds_ById, null, gridSize, origin, tolerance_Temp, limit, Constants.Terrain.MaximumNodeCount, tileSize, commandTimeout, cancellationToken);
             }
             catch (Exception exception)
             {
@@ -509,7 +509,7 @@ namespace DiGi.GIS.WebAPI.Classes
                         continue;
                     }
 
-                    TerrainPointCoverageResult? terrainPointCoverageResult = await CoverageAsync(countyId, polygonalFace2Ds_ById, boundingBox2D, gridSize, origin, tolerance_Temp, limit - point2Ds_Missing.Count, commandTimeout, cancellationToken);
+                    TerrainPointCoverageResult? terrainPointCoverageResult = await terrainPointPostgreSQLConverter.GetCoverageByCountyIdAsync(countyId, polygonalFace2Ds_ById, boundingBox2D, gridSize, origin, tolerance_Temp, limit - point2Ds_Missing.Count, Constants.Terrain.MaximumNodeCount, tileSize, commandTimeout, cancellationToken);
                     if (terrainPointCoverageResult is null)
                     {
                         Serilog.Modify.Log("The requested area at grid {GridSize} exceeds the {MaximumNodeCount} node ceiling", gridSize, Constants.Terrain.MaximumNodeCount);
@@ -578,11 +578,12 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             // A decimation grid finer than the source spacing walks every point and removes none, and the
-            // stored lattice is already regular at 10 m or coarser, so there is nothing to decimate.
-            // Lowest rather than Highest because this is bare ground, not a surface model of canopy and
-            // roofs. The edge limit is what stops Delaunay bridging county edges and no-data gaps with a
-            // skirt of long thin triangles spanning the convex hull.
-            HeightFieldPointCloud3DMeshSolver heightFieldPointCloud3DMeshSolver = new(0, Constants.Terrain.MaximumEdgeLength, PointCloudHeightSelection.Lowest);
+            // stored lattice is already regular at 10 m or coarser, so there is nothing to decimate. With no
+            // decimation the height selection never runs; Lowest is passed because it is what this path would
+            // want - bare ground rather than a surface model of canopy and roofs - if a grid were ever set.
+            // No fixed edge limit: a factor stops Delaunay bridging county edges and no-data gaps with a skirt
+            // of long thin triangles, without opening a hole around a point the store happens to be missing.
+            HeightFieldPointCloud3DMeshSolver heightFieldPointCloud3DMeshSolver = new(0, 0, PointCloudHeightSelection.Lowest, edgeLengthFactor: Constants.Terrain.EdgeLengthFactor);
 
             Mesh3D? mesh3D = pointCloud3D.Mesh3D(heightFieldPointCloud3DMeshSolver);
             if (mesh3D is null)
@@ -638,195 +639,6 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Compares the nodes of a lattice lying on a county's land against the points the terrain point table holds for it.
-        /// <para>Walked in tiles rather than in one pass, the same way the sampling task walks a county: a county at a fine spacing is millions of nodes, and holding all of them and all of their stored counterparts at once is what a tile exists to avoid. The tiles are cut from the shared lattice in index space, so a node belongs to exactly one of them.</para>
-        /// <para>The membership test, the node generation and the lattice all come from the helpers the sampling task itself uses. Deriving them again here would let the two drift, and a coverage that disagrees with the run it measures reports holes where nothing was ever going to be sampled.</para>
-        /// </summary>
-        /// <param name="countyId">The identifier of the county partition to measure.</param>
-        /// <param name="polygonalFace2Ds_ById">The outlines of the county's subdivisions, keyed by subdivision identifier.</param>
-        /// <param name="boundingBox2D_Limit">An area to confine the measurement to, or null for the whole county.</param>
-        /// <param name="gridSize">The lattice spacing.</param>
-        /// <param name="origin">The point the lattice is anchored at.</param>
-        /// <param name="tolerance">The distance a stored point may lie from a node and still be counted as that node.</param>
-        /// <param name="limit">The largest number of missing coordinates to carry back.</param>
-        /// <param name="commandTimeout">The timeout in seconds for each read of what a tile already holds.</param>
-        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
-        /// <returns>The coverage, or <see langword="null"/> when the area and the lattice together exceed <see cref="Constants.Terrain.MaximumNodeCount"/>.</returns>
-        private async Task<TerrainPointCoverageResult?> CoverageAsync(int countyId, Dictionary<int, PolygonalFace2D> polygonalFace2Ds_ById, BoundingBox2D? boundingBox2D_Limit, double gridSize, Point2D origin, double tolerance, int limit, int commandTimeout, CancellationToken cancellationToken)
-        {
-            List<BoundingBox2D> boundingBox2Ds_Subdivision = [];
-            foreach (PolygonalFace2D polygonalFace2D in polygonalFace2Ds_ById.Values)
-            {
-                if (polygonalFace2D.GetBoundingBox() is BoundingBox2D boundingBox2D_Subdivision)
-                {
-                    boundingBox2Ds_Subdivision.Add(boundingBox2D_Subdivision);
-                }
-            }
-
-            if (boundingBox2Ds_Subdivision.Count == 0)
-            {
-                return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, 0, 0, 0, 0, null);
-            }
-
-            BoundingBox2D boundingBox2D_County = new(boundingBox2Ds_Subdivision);
-
-            double x_Min = boundingBox2D_County.Min.X;
-            double x_Max = boundingBox2D_County.Max.X;
-            double y_Min = boundingBox2D_County.Min.Y;
-            double y_Max = boundingBox2D_County.Max.Y;
-
-            if (boundingBox2D_Limit is not null)
-            {
-                x_Min = Math.Max(x_Min, boundingBox2D_Limit.Min.X);
-                x_Max = Math.Min(x_Max, boundingBox2D_Limit.Max.X);
-                y_Min = Math.Max(y_Min, boundingBox2D_Limit.Min.Y);
-                y_Max = Math.Min(y_Max, boundingBox2D_Limit.Max.Y);
-
-                if (x_Max < x_Min || y_Max < y_Min)
-                {
-                    return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, 0, 0, 0, 0, null);
-                }
-            }
-
-            double index_X_Min_Double = Math.Ceiling((x_Min - origin.X - tolerance) / gridSize);
-            double index_X_Max_Double = Math.Floor((x_Max - origin.X + tolerance) / gridSize);
-            double index_Y_Min_Double = Math.Ceiling((y_Min - origin.Y - tolerance) / gridSize);
-            double index_Y_Max_Double = Math.Floor((y_Max - origin.Y + tolerance) / gridSize);
-
-            if (double.IsNaN(index_X_Min_Double) || double.IsNaN(index_X_Max_Double) || double.IsNaN(index_Y_Min_Double) || double.IsNaN(index_Y_Max_Double))
-            {
-                return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, 0, 0, 0, 0, null);
-            }
-
-            if (index_X_Max_Double < index_X_Min_Double || index_Y_Max_Double < index_Y_Min_Double)
-            {
-                return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, 0, 0, 0, 0, null);
-            }
-
-            // Checked in double and before a single node is built. The whole rectangle is the ceiling rather than
-            // the land inside it, because knowing how much of it is land is itself the work being guarded against.
-            if ((index_X_Max_Double - index_X_Min_Double + 1) * (index_Y_Max_Double - index_Y_Min_Double + 1) > Constants.Terrain.MaximumNodeCount)
-            {
-                return null;
-            }
-
-            int index_X_Min = System.Convert.ToInt32(index_X_Min_Double);
-            int index_X_Max = System.Convert.ToInt32(index_X_Max_Double);
-            int index_Y_Min = System.Convert.ToInt32(index_Y_Min_Double);
-            int index_Y_Max = System.Convert.ToInt32(index_Y_Max_Double);
-
-            long expectedCount = 0;
-            long storedCount = 0;
-            long missingCount = 0;
-            long offGridCount = 0;
-            List<Point2D> point2Ds_Missing = [];
-
-            int block_X_Min = FloorDivide(index_X_Min, tileSize);
-            int block_X_Max = FloorDivide(index_X_Max, tileSize);
-            int block_Y_Min = FloorDivide(index_Y_Min, tileSize);
-            int block_Y_Max = FloorDivide(index_Y_Max, tileSize);
-
-            for (int block_X = block_X_Min; block_X <= block_X_Max; block_X++)
-            {
-                for (int block_Y = block_Y_Min; block_Y <= block_Y_Max; block_Y++)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    int index_X_Low = Math.Max(index_X_Min, block_X * tileSize);
-                    int index_X_High = Math.Min(index_X_Max, ((block_X + 1) * tileSize) - 1);
-                    int index_Y_Low = Math.Max(index_Y_Min, block_Y * tileSize);
-                    int index_Y_High = Math.Min(index_Y_Max, ((block_Y + 1) * tileSize) - 1);
-
-                    if (index_X_High < index_X_Low || index_Y_High < index_Y_Low)
-                    {
-                        continue;
-                    }
-
-                    BoundingBox2D boundingBox2D_Tile = new(
-                        new Point2D(origin.X + (index_X_Low * gridSize), origin.Y + (index_Y_Low * gridSize)),
-                        new Point2D(origin.X + (index_X_High * gridSize), origin.Y + (index_Y_High * gridSize)));
-
-                    bool intersects = false;
-                    foreach (BoundingBox2D boundingBox2D_Subdivision in boundingBox2Ds_Subdivision)
-                    {
-                        if (boundingBox2D_Tile.InRange(boundingBox2D_Subdivision, tolerance))
-                        {
-                            intersects = true;
-                            break;
-                        }
-                    }
-
-                    if (!intersects)
-                    {
-                        continue;
-                    }
-
-                    List<Point2D>? point2Ds_Tile = boundingBox2D_Tile.Point2Ds(origin, gridSize, gridSize, tolerance);
-                    if (point2Ds_Tile is null || point2Ds_Tile.Count == 0)
-                    {
-                        continue;
-                    }
-
-                    int?[]? subdivisionIds = polygonalFace2Ds_ById.IdsByPoint2Ds(point2Ds_Tile, tolerance);
-                    if (subdivisionIds is null)
-                    {
-                        continue;
-                    }
-
-                    HashSet<(int, int)> indexes_Stored = [];
-                    PointCloud3D? pointCloud3D = await terrainPointPostgreSQLConverter.GetPointCloud3DByBoundingBox2DAsync(boundingBox2D_Tile, countyId, null, tolerance, commandTimeout, cancellationToken);
-                    if (pointCloud3D is not null)
-                    {
-                        for (int i = 0; i < pointCloud3D.Count; i++)
-                        {
-                            if (!pointCloud3D.TryGetPoint(i, out double x, out double y, out double _))
-                            {
-                                continue;
-                            }
-
-                            if (new Point2D(x, y).TryGetGridIndex(origin, gridSize, gridSize, out int index_X_Stored, out int index_Y_Stored, tolerance))
-                            {
-                                indexes_Stored.Add((index_X_Stored, index_Y_Stored));
-                            }
-                            else
-                            {
-                                offGridCount++;
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < point2Ds_Tile.Count; i++)
-                    {
-                        // A node in no subdivision is outside the county's land. A rectangle laid over an irregular
-                        // outline always holds some, and a run was never going to sample them.
-                        if (subdivisionIds[i] is not int)
-                        {
-                            continue;
-                        }
-
-                        expectedCount++;
-
-                        Point2D point2D = point2Ds_Tile[i];
-                        if (point2D.TryGetGridIndex(origin, gridSize, gridSize, out int index_X_Point, out int index_Y_Point, tolerance) && indexes_Stored.Contains((index_X_Point, index_Y_Point)))
-                        {
-                            storedCount++;
-                            continue;
-                        }
-
-                        missingCount++;
-
-                        if (point2Ds_Missing.Count < limit)
-                        {
-                            point2Ds_Missing.Add(point2D);
-                        }
-                    }
-                }
-            }
-
-            return new TerrainPointCoverageResult(countyId, gridSize, origin.X, origin.Y, expectedCount, storedCount, missingCount, offGridCount, point2Ds_Missing);
-        }
-
-        /// <summary>
         /// Resolves and checks the lattice a coverage or gap request asked to be measured against.
         /// </summary>
         /// <param name="gridSize">The lattice spacing as bound from the query string.</param>
@@ -869,18 +681,6 @@ namespace DiGi.GIS.WebAPI.Classes
             return true;
         }
 
-        /// <summary>
-        /// Divides rounding towards negative infinity, so that indexes below the origin fall into tiles the same way indexes above it do.
-        /// </summary>
-        /// <param name="value">The value to divide.</param>
-        /// <param name="divisor">The divisor, which has to be greater than zero.</param>
-        /// <returns>The quotient rounded towards negative infinity.</returns>
-        private static int FloorDivide(int value, int divisor)
-        {
-            int quotient = value / divisor;
-
-            return value % divisor != 0 && value < 0 ? quotient - 1 : quotient;
-        }
 
         /// <summary>
         /// Resolves the tolerance a request asked for, falling back to the default when it was not supplied.
