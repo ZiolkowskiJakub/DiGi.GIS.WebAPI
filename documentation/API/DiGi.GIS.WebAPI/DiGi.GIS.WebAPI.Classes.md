@@ -1055,29 +1055,6 @@ public class Building2DController : DiGi.WebAPI.Classes.WebAPIController
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [Microsoft\.AspNetCore\.Mvc\.ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase 'Microsoft\.AspNetCore\.Mvc\.ControllerBase') → [DiGi\.WebAPI\.Classes\.WebAPIController](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.webapicontroller 'DiGi\.WebAPI\.Classes\.WebAPIController') → Building2DController
 ### Constructors
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.Building2DController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter)'></a>
-
-## Building2DController\(GISWebAPIConfigurationFileWatcher, Building2DPostgreSQLConverter\) Constructor
-
-Initializes a new instance of the [Building2DController](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.Building2DController 'DiGi\.GIS\.WebAPI\.Classes\.Building2DController') class\.
-
-```csharp
-public Building2DController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter);
-```
-#### Parameters
-
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.Building2DController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter).GISWebAPIConfigurationFileWatcher'></a>
-
-`GISWebAPIConfigurationFileWatcher` [GISWebAPIConfigurationFileWatcher](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher')
-
-The configuration file watcher for the GIS PostgreSQL Web API\.
-
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.Building2DController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter).building2DPostgreSQLConverter'></a>
-
-`building2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
-
-The converter used for Building 2D data operations in PostgreSQL\.
-
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.Building2DController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter)'></a>
 
 ## Building2DController\(GISWebAPIConfigurationFileWatcher, Building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter\) Constructor

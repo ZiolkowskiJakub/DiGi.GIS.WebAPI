@@ -23,14 +23,13 @@ namespace DiGi.GIS.WebAPI.Classes
         private readonly PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter;
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
 
-        /// <summary> Initializes a new instance of the <see cref="Building2DController"/> class. </summary>
-        /// <param name="GISWebAPIConfigurationFileWatcher">The configuration file watcher for the GIS PostgreSQL Web API.</param>
-        /// <param name="building2DPostgreSQLConverter">The converter used for Building 2D data operations in PostgreSQL.</param>
-        public Building2DController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter)
-            : this(GISWebAPIConfigurationFileWatcher, building2DPostgreSQLConverter, new PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter(building2DPostgreSQLConverter?.ConnectionData))
-        {
-        }
-
+        // This has to stay the ONLY public constructor. MVC activates controllers through
+        // ActivatorUtilities.CreateFactory(type, Type.EmptyTypes), which matches every public
+        // constructor when no explicit argument types are supplied and then throws
+        // "Multiple constructors accepting all given argument types have been found in type ...".
+        // A second, shorter convenience constructor therefore turns every endpoint on this
+        // controller into an HTTP 500 before the action body ever runs (issue #6). Test code that
+        // wants a partial controller passes the extra converters explicitly instead.
         /// <summary> Initializes a new instance of the <see cref="Building2DController"/> class. </summary>
         /// <param name="GISWebAPIConfigurationFileWatcher">The configuration file watcher for the GIS PostgreSQL Web API.</param>
         /// <param name="building2DPostgreSQLConverter">The converter used for Building 2D data operations in PostgreSQL.</param>
