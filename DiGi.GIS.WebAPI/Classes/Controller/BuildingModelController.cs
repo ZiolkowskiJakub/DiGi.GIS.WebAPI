@@ -107,19 +107,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 List<string> references = [.. grouping.Select(building2DReference => building2DReference.Reference!).Distinct()];
 
-                List<PostgreSQL.Classes.Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(grouping);
-                if (building2Ds is null || building2Ds.Count == 0)
-                {
-                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No Building2Ds found for county {CountyId}. Requested references: {Count}", countyId, references.Count);
-                    continue;
-                }
-
-                //Temporary solution till PostgreSQL.Classes.BuildingModel will have correct geometry
-                List<PostgreSQL.Classes.BuildingModel?>? buildingModels_PostgreSQL = building2Ds.ConvertAll(building2D_PostgreSQL => Analytical.Create.BuildingModel(building2D_PostgreSQL?.ToDiGi()))?.ConvertAll(x => x.ToPostgreSQL(countyId));
-
-                //TODO: Uncomment the following code when PostgreSQL.Classes.BuildingModel will have correct geometry
-                //List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, null, cancellationToken);
-
+                List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, null, true, cancellationToken);
                 if (buildingModels_PostgreSQL is null || buildingModels_PostgreSQL.Count == 0)
                 {
                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No BuildingModels stored for county {CountyId}. Requested references: {Count}", countyId, references.Count);
