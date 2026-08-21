@@ -757,5 +757,74 @@ namespace DiGi.GIS.WebAPI
         {
             return await UpdateItemsAsync(GISWebAPIManager, utf8Json, (IEnumerable<int>)[countyId], postOptions);
         }
+
+        /// <summary>
+        /// Asynchronously updates multiple 2D building items for an explicitly identified county row via the PostgreSQL Web API.
+        /// <para>The counterpart of the <c>code</c> overload, for a caller that already holds the identifiers: a multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so pass every part rather than picking one - the server files each item under the part it belongs to.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The manager instance used to facilitate the web API communication.</param>
+        /// <param name="building2Ds">A collection of <see cref="Building2D"/> objects to be updated.</param>
+        /// <param name="countyIds">The identifiers of the county rows the buildings belong to. Normally every polygon part of one county.</param>
+        /// <param name="postOptions">Optional configuration options for the POST request.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<Building2D>? building2Ds, IEnumerable<int>? countyIds, PostOptions? postOptions = null)
+        {
+            if (GISWebAPIManager is null || building2Ds is null)
+            {
+                return false;
+            }
+
+            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<Building2DController>(nameof(Building2DController.UpdateItemsByCountyIdsAsync), out string? path);
+            if (httpClient is null || string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            UrlBuilder urlBuilder = new(path);
+            urlBuilder.AddParameter("countyids", countyIds);
+
+            return await UpdateItemsAsync(httpClient, urlBuilder, Core.Convert.ToSystem_String(building2Ds), postOptions);
+        }
+
+        /// <summary>
+        /// Asynchronously updates multiple 2D building items for one explicitly identified county row via the PostgreSQL Web API.
+        /// <para>For a county stored as several polygon parts, pass every part to the <see cref="IEnumerable{T}"/> overload instead - naming one part files the whole batch there whether or not the buildings belong to it.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The manager instance used to facilitate the web API communication.</param>
+        /// <param name="building2Ds">A collection of <see cref="Building2D"/> objects to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the buildings belong to.</param>
+        /// <param name="postOptions">Optional configuration options for the POST request.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, IEnumerable<Building2D>? building2Ds, int countyId, PostOptions? postOptions = null)
+        {
+            return await UpdateItemsAsync(GISWebAPIManager, building2Ds, (IEnumerable<int>)[countyId], postOptions);
+        }
+
+        /// <summary>
+        /// Asynchronously updates a single 2D building item for an explicitly identified county row via the PostgreSQL Web API.
+        /// </summary>
+        /// <param name="GISWebAPIManager">The manager instance used to facilitate the web API communication.</param>
+        /// <param name="building2D">The <see cref="Building2D"/> object to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the building belongs to.</param>
+        /// <param name="postOptions">Optional configuration options for the POST request.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, Building2D? building2D, int countyId, PostOptions? postOptions = null)
+        {
+            if (GISWebAPIManager is null || building2D is null)
+            {
+                return false;
+            }
+
+            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<Building2DController>(nameof(Building2DController.UpdateItemAsync), out string? path);
+            if (httpClient is null || string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            UrlBuilder urlBuilder = new(path);
+            urlBuilder.AddParameter("countyid", countyId);
+
+            return await UpdateItemsAsync(httpClient, urlBuilder, Core.Convert.ToSystem_String(building2D), postOptions);
+        }
     }
 }

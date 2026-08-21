@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,26 +19,38 @@ namespace DiGi.GIS.WebAPI.Classes
     [Route("gis/[controller]")]
     public class Building2DController : DiGi.WebAPI.Classes.WebAPIController
     {
+        private readonly PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
         private readonly PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter;
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
 
-        /// <summary></summary>
+        /// <summary> Initializes a new instance of the <see cref="Building2DController"/> class. </summary>
         /// <param name="GISWebAPIConfigurationFileWatcher">The configuration file watcher for the GIS PostgreSQL Web API.</param>
         /// <param name="building2DPostgreSQLConverter">The converter used for Building 2D data operations in PostgreSQL.</param>
         public Building2DController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter)
+            : this(GISWebAPIConfigurationFileWatcher, building2DPostgreSQLConverter, new PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter(building2DPostgreSQLConverter?.ConnectionData))
+        {
+        }
+
+        /// <summary> Initializes a new instance of the <see cref="Building2DController"/> class. </summary>
+        /// <param name="GISWebAPIConfigurationFileWatcher">The configuration file watcher for the GIS PostgreSQL Web API.</param>
+        /// <param name="building2DPostgreSQLConverter">The converter used for Building 2D data operations in PostgreSQL.</param>
+        /// <param name="administrativeAreal2DPostgreSQLConverter">The converter used to resolve administrative area codes to county identifiers.</param>
+        public Building2DController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
+            this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
         }
 
         /// <summary> Asynchronously counts the number of buildings based on the administrative areal 2D identifiers. </summary>
         /// <param name="countByAdministrativeAreal2DIdsParameter">The parameter object containing the collection of administrative areal 2D identifiers.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("count", Name = $"{nameof(Building2DController)}_{nameof(CountAsync)}")]
         [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CountAsync([FromBody] CountByAdministrativeAreal2DIdsParameter countByAdministrativeAreal2DIdsParameter)
+        public async Task<IActionResult> CountAsync([FromBody] CountByAdministrativeAreal2DIdsParameter countByAdministrativeAreal2DIdsParameter, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(CountAsync));
 
@@ -46,7 +59,12 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            long count = await building2DPostgreSQLConverter.CountAsync(countByAdministrativeAreal2DIdsParameter.AdministrativeAreal2DIds);
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            long count = await building2DPostgreSQLConverter.CountAsync(countByAdministrativeAreal2DIdsParameter.AdministrativeAreal2DIds, cancellationToken);
             if (count < 0)
             {
                 return NotFound();
@@ -58,16 +76,28 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Asynchronously retrieves a building 2D reference by its unique identifier and an optional county identifier. </summary>
         /// <param name="id">The unique identifier of the building.</param>
         /// <param name="countyId">An optional integer representing the county identifier used to filter the search.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("building2Dreferencebyid", Name = $"{nameof(Building2DController)}_{nameof(GetBuilding2DReferenceByIdAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(PostgreSQL.Classes.Building2DReference), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetBuilding2DReferenceByIdAsync([FromQuery(Name = "id")] long id, [FromQuery(Name = "countyid")] int? countyId)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetBuilding2DReferenceByIdAsync([FromQuery(Name = "id")] long id, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetBuilding2DReferenceByIdAsync));
 
-            PostgreSQL.Classes.Building2DReference? building2DReference = await building2DPostgreSQLConverter.GetBuilding2DReferenceByIdAsync(id, countyId);
+            if (id <= 0 || (countyId is not null && countyId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            PostgreSQL.Classes.Building2DReference? building2DReference = await building2DPostgreSQLConverter.GetBuilding2DReferenceByIdAsync(id, countyId, cancellationToken);
             if (building2DReference is null)
             {
                 return NotFound();
@@ -85,16 +115,28 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves a building 2D reference by its unique reference code and an optional county identifier. </summary>
         /// <param name="reference">The unique reference string of the building to retrieve.</param>
         /// <param name="countyId">The optional integer identifier of the county used to filter the search.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("building2Dreferencebyreference", Name = $"{nameof(Building2DController)}_{nameof(GetBuilding2DReferenceByReferenceAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(PostgreSQL.Classes.Building2DReference), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetBuilding2DReferenceByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetBuilding2DReferenceByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetBuilding2DReferenceByReferenceAsync));
 
-            PostgreSQL.Classes.Building2DReference? building2DReference = await building2DPostgreSQLConverter.GetBuilding2DReferenceByReferenceAsync(reference, countyId);
+            if (string.IsNullOrWhiteSpace(reference) || (countyId is not null && countyId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            PostgreSQL.Classes.Building2DReference? building2DReference = await building2DPostgreSQLConverter.GetBuilding2DReferenceByReferenceAsync(reference, countyId, cancellationToken: cancellationToken);
             if (building2DReference is null)
             {
                 return NotFound();
@@ -111,16 +153,28 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves building 2D references filtered by administrative area 2D identifier. Can be used for relatively small number of buildings</summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D used to filter the building references.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("building2Dreferencesbyadministrativeareal2Did", Name = $"{nameof(Building2DController)}_{nameof(GetBuilding2DReferencesByAdministrativeAreal2DIdAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetBuilding2DReferencesByAdministrativeAreal2DIdAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetBuilding2DReferencesByAdministrativeAreal2DIdAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetBuilding2DReferencesByAdministrativeAreal2DIdAsync));
 
-            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync([administrativeAreal2DId]);
+            if (administrativeAreal2DId <= 0)
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync([administrativeAreal2DId], cancellationToken);
             string? json = Core.Convert.ToSystem_String(building2DReferences);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -134,20 +188,33 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Retrieves a paginated list of building 2D references.
         /// </summary>
         /// <param name="building2DReferencesByPagingParameter">The parameter containing paging options, including county identifier, cursor, and page size.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task representing the asynchronous operation, returning a list of building 2D references.</returns>
         [HttpPost("building2Dreferencesbypagingparameter", Name = $"{nameof(Building2DController)}_{nameof(GetBuilding2DReferencesByPagingParameterAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetBuilding2DReferencesByPagingParameterAsync([FromBody] Building2DReferencesByPagingParameter building2DReferencesByPagingParameter)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetBuilding2DReferencesByPagingParameterAsync([FromBody] Building2DReferencesByPagingParameter building2DReferencesByPagingParameter, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetBuilding2DReferencesByPagingParameterAsync));
+
+            if (building2DReferencesByPagingParameter is null || building2DReferencesByPagingParameter.CountyId <= 0 || building2DReferencesByPagingParameter.PageSize <= 0)
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
 
             List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(
                 building2DReferencesByPagingParameter.CountyId,
                 building2DReferencesByPagingParameter.SubdivisionId,
                 building2DReferencesByPagingParameter.Cursor,
-                building2DReferencesByPagingParameter.PageSize);
+                building2DReferencesByPagingParameter.PageSize,
+                cancellationToken);
 
             if (building2DReferences is null)
             {
@@ -172,15 +239,27 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves a building 2D item by its identifier. </summary>
         /// <param name="id">The unique identifier of the building 2D item to retrieve.</param>
         /// <param name="countyId">The optional county identifier associated with the building.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itembyid", Name = $"{nameof(Building2DController)}_{nameof(GetItemByIdAsync)}")]
-        [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2D>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Building2D), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetItemByIdAsync([FromQuery(Name = "id")] long id, [FromQuery(Name = "countyid")] int? countyId)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetItemByIdAsync([FromQuery(Name = "id")] long id, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemByIdAsync));
 
-            PostgreSQL.Classes.Building2D? building2D = await building2DPostgreSQLConverter.GetBuilding2DByIdAsync(id, countyId);
+            if (id <= 0 || (countyId is not null && countyId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            PostgreSQL.Classes.Building2D? building2D = await building2DPostgreSQLConverter.GetBuilding2DByIdAsync(id, countyId, cancellationToken);
             if (building2D is null)
             {
                 return NotFound();
@@ -205,12 +284,13 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="x">The X coordinate of the search point.</param>
         /// <param name="y">The Y coordinate of the search point.</param>
         /// <param name="tolerance">The optional tolerance distance in meters to use when searching for the item near the specified point. If not provided, NaN, or non-positive, a default tolerance of 0.5 meters is used.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>An <see cref="IActionResult" /> containing the building 2D item if found, or an error response.</returns>
         [HttpGet("itembypoint", Name = $"{nameof(Building2DController)}_{nameof(GetItemByPointAsync)}")]
-        [ProducesResponseType(typeof(PostgreSQL.Classes.Building2D), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Building2D), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemByPointAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "tolerance")] double? tolerance)
+        public async Task<IActionResult> GetItemByPointAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "tolerance")] double? tolerance, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemByPointAsync));
             if (double.IsNaN(x) || double.IsNaN(y))
@@ -223,7 +303,12 @@ namespace DiGi.GIS.WebAPI.Classes
                 tolerance = 0.5;
             }
 
-            PostgreSQL.Classes.Building2D? building2D_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(new Point2D(x, y), tolerance.Value);
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            PostgreSQL.Classes.Building2D? building2D_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(new Point2D(x, y), tolerance.Value, cancellationToken);
             if (building2D_PostgreSQL is null)
             {
                 return NotFound();
@@ -246,15 +331,27 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Asynchronously retrieves a building 2D item by its reference code and an optional county identifier. </summary>
         /// <param name="reference">The unique reference string used to locate the building 2D item.</param>
         /// <param name="countyId">The optional identifier of the county associated with the building.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itembyreference", Name = $"{nameof(Building2DController)}_{nameof(GetItemByReferenceAsync)}")]
-        [ProducesResponseType(typeof(PostgreSQL.Classes.Building2D), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Building2D), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetItemByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetItemByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemByReferenceAsync));
 
-            PostgreSQL.Classes.Building2D? building2D = await building2DPostgreSQLConverter.GetBuilding2DByReferenceAsync(reference, countyId);
+            if (string.IsNullOrWhiteSpace(reference) || (countyId is not null && countyId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            PostgreSQL.Classes.Building2D? building2D = await building2DPostgreSQLConverter.GetBuilding2DByReferenceAsync(reference, countyId, cancellationToken: cancellationToken);
             if (building2D is null)
             {
                 return NotFound();
@@ -275,12 +372,13 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="x_2">The X-coordinate of the second corner of the bounding box.</param>
         /// <param name="y_2">The Y-coordinate of the second corner of the bounding box.</param>
         /// <param name="tolerance">An optional tolerance value for the spatial query. If not provided or NaN, a default macro distance is used.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itemsbyboundingbox", Name = $"{nameof(Building2DController)}_{nameof(GetItemsByBoundingBoxAsync)}")]
-        [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2D>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<Building2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByBoundingBoxAsync([FromQuery(Name = "x_1")] double x_1, [FromQuery(Name = "y_1")] double y_1, [FromQuery(Name = "x_2")] double x_2, [FromQuery(Name = "y_2")] double y_2, [FromQuery(Name = "tolerance")] double? tolerance)
+        public async Task<IActionResult> GetItemsByBoundingBoxAsync([FromQuery(Name = "x_1")] double x_1, [FromQuery(Name = "y_1")] double y_1, [FromQuery(Name = "x_2")] double x_2, [FromQuery(Name = "y_2")] double y_2, [FromQuery(Name = "tolerance")] double? tolerance, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemsByBoundingBoxAsync));
             if (double.IsNaN(x_1) || double.IsNaN(y_1) || double.IsNaN(x_2) || double.IsNaN(y_2))
@@ -293,7 +391,12 @@ namespace DiGi.GIS.WebAPI.Classes
                 tolerance = Core.Constants.Tolerance.MacroDistance;
             }
 
-            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(new BoundingBox2D(new Core.Classes.Range<double>(x_1, x_2), new Core.Classes.Range<double>(y_1, y_2)), tolerance.Value);
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(new BoundingBox2D(new Core.Classes.Range<double>(x_1, x_2), new Core.Classes.Range<double>(y_1, y_2)), tolerance.Value, cancellationToken);
             if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
             {
                 return NotFound();
@@ -311,7 +414,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 building2Ds.Add(building2D);
             }
 
-            if (building2Ds is null || building2Ds.Count == 0)
+            if (building2Ds.Count == 0)
             {
                 return NotFound();
             }
@@ -327,12 +430,13 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves building 2D items by their references. </summary>
         /// <param name="jsonArray">The JSON array containing the building 2D references to retrieve.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("itemsbybuilding2Dreferences", Name = $"{nameof(Building2DController)}_{nameof(GetItemsByBuilding2DReferencesAsync)}")]
-        [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2D>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<Building2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByBuilding2DReferencesAsync([FromBody] JsonArray? jsonArray)
+        public async Task<IActionResult> GetItemsByBuilding2DReferencesAsync([FromBody] JsonArray? jsonArray, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemsByBuilding2DReferencesAsync));
 
@@ -341,7 +445,11 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest("The provided JSON array is null or empty.");
             }
 
-            // Explicit typing instead of 'var' as requested
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
             List<PostgreSQL.Classes.Building2DReference>? building2DReferences =
                 Core.Create.SerializableObjects<PostgreSQL.Classes.Building2DReference>(jsonArray);
 
@@ -352,7 +460,7 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL =
-                await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences);
+                await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences, cancellationToken: cancellationToken);
 
             if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
             {
@@ -376,7 +484,82 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NotFound();
             }
 
-            // Returning OK (200) with the serialized string
+            string? json = Core.Convert.ToSystem_String(building2Ds);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves building 2D items for each of the provided references and an optional county identifier.
+        /// </summary>
+        /// <param name="references">The collection of unique reference strings used to identify the 2D buildings.</param>
+        /// <param name="countyId">An optional integer representing the county ID to filter the results.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
+        /// <returns>A task representing the asynchronous operation, returning a list of building 2D items.</returns>
+        [HttpPost("itemsbyreferences", Name = $"{nameof(Building2DController)}_{nameof(GetItemsByReferencesAsync)}")]
+        [ProducesResponseType(typeof(List<Building2D>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetItemsByReferencesAsync([FromBody] IEnumerable<string>? references, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemsByReferencesAsync));
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
+
+            if (references is null || (countyId is not null && countyId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.Building2DReference> building2DReferences = [];
+            foreach (string reference in references)
+            {
+                if (string.IsNullOrWhiteSpace(reference))
+                {
+                    continue;
+                }
+
+                building2DReferences.Add(new PostgreSQL.Classes.Building2DReference { Reference = reference, CountyId = countyId });
+            }
+
+            if (building2DReferences.Count == 0)
+            {
+                return Content(new JsonArray().ToJsonString(), "application/json");
+            }
+
+            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL =
+                await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences, fallbackByReference: countyId is null, cancellationToken: cancellationToken);
+
+            if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
+            {
+                return NotFound();
+            }
+
+            List<Building2D> building2Ds = [];
+            foreach (PostgreSQL.Classes.Building2D building2D_PostgreSQL in building2Ds_PostgreSQL)
+            {
+                Building2D? building2D = building2D_PostgreSQL.ToDiGi();
+                if (building2D is null)
+                {
+                    continue;
+                }
+
+                building2Ds.Add(building2D);
+            }
+
+            if (building2Ds.Count == 0)
+            {
+                return NotFound();
+            }
+
             string? json = Core.Convert.ToSystem_String(building2Ds);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -390,15 +573,27 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Retrieves building 2D items for a specified county identifier.
         /// </summary>
         /// <param name="countyId">The unique identifier of the county.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the building 2D items as a JSON response, or a 404 status if no items are found.</returns>
         [HttpGet("itemsbycountyid", Name = $"{nameof(Building2DController)}_{nameof(GetItemsByCountyIdAsync)}")]
-        [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2D>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<Building2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetItemsByCountyIdAsync([FromQuery(Name = "countyid")] int countyId)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetItemsByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemsByCountyIdAsync));
 
-            List<PostgreSQL.Classes.Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByCountyIdAsync(countyId);
+            if (countyId <= 0)
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByCountyIdAsync(countyId, cancellationToken);
             if (building2Ds is null)
             {
                 return NotFound();
@@ -425,12 +620,13 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="radius">The radius of the search circle.</param>
         /// <param name="diameter">The diameter of the search circle.</param>
         /// <param name="tolerance">The tolerance value to be applied to the search area.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itemsbycircle", Name = $"{nameof(Building2DController)}_{nameof(GetItemsByCircleAsync)}")]
-        [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2D>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<Building2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByCircleAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "radius")] double? radius, [FromQuery(Name = "diameter")] double? diameter, [FromQuery(Name = "tolerance")] double? tolerance)
+        public async Task<IActionResult> GetItemsByCircleAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "radius")] double? radius, [FromQuery(Name = "diameter")] double? diameter, [FromQuery(Name = "tolerance")] double? tolerance, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetItemsByCircleAsync));
             if (double.IsNaN(x) || double.IsNaN(y))
@@ -457,7 +653,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 }
             }
 
-            if (double.IsNaN(radius_Temp))
+            if (double.IsNaN(radius_Temp) || radius_Temp <= 0)
             {
                 return BadRequest();
             }
@@ -467,7 +663,12 @@ namespace DiGi.GIS.WebAPI.Classes
                 tolerance = Core.Constants.Tolerance.MacroDistance;
             }
 
-            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value);
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value, cancellationToken);
             if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
             {
                 return NotFound();
@@ -485,7 +686,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 building2Ds.Add(building2D);
             }
 
-            if (building2Ds is null || building2Ds.Count == 0)
+            if (building2Ds.Count == 0)
             {
                 return NotFound();
             }
@@ -502,16 +703,27 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves Point2D coordinates by their references. </summary>
         /// <param name="references">A collection of reference strings used to identify the Point2D objects.</param>
         /// <param name="countyId">The optional identifier for the county associated with the coordinates.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-
         [HttpPost("point2dsbyreferences", Name = $"{nameof(Building2DController)}_{nameof(GetPoint2DsByReferencesAsync)}")]
         [ProducesResponseType(typeof(List<Point2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetPoint2DsByReferencesAsync([FromBody] IEnumerable<string> references, [FromQuery(Name = "countyid")] int? countyId)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetPoint2DsByReferencesAsync([FromBody] IEnumerable<string>? references, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetPoint2DsByReferencesAsync));
 
-            List<Point2D>? point2Ds = await building2DPostgreSQLConverter.GetPoint2DsByReferences(references, countyId);
+            if (references is null || (countyId is not null && countyId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<Point2D>? point2Ds = await building2DPostgreSQLConverter.GetPoint2DsByReferences(references, countyId, cancellationToken);
             if (point2Ds is null)
             {
                 return NotFound();
@@ -529,17 +741,28 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves references of the building2Ds filtered by county Id. </summary>
         /// <param name="countyId">The unique identifier of the county used to filter the building 2D references.</param>
         /// <param name="subdivisionId">The optional unique identifier of the subdivision used to further filter the building 2D references.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-
         [HttpGet("referencesbycountyid", Name = $"{nameof(Building2DController)}_{nameof(GetReferencesByCountyIdAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetReferencesByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "subdivisionid")] int? subdivisionId = null)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetReferencesByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "subdivisionid")] int? subdivisionId = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferencesByCountyIdAsync));
 
-            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, subdivisionId, excludedReferences: null, commandTimeout: 30);
+            if (countyId <= 0 || (subdivisionId is not null && subdivisionId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, subdivisionId, excludedReferences: null, commandTimeout: 30, cancellationToken: cancellationToken);
             if (building2DReferences is null || building2DReferences.Count == 0)
             {
                 return NotFound();
@@ -556,7 +779,6 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             JsonArray jsonArray = [.. references];
-
             string? json = jsonArray.ToJsonString();
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -577,9 +799,20 @@ namespace DiGi.GIS.WebAPI.Classes
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReferenceDuplicate>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetReferenceDuplicatesAsync([FromQuery(Name = "limit")] int limit = 100, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferenceDuplicatesAsync));
+
+            if (limit <= 0 || commandTimeout < 0)
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
 
             List<PostgreSQL.Classes.Building2DReferenceDuplicate>? duplicates = await building2DPostgreSQLConverter.GetDuplicateReferencesAsync(limit, commandTimeout, cancellationToken);
             if (duplicates is null)
@@ -606,9 +839,20 @@ namespace DiGi.GIS.WebAPI.Classes
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(PostgreSQL.Classes.Building2DReferenceUniquenessSummary), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetReferenceUniquenessSummaryAsync([FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferenceUniquenessSummaryAsync));
+
+            if (commandTimeout < 0)
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
 
             PostgreSQL.Classes.Building2DReferenceUniquenessSummary? summary = await building2DPostgreSQLConverter.GetReferenceUniquenessSummaryAsync(commandTimeout, cancellationToken);
             if (summary is null)
@@ -628,17 +872,19 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Updates a single building 2D item. </summary>
         /// <param name="jsonObject">The <see cref="T:System.Text.Json.Nodes.JsonObject" /> containing the data to update the building 2D item. This value can be null.</param>
         /// <param name="code">The code identifying the specific building 2D item to be updated. This value can be null.</param>
+        /// <param name="countyId">The optional county identifier associated with the building.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-
         [HttpPost("updateitem", Name = $"{nameof(Building2DController)}_{nameof(UpdateItemAsync)}")]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemAsync([FromBody] JsonObject? jsonObject, [FromQuery(Name = "code")] string? code)
+        public async Task<IActionResult> UpdateItemAsync([FromBody] JsonObject? jsonObject, [FromQuery(Name = "code")] string? code, [FromQuery(Name = "countyid")] int? countyId = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(UpdateItemAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuilding2D)
             {
@@ -646,7 +892,12 @@ namespace DiGi.GIS.WebAPI.Classes
                 return Unauthorized();
             }
 
-            if (jsonObject is null)
+            if (jsonObject is null || (countyId is not null && countyId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
             {
                 return BadRequest();
             }
@@ -663,17 +914,17 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
+            if (countyId is not null)
+            {
+                building2D_PostgreSQL.CountyId = countyId.Value;
+            }
+
             PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = await building2DPostgreSQLConverter.UpdateAsync([building2D_PostgreSQL]);
 
             UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(1);
 
-            // The result used to be discarded outright, so an unreachable database was reported to the
-            // caller as a stored building. The Building2D was converted and reached this point, so nothing
-            // updated is a failure rather than a quiet no-op.
             if (updateItemsResult is null || updateItemsResult.Updated == 0)
             {
-                // A single item leaves no room for a partial write, so the rejection - when there is one -
-                // is the entire explanation of the failure and belongs in the response.
                 UpdateItemsResult.Rejection? rejection = updateItemsResult?.Rejected.Count > 0 ? updateItemsResult.Rejected[0] : null;
                 if (rejection is not null)
                 {
@@ -688,18 +939,18 @@ namespace DiGi.GIS.WebAPI.Classes
             return Ok(updateItemsResult);
         }
 
-        /// <summary> Updates multiple building 2D items. </summary>
+        /// <summary> Updates multiple building 2D items based on the provided JSON array and identification code. </summary>
         /// <param name="jsonArray">The JSON array containing the building 2D items to be updated.</param>
-        /// <param name="code">An optional code used for the update operation.</param>
+        /// <param name="code">The identification code required for the update operation.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-
         [HttpPost("updateitems", Name = $"{nameof(Building2DController)}_{nameof(UpdateItemsAsync)}")]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string? code)
+        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string? code, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(UpdateItemsAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
@@ -707,13 +958,28 @@ namespace DiGi.GIS.WebAPI.Classes
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuilding2D)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2D update not allowed");
-                return BadRequest();
+                return Unauthorized();
             }
 
             if (jsonArray is null || jsonArray.Count == 0)
             {
                 Serilog.Modify.Log("No Building2Ds to update");
                 return NoContent();
+            }
+
+            if (!string.IsNullOrWhiteSpace(code) && administrativeAreal2DPostgreSQLConverter is not null)
+            {
+                HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, PostgreSQL.Enums.AdministrativeArealType.County, cancellationToken);
+                if (countyIds is not null && countyIds.Count > 0)
+                {
+                    int[] countyIds_Resolved = [.. countyIds.OrderBy(x => x)];
+                    if (countyIds_Resolved.Length > 1)
+                    {
+                        Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each building is being filed under the part it belongs to", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
+                    }
+
+                    return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved, cancellationToken);
+                }
             }
 
             List<Building2D>? building2Ds = Core.Create.SerializableObjects<Building2D>(jsonArray);
@@ -737,15 +1003,19 @@ namespace DiGi.GIS.WebAPI.Classes
                 building2Ds_PostgreSQL.Add(building2D_PostgreSQL);
             }
 
-            if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
+            if (building2Ds_PostgreSQL.Count == 0)
             {
                 Serilog.Modify.Log("No Building2Ds PostgreSQL to update");
                 return NoContent();
             }
 
             Serilog.Modify.Log("Building2Ds conversion to PostgreSQL ended. Building2Ds converted: {After}/{Before}", building2Ds_PostgreSQL.Count, building2Ds.Count);
-
             Serilog.Modify.Log("Updating to database starting");
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return StatusCode(500, "Database update failed.");
+            }
 
             PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = null;
             try
@@ -765,19 +1035,11 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Database update failed.");
             }
 
-            // This is the route where the county tier can genuinely fail: ToPostgreSQL(code) leaves CountyId
-            // null, so every row is resolved by the converter and a footprint outside every candidate part
-            // is dropped. Naming those rows is the whole point - a partial write used to be indistinguishable
-            // from a complete one.
             if (updateItemsResult.Rejected.Count != 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2Ds rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
             }
 
-            // Answering Ok here is what let a whole county regeneration report success while writing
-            // nothing: the storage database was unreachable, every batch came back empty, and the client
-            // treats 200 as done. Building2Ds were converted and reached this point, so nothing updated is
-            // a failure, not a quiet no-op. BuildingController already answers this case the same way.
             if (updateItemsResult.Updated == 0)
             {
                 if (updateItemsResult.Rejected.Count == updateItemsResult.Sent)
@@ -788,11 +1050,125 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Database update returned no modified Building2D IDs.");
             }
 
-            // Updated counts distinct identifiers, and rows colliding on (reference, county_id) share one,
-            // so Updated < Sent on its own proves nothing. Rejected is the exact figure.
             Serilog.Modify.Log("Updating to database ended. Updated Building2Ds: {After}/{Before}, rejected: {Rejected}", updateItemsResult.Updated, updateItemsResult.Sent, updateItemsResult.Rejected.Count);
 
             return Ok(updateItemsResult);
+        }
+
+        /// <summary>
+        /// Updates multiple building 2D items in the database for the given county rows.
+        /// </summary>
+        /// <param name="jsonArray">The JSON array containing the building 2D items to be updated.</param>
+        /// <param name="countyIds">The identifiers of the county rows the buildings belong to. Normally every polygon part of one county.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpPost("updateitemsbycountyids", Name = $"{nameof(Building2DController)}_{nameof(UpdateItemsByCountyIdsAsync)}")]
+        [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(UpdateItemsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuilding2D)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2D update not allowed");
+                return Unauthorized();
+            }
+
+            if (countyIds is null || countyIds.Length == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CountyIds cannot be null or empty");
+                return BadRequest();
+            }
+
+            if (jsonArray is null || jsonArray.Count == 0)
+            {
+                Serilog.Modify.Log("No Building2D data to update");
+                return NoContent();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return StatusCode(500, "Database update failed.");
+            }
+
+            try
+            {
+                List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
+
+                List<Building2D>? building2Ds = Core.Create.SerializableObjects<Building2D>(jsonArray);
+                if (building2Ds is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Building2Ds could not be converted from json");
+                    return BadRequest();
+                }
+
+                Serilog.Modify.Log("Building2Ds conversion to PostgreSQL started. Building2Ds count: {Count}", building2Ds.Count);
+
+                int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
+
+                List<PostgreSQL.Classes.Building2D> building2Ds_PostgreSQL = [];
+                foreach (Building2D building2D in building2Ds)
+                {
+                    PostgreSQL.Classes.Building2D? building2D_PostgreSQL = building2D.ToPostgreSQL();
+                    if (building2D_PostgreSQL is null)
+                    {
+                        continue;
+                    }
+
+                    if (countyId_Single is not null)
+                    {
+                        building2D_PostgreSQL.CountyId = countyId_Single.Value;
+                    }
+
+                    building2Ds_PostgreSQL.Add(building2D_PostgreSQL);
+                }
+
+                if (building2Ds_PostgreSQL.Count == 0)
+                {
+                    Serilog.Modify.Log("No Building2Ds PostgreSQL to update");
+                    return NoContent();
+                }
+
+                Serilog.Modify.Log("Updating to database starting");
+
+                PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = await building2DPostgreSQLConverter.UpdateAsync(building2Ds_PostgreSQL);
+
+                UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(building2Ds_PostgreSQL.Count);
+                if (updateItemsResult is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database could not be attempted");
+                    return StatusCode(500, "Database update failed.");
+                }
+
+                if (updateItemsResult.Rejected.Count != 0)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2Ds rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
+                }
+
+                if (updateItemsResult.Updated == 0)
+                {
+                    if (updateItemsResult.Rejected.Count == updateItemsResult.Sent)
+                    {
+                        return StatusCode(500, $"All {updateItemsResult.Sent} Building2Ds were rejected before the database; none could be filed under a county.");
+                    }
+
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no Building2Ds have been updated");
+                    return StatusCode(500, "Database update returned no modified building IDs.");
+                }
+
+                Serilog.Modify.Log("Updating to database ended. Updated Building2Ds: {After}/{Before}, rejected: {Rejected}", updateItemsResult.Updated, updateItemsResult.Sent, updateItemsResult.Rejected.Count);
+                return Ok(updateItemsResult);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Unhandled error during Building2DController.UpdateItemsByCountyIdsAsync");
+                return StatusCode(500, exception.Message);
+            }
         }
     }
 }
