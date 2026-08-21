@@ -20,6 +20,8 @@ Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system
 
 ## AdministrativeAreal2DController\(GISWebAPIConfigurationFileWatcher, AdministrativeAreal2DPostgreSQLConverter\) Constructor
 
+Initializes a new instance of the [AdministrativeAreal2DController](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController 'DiGi\.GIS\.WebAPI\.Classes\.AdministrativeAreal2DController') class\.
+
 ```csharp
 public AdministrativeAreal2DController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter);
 ```
@@ -38,70 +40,88 @@ The configuration file watcher for the GIS PostgreSQL Web API\.
 The converter used for administrative area 2D PostgreSQL operations\.
 ### Methods
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferenceByCodeAsync\(string, Nullable\<AdministrativeArealType\>\) Method
+## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferenceByCodeAsync\(string, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
 
 Gets an administrative area reference by its code and type\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferenceByCodeAsync(string? code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferenceByCodeAsync(string? code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique code of the administrative area\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).administrativeArealType'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The type of the administrative area\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByIdAsync(int)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByIdAsync(int,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferenceByIdAsync\(int\) Method
+## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferenceByIdAsync\(int, CancellationToken\) Method
 
 Retrieves an administrative area reference by its identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferenceByIdAsync(int id);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferenceByIdAsync(int id, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByIdAsync(int).id'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByIdAsync(int,System.Threading.CancellationToken).id'></a>
 
 `id` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The unique identifier of the administrative area reference to retrieve\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferenceByIdAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencePathByIdAsync(int)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencePathByIdAsync(int,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferencePathByIdAsync\(int\) Method
+## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferencePathByIdAsync\(int, CancellationToken\) Method
 
 Retrieves the administrative area reference path by its identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferencePathByIdAsync(int id);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferencePathByIdAsync(int id, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencePathByIdAsync(int).id'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencePathByIdAsync(int,System.Threading.CancellationToken).id'></a>
 
 `id` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The unique identifier of the administrative area reference path to retrieve\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencePathByIdAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -128,7 +148,7 @@ The search text used to find matching administrative area reference paths\.
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
-A cancellation token that can be used by the called method to indicate that the operation should be canceled\.
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -138,7 +158,7 @@ A task that represents the asynchronous operation\.
 
 ## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferencePathsByNameParameterAsync\(AdministrativeAreal2DReferencePathsByNameParameter, CancellationToken\) Method
 
-Retrieves administrative area reference paths by name parameter \(where Text is the search term\)\.
+Retrieves administrative area reference paths by name parameter\.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferencePathsByNameParameterAsync(DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencePathsByNameParameter administrativeAreal2DReferencePathsByNameParameter, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -155,67 +175,133 @@ The parameter containing the search term for querying administrative areas by na
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
-The cancellation token\.
-
-#### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. List of AdministrativeAreal2DReferencePaths [DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencePath](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.administrativeareal2dreferencepath 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DReferencePath') if valid administrative area references are found\.
-
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,System.Nullable_bool_)'></a>
-
-## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync\(AdministrativeArealType, Nullable\<int\>, Nullable\<bool\>\) Method
-
-Retrieves all administrative area references filtered by administrative area type\.
-
-```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType, System.Nullable<int> parentId, System.Nullable<bool> uniqueCode);
-```
-#### Parameters
-
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,System.Nullable_bool_).administrativeArealType'></a>
-
-`administrativeArealType` [DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')
-
-The administrative area type used to filter the references\.
-
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,System.Nullable_bool_).parentId'></a>
-
-`parentId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
-
-The optional parent identifier used for filtering\.
-
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType,System.Nullable_int_,System.Nullable_bool_).uniqueCode'></a>
-
-`uniqueCode` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
-
-An optional flag indicating whether to filter by unique code\.
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Nullable_int_,System.Nullable_bool_,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferencesByCodeAsync\(string, Nullable\<AdministrativeArealType\>\) Method
+## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync\(Nullable\<AdministrativeArealType\>, Nullable\<int\>, Nullable\<bool\>, CancellationToken\) Method
+
+Retrieves all administrative area references filtered by administrative area type\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Nullable<int> parentId, System.Nullable<bool> uniqueCode, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Nullable_int_,System.Nullable_bool_,System.Threading.CancellationToken).administrativeArealType'></a>
+
+`administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The administrative area type used to filter the references\. Bound as nullable so an omitted parameter can be rejected: a non\-nullable binding would silently take [DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Country](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype.country 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Country'), because that is `default` of the enum while [DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Undefined](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype.undefined 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Undefined') is \-1\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Nullable_int_,System.Nullable_bool_,System.Threading.CancellationToken).parentId'></a>
+
+`parentId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional parent identifier used for filtering\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Nullable_int_,System.Nullable_bool_,System.Threading.CancellationToken).uniqueCode'></a>
+
+`uniqueCode` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+An optional flag indicating whether to filter by unique code\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Nullable_int_,System.Nullable_bool_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferencesByCodeAsync\(string, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
 
 Retrieves administrative area references by their code\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferencesByCodeAsync(string code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferencesByCodeAsync(string code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique identifier or code used to retrieve the administrative area references\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).administrativeArealType'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 An optional filter specifying the type of administrative area\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByIdsAsync(System.Collections.Generic.List_int_,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferencesByIdsAsync\(List\<int\>, CancellationToken\) Method
+
+Retrieves administrative area references by a list of identifiers\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferencesByIdsAsync(System.Collections.Generic.List<int> ids, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByIdsAsync(System.Collections.Generic.List_int_,System.Threading.CancellationToken).ids'></a>
+
+`ids` [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+The list of unique identifiers of the administrative areas to retrieve\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByIdsAsync(System.Collections.Generic.List_int_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByNameParameterAsync(DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DController\.GetAdministrativeAreal2DReferencesByNameParameterAsync\(AdministrativeAreal2DReferencesByNameParameter, CancellationToken\) Method
+
+Retrieves administrative area references by name parameter\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetAdministrativeAreal2DReferencesByNameParameterAsync(DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter administrativeAreal2DReferencesByNameParameter, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByNameParameterAsync(DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter,System.Threading.CancellationToken).administrativeAreal2DReferencesByNameParameter'></a>
+
+`administrativeAreal2DReferencesByNameParameter` [AdministrativeAreal2DReferencesByNameParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter 'DiGi\.GIS\.WebAPI\.Classes\.AdministrativeAreal2DReferencesByNameParameter')
+
+The parameter containing the search term for querying administrative area references by name\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetAdministrativeAreal2DReferencesByNameParameterAsync(DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -256,349 +342,529 @@ public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCo
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetCountAsync(System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetIdByCodeAsync\(string, Nullable\<AdministrativeArealType\>\) Method
+## AdministrativeAreal2DController\.GetCountAsync\(CancellationToken\) Method
+
+Retrieves the count of administrative areas\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCountAsync(System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetCountAsync(System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DController\.GetIdByCodeAsync\(string, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
 
 Retrieves the identifier for a given code\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetIdByCodeAsync(string code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetIdByCodeAsync(string code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique code of the administrative area\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).administrativeArealType'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional type of the administrative area to filter the search\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdsByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetItemByCodeAsync\(string, Nullable\<AdministrativeArealType\>\) Method
+## AdministrativeAreal2DController\.GetIdsByAdministrativeArealTypeAsync\(Nullable\<AdministrativeArealType\>, CancellationToken\) Method
+
+Retrieves all identifiers for a given administrative area type\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetIdsByAdministrativeArealTypeAsync(System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdsByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
+
+`administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The administrative area type\. Bound as nullable so an omitted parameter can be rejected: a non\-nullable binding would silently take [DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Country](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype.country 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Country'), because that is `default` of the enum while [DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Undefined](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype.undefined 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Undefined') is \-1\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdsByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DController\.GetIdsByCodeAsync\(string, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
+
+Retrieves all identifiers for a given code\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetIdsByCodeAsync(string code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The code of the administrative area\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
+
+`administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional type of the administrative area to filter the search\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetIdsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DController\.GetItemByCodeAsync\(string, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
 
 Retrieves an administrative area item by its code and optional type\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemByCodeAsync(string code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemByCodeAsync(string code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique code of the administrative area to retrieve\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).administrativeArealType'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional type of the administrative area to filter the search\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByIdAsync(int)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByIdAsync(int,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetItemByIdAsync\(int\) Method
+## AdministrativeAreal2DController\.GetItemByIdAsync\(int, CancellationToken\) Method
 
 Asynchronously retrieves an administrative area item by its unique identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemByIdAsync(int id);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemByIdAsync(int id, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByIdAsync(int).id'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByIdAsync(int,System.Threading.CancellationToken).id'></a>
 
 `id` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The integer identifier of the administrative area item to retrieve\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemByIdAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetItemsByAdministrativeArealTypeAsync\(AdministrativeArealType\) Method
+## AdministrativeAreal2DController\.GetItemsByAdministrativeArealTypeAsync\(Nullable\<AdministrativeArealType\>, CancellationToken\) Method
 
 Retrieves all administrative area items filtered by administrative area type\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType administrativeArealType);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByAdministrativeArealTypeAsync(System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByAdministrativeArealTypeAsync(DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType).administrativeArealType'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
 
-`administrativeArealType` [DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')
+`administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
-The administrative area type used to filter the results\.
+The administrative area type used to filter the results\. Bound as nullable so an omitted parameter can be rejected: a non\-nullable binding would silently take [DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Country](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype.country 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Country'), because that is `default` of the enum while [DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Undefined](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype.undefined 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType\.Undefined') is \-1\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByAdministrativeArealTypeAsync(System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetItemsByBoundingBoxAsync\(double, double, double, double, Nullable\<double\>, Nullable\<AdministrativeArealType\>\) Method
+## AdministrativeAreal2DController\.GetItemsByBoundingBoxAsync\(double, double, double, double, Nullable\<double\>, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
 
 Retrieves administrative area items within a specified bounding box\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByBoundingBoxAsync(double x_1, double y_1, double x_2, double y_2, System.Nullable<double> tolerance, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByBoundingBoxAsync(double x_1, double y_1, double x_2, double y_2, System.Nullable<double> tolerance, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).x_1'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).x_1'></a>
 
 `x_1` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The X\-coordinate of the first corner of the bounding box\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).y_1'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).y_1'></a>
 
 `y_1` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The Y\-coordinate of the first corner of the bounding box\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).x_2'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).x_2'></a>
 
 `x_2` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The X\-coordinate of the second corner of the bounding box\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).y_2'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).y_2'></a>
 
 `y_2` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The Y\-coordinate of the second corner of the bounding box\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).tolerance'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).tolerance'></a>
 
 `tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 An optional tolerance value for the spatial query\. If not provided, a default macro distance is used\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).administrativeArealType'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 An optional filter to restrict results to a specific type of administrative area\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByBoundingBoxAsync(double,double,double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetItemsByCircleAsync\(double, double, Nullable\<double\>, Nullable\<double\>, Nullable\<double\>, Nullable\<AdministrativeArealType\>\) Method
+## AdministrativeAreal2DController\.GetItemsByCircleAsync\(double, double, Nullable\<double\>, Nullable\<double\>, Nullable\<double\>, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
 
 Retrieves administrative area items within a specified circle\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByCircleAsync(double x, double y, System.Nullable<double> radius, System.Nullable<double> diameter, System.Nullable<double> tolerance, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByCircleAsync(double x, double y, System.Nullable<double> radius, System.Nullable<double> diameter, System.Nullable<double> tolerance, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).x'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).x'></a>
 
 `x` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The X\-coordinate of the center point of the search circle\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).y'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).y'></a>
 
 `y` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The Y\-coordinate of the center point of the search circle\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).radius'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).radius'></a>
 
 `radius` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The radius of the search circle\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).diameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).diameter'></a>
 
 `diameter` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The diameter of the search circle\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).tolerance'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).tolerance'></a>
 
 `tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The tolerance value for the spatial query\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).administrativeArealType'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The type of administrative area to retrieve\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCircleAsync(double,double,System.Nullable_double_,System.Nullable_double_,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing a list of administrative area items if found, or an error response\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetItemsByCodeAsync\(string, Nullable\<AdministrativeArealType\>\) Method
+## AdministrativeAreal2DController\.GetItemsByCodeAsync\(string, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
 
 Retrieves administrative area items filtered by code\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByCodeAsync(string code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByCodeAsync(string code, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The code used to filter the administrative area items\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).administrativeArealType'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional type of administrative area to filter by\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodeAsync(string,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing a list of matching administrative area items, or an error response if the code is invalid or no items are found\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodesAsync(System.Collections.Generic.List_string_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodesAsync(System.Collections.Generic.List_string_,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetItemsByCodesAsync\(List\<string\>\) Method
+## AdministrativeAreal2DController\.GetItemsByCodesAsync\(List\<string\>, CancellationToken\) Method
 
 Retrieves administrative area items filtered by multiple codes\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByCodesAsync(System.Collections.Generic.List<string> codes);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByCodesAsync(System.Collections.Generic.List<string> codes, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodesAsync(System.Collections.Generic.List_string_).codes'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodesAsync(System.Collections.Generic.List_string_,System.Threading.CancellationToken).codes'></a>
 
 `codes` [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
 
 The list of codes used to filter the administrative area items\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByCodesAsync(System.Collections.Generic.List_string_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByIdsAsync(System.Collections.Generic.List_int_,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetItemsByPointAsync\(double, double, Nullable\<double\>, Nullable\<AdministrativeArealType\>\) Method
+## AdministrativeAreal2DController\.GetItemsByIdsAsync\(List\<int\>, CancellationToken\) Method
+
+Retrieves administrative area items filtered by a list of identifiers\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByIdsAsync(System.Collections.Generic.List<int> ids, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByIdsAsync(System.Collections.Generic.List_int_,System.Threading.CancellationToken).ids'></a>
+
+`ids` [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
+
+The list of identifiers used to retrieve the administrative area items\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByIdsAsync(System.Collections.Generic.List_int_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken)'></a>
+
+## AdministrativeAreal2DController\.GetItemsByPointAsync\(double, double, Nullable\<double\>, Nullable\<AdministrativeArealType\>, CancellationToken\) Method
 
 Retrieves administrative area items at or near a specified point\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByPointAsync(double x, double y, System.Nullable<double> tolerance, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetItemsByPointAsync(double x, double y, System.Nullable<double> tolerance, System.Nullable<DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType> administrativeArealType, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).x'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).x'></a>
 
 `x` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The X\-coordinate of the search point\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).y'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).y'></a>
 
 `y` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
 
 The Y\-coordinate of the search point\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).tolerance'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).tolerance'></a>
 
 `tolerance` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional tolerance distance to use when searching for items near the specified point\. If null, a default macro distance is used\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_).administrativeArealType'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).administrativeArealType'></a>
 
 `administrativeArealType` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.enums.administrativearealtype 'DiGi\.GIS\.PostgreSQL\.Enums\.AdministrativeArealType')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional type filter for the administrative area items to be retrieved\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetItemsByPointAsync(double,double,System.Nullable_double_,System.Nullable_DiGi.GIS.PostgreSQL.Enums.AdministrativeArealType_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetSubCodesAsync(string)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetSubCodesAsync(string,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.GetSubCodesAsync\(string\) Method
+## AdministrativeAreal2DController\.GetSubCodesAsync\(string, CancellationToken\) Method
 
 Retrieves subcodes for a given code\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetSubCodesAsync(string code);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetSubCodesAsync(string code, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetSubCodesAsync(string).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetSubCodesAsync(string,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The administrative area code used to retrieve the associated subcodes\.
 
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.GetSubCodesAsync(string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.UpdateItemAsync\(JsonObject\) Method
+## AdministrativeAreal2DController\.UpdateItemAsync\(JsonObject, CancellationToken\) Method
 
 Updates a single administrative area item\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemAsync(System.Text.Json.Nodes.JsonObject? jsonObject);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemAsync(System.Text.Json.Nodes.JsonObject? jsonObject, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,System.Threading.CancellationToken).jsonObject'></a>
 
 `jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
 
-The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the data used to update the administrative area item\. This value can be null\.
+The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the data used to update the administrative area item\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.UpdateItemsAsync\(JsonArray\) Method
+## AdministrativeAreal2DController\.UpdateItemsAsync\(JsonArray, CancellationToken\) Method
 
 Updates multiple administrative area items\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the administrative area items to be updated\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by other objects or threads to receive notice of cancellation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -667,6 +933,77 @@ The JSON object containing the parameter values\.
 ## AdministrativeAreal2DReferencePathsByNameParameter\.Text Property
 
 Text to search for in the names of the administrative areal 2D reference paths\. The search is case\-insensitive and matches any path whose name contains the specified text\.
+
+```csharp
+public string? Text { get; set; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter'></a>
+
+## AdministrativeAreal2DReferencesByNameParameter Class
+
+Represents a parameter containing text for querying administrative area references\.
+
+```csharp
+public class AdministrativeAreal2DReferencesByNameParameter : DiGi.WebAPI.Classes.Parameter
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [DiGi\.Core\.Classes\.Object](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.object 'DiGi\.Core\.Classes\.Object') → [DiGi\.Core\.Classes\.SerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.serializableobject 'DiGi\.Core\.Classes\.SerializableObject') → [DiGi\.WebAPI\.Classes\.Parameter](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.parameter 'DiGi\.WebAPI\.Classes\.Parameter') → AdministrativeAreal2DReferencesByNameParameter
+### Constructors
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter.AdministrativeAreal2DReferencesByNameParameter()'></a>
+
+## AdministrativeAreal2DReferencesByNameParameter\(\) Constructor
+
+Initializes a new instance of the [AdministrativeAreal2DReferencesByNameParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter 'DiGi\.GIS\.WebAPI\.Classes\.AdministrativeAreal2DReferencesByNameParameter') class\.
+
+```csharp
+public AdministrativeAreal2DReferencesByNameParameter();
+```
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter.AdministrativeAreal2DReferencesByNameParameter(string)'></a>
+
+## AdministrativeAreal2DReferencesByNameParameter\(string\) Constructor
+
+Initializes a new instance of the [AdministrativeAreal2DReferencesByNameParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter 'DiGi\.GIS\.WebAPI\.Classes\.AdministrativeAreal2DReferencesByNameParameter') class with the specified text\.
+
+```csharp
+public AdministrativeAreal2DReferencesByNameParameter(string text);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter.AdministrativeAreal2DReferencesByNameParameter(string).text'></a>
+
+`text` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The text to search for\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter.AdministrativeAreal2DReferencesByNameParameter(System.Text.Json.Nodes.JsonObject)'></a>
+
+## AdministrativeAreal2DReferencesByNameParameter\(JsonObject\) Constructor
+
+Initializes a new instance of the [AdministrativeAreal2DReferencesByNameParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter 'DiGi\.GIS\.WebAPI\.Classes\.AdministrativeAreal2DReferencesByNameParameter') class using a [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') instance\.
+
+```csharp
+public AdministrativeAreal2DReferencesByNameParameter(System.Text.Json.Nodes.JsonObject jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter.AdministrativeAreal2DReferencesByNameParameter(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the parameter values\.
+### Properties
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DReferencesByNameParameter.Text'></a>
+
+## AdministrativeAreal2DReferencesByNameParameter\.Text Property
+
+Gets or sets the text to search for in the names of administrative areal 2D references\.
 
 ```csharp
 public string? Text { get; set; }

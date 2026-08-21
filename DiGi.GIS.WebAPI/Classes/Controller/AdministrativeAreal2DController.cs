@@ -23,7 +23,7 @@ namespace DiGi.GIS.WebAPI.Classes
         private readonly AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
 
-        /// <summary></summary>
+        /// <summary> Initializes a new instance of the <see cref="AdministrativeAreal2DController"/> class. </summary>
         /// <param name="GISWebAPIConfigurationFileWatcher">The configuration file watcher for the GIS PostgreSQL Web API.</param>
         /// <param name="administrativeAreal2DPostgreSQLConverter">The converter used for administrative area 2D PostgreSQL operations.</param>
         public AdministrativeAreal2DController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
@@ -35,25 +35,31 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Gets an administrative area reference by its code and type. </summary>
         /// <param name="code">The unique code of the administrative area.</param>
         /// <param name="administrativeArealType">The type of the administrative area.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("administrativeareal2Dreferencebycode", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetAdministrativeAreal2DReferenceByCodeAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(AdministrativeAreal2DReference), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetAdministrativeAreal2DReferenceByCodeAsync([FromQuery(Name = "code")] string? code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType)
+        public async Task<IActionResult> GetAdministrativeAreal2DReferenceByCodeAsync([FromQuery(Name = "code")] string? code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferenceByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
             Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
 
-            if (string.IsNullOrWhiteSpace(code))
+            if (string.IsNullOrWhiteSpace(code) || administrativeArealType == AdministrativeArealType.Undefined)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid code provided");
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid code or administrative areal type provided");
                 return BadRequest();
             }
 
-            AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByCodeAsync(code, administrativeArealType);
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByCodeAsync(code, administrativeArealType, cancellationToken);
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReference);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -65,17 +71,30 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves an administrative area reference by its identifier. </summary>
         /// <param name="id">The unique identifier of the administrative area reference to retrieve.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("administrativeareal2Dreferencebyid", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetAdministrativeAreal2DReferenceByIdAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(AdministrativeAreal2DReference), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetAdministrativeAreal2DReferenceByIdAsync([FromQuery(Name = "id")] int id)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetAdministrativeAreal2DReferenceByIdAsync([FromQuery(Name = "id")] int id, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferenceByIdAsync));
             Serilog.Modify.Log("Id provided: {Id}", id);
 
-            AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByIdAsync(id);
+            if (id <= 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid id provided: {Id}", id);
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByIdAsync(id, cancellationToken);
 
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReference);
             if (string.IsNullOrWhiteSpace(json))
@@ -88,16 +107,30 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves the administrative area reference path by its identifier. </summary>
         /// <param name="id">The unique identifier of the administrative area reference path to retrieve.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("administrativeareal2Dreferencepathbyid", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetAdministrativeAreal2DReferencePathByIdAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(AdministrativeAreal2DReferencePath), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetAdministrativeAreal2DReferencePathByIdAsync([FromQuery(Name = "id")] int id)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetAdministrativeAreal2DReferencePathByIdAsync([FromQuery(Name = "id")] int id, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferencePathByIdAsync));
             Serilog.Modify.Log("Id provided: {Id}", id);
-            AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(id);
+
+            if (id <= 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid id provided: {Id}", id);
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(id, cancellationToken);
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferencePath);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -109,20 +142,30 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves administrative area reference paths by name. </summary>
         /// <param name="text">The search text used to find matching administrative area reference paths.</param>
-        /// <param name="cancellationToken">A cancellation token that can be used by the called method to indicate that the operation should be canceled.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("administrativeareal2Dreferencepathsbyname", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetAdministrativeAreal2DReferencePathsByNameAsync)}")]
         [ApiExplorerSettings(IgnoreApi = true)]
         [ProducesResponseType(typeof(List<AdministrativeAreal2DReferencePath>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAdministrativeAreal2DReferencePathsByNameAsync([FromBody] string text, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferencePathsByNameAsync));
 
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
             try
             {
-                // Explicit typing as requested. Passing CancellationToken to the DLL logic.
                 List<AdministrativeAreal2DReferencePath>? administrativeAreal2DReferencePaths = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathsByNameAsync(text, cancellationToken);
 
                 if (administrativeAreal2DReferencePaths is null)
@@ -130,14 +173,12 @@ namespace DiGi.GIS.WebAPI.Classes
                     return NotFound();
                 }
 
-                // Converting the list to a JSON string using your specialized DLL converter.
                 string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferencePaths);
                 if (string.IsNullOrWhiteSpace(json))
                 {
                     return NotFound();
                 }
 
-                // Returning the string directly as application/json avoids double serialization.
                 return Content(json, "application/json");
             }
             catch (Exception exception)
@@ -147,16 +188,15 @@ namespace DiGi.GIS.WebAPI.Classes
             }
         }
 
-        /// <summary>
-        /// Retrieves administrative area reference paths by name parameter (where Text is the search term).
-        /// </summary>
-        /// <param name="administrativeAreal2DReferencePathsByNameParameter">The parameter containing the search term for querying administrative areas by name. </param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task that represents the asynchronous operation. List of AdministrativeAreal2DReferencePaths <see cref="AdministrativeAreal2DReferencePath"/> if valid administrative area references are found.</returns>
+        /// <summary> Retrieves administrative area reference paths by name parameter. </summary>
+        /// <param name="administrativeAreal2DReferencePathsByNameParameter">The parameter containing the search term for querying administrative areas by name.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("administrativeareal2Dreferencepathsbynameparameter", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetAdministrativeAreal2DReferencePathsByNameParameterAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<AdministrativeAreal2DReferencePath>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAdministrativeAreal2DReferencePathsByNameParameterAsync([FromBody] AdministrativeAreal2DReferencePathsByNameParameter administrativeAreal2DReferencePathsByNameParameter, CancellationToken cancellationToken = default)
         {
@@ -164,12 +204,16 @@ namespace DiGi.GIS.WebAPI.Classes
 
             if (string.IsNullOrWhiteSpace(administrativeAreal2DReferencePathsByNameParameter?.Text))
             {
-                return NotFound();
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
             }
 
             try
             {
-                // Explicit typing as requested. Passing CancellationToken to the DLL logic.
                 List<AdministrativeAreal2DReferencePath>? administrativeAreal2DReferencePaths = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathsByNameAsync(administrativeAreal2DReferencePathsByNameParameter.Text, cancellationToken);
 
                 if (administrativeAreal2DReferencePaths is null)
@@ -177,14 +221,12 @@ namespace DiGi.GIS.WebAPI.Classes
                     return NotFound();
                 }
 
-                // Converting the list to a JSON string using your specialized DLL converter.
                 string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferencePaths);
                 if (string.IsNullOrWhiteSpace(json))
                 {
                     return NotFound();
                 }
 
-                // Returning the string directly as application/json avoids double serialization.
                 return Content(json, "application/json");
             }
             catch (Exception exception)
@@ -194,21 +236,83 @@ namespace DiGi.GIS.WebAPI.Classes
             }
         }
 
+        /// <summary> Retrieves administrative area references by name parameter. </summary>
+        /// <param name="administrativeAreal2DReferencesByNameParameter">The parameter containing the search term for querying administrative area references by name.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpPost("administrativeareal2Dreferencesbynameparameter", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetAdministrativeAreal2DReferencesByNameParameterAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<AdministrativeAreal2DReference>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAdministrativeAreal2DReferencesByNameParameterAsync([FromBody] AdministrativeAreal2DReferencesByNameParameter administrativeAreal2DReferencesByNameParameter, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferencesByNameParameterAsync));
+
+            if (string.IsNullOrWhiteSpace(administrativeAreal2DReferencesByNameParameter?.Text))
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByNameAsync(administrativeAreal2DReferencesByNameParameter.Text, cancellationToken);
+
+                if (administrativeAreal2DReferences is null)
+                {
+                    return NotFound();
+                }
+
+                string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferences);
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    return NotFound();
+                }
+
+                return Content(json, "application/json");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Error in GetAdministrativeAreal2DReferencesByNameParameterAsync");
+                return StatusCode(500, "An error occurred while processing the geospatial data.");
+            }
+        }
+
         /// <summary> Retrieves all administrative area references filtered by administrative area type. </summary>
-        /// <param name="administrativeArealType">The administrative area type used to filter the references.</param>
+        /// <param name="administrativeArealType">The administrative area type used to filter the references. Bound as nullable so an omitted parameter can be rejected: a non-nullable binding would silently take <see cref="AdministrativeArealType.Country"/>, because that is <c>default</c> of the enum while <see cref="AdministrativeArealType.Undefined"/> is -1.</param>
         /// <param name="parentId">The optional parent identifier used for filtering.</param>
         /// <param name="uniqueCode">An optional flag indicating whether to filter by unique code.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("administrativeareal2Dreferencesbyadministrativearealtype", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<AdministrativeAreal2DReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync([FromQuery(Name = "administrativearealtype")] AdministrativeArealType administrativeArealType, [FromQuery(Name = "parentId")] int? parentId, [FromQuery(Name = "uniquecode")] bool? uniqueCode)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync([FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, [FromQuery(Name = "parentId")] int? parentId, [FromQuery(Name = "uniquecode")] bool? uniqueCode, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync));
-            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType.ToString());
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
             Serilog.Modify.Log("ParentId provided: {ParentId}", parentId?.ToString() ?? string.Empty);
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(administrativeArealType, parentId, uniqueCode ?? false);
+
+            if (administrativeArealType is null || administrativeArealType.Value == AdministrativeArealType.Undefined || (parentId.HasValue && parentId.Value <= 0))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid AdministrativeArealType or ParentId provided");
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(administrativeArealType.Value, parentId, uniqueCode ?? false, 30, cancellationToken);
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferences);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -221,21 +325,27 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves administrative area references by their code. </summary>
         /// <param name="code">The unique identifier or code used to retrieve the administrative area references.</param>
         /// <param name="administrativeArealType">An optional filter specifying the type of administrative area.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("administrativeareal2Dreferencesbycode", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetAdministrativeAreal2DReferencesByCodeAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<AdministrativeAreal2DReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetAdministrativeAreal2DReferencesByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType)
+        public async Task<IActionResult> GetAdministrativeAreal2DReferencesByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferencesByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
             Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
 
-            if (string.IsNullOrWhiteSpace(code))
+            if (string.IsNullOrWhiteSpace(code) || administrativeArealType == AdministrativeArealType.Undefined)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid code provided");
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid code or administrative areal type provided");
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
                 return BadRequest();
             }
 
@@ -243,11 +353,11 @@ namespace DiGi.GIS.WebAPI.Classes
 
             if (administrativeArealType != null)
             {
-                administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(code, administrativeArealType.Value);
+                administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(code, administrativeArealType.Value, cancellationToken);
             }
             else
             {
-                administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(code);
+                administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(code, cancellationToken);
             }
 
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferences);
@@ -260,15 +370,54 @@ namespace DiGi.GIS.WebAPI.Classes
             return Content(json, "application/json");
         }
 
+        /// <summary> Retrieves administrative area references by a list of identifiers. </summary>
+        /// <param name="ids">The list of unique identifiers of the administrative areas to retrieve.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpPost("administrativeareal2Dreferencesbyids", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetAdministrativeAreal2DReferencesByIdsAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<AdministrativeAreal2DReference>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetAdministrativeAreal2DReferencesByIdsAsync([FromBody] List<int> ids, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferencesByIdsAsync));
+
+            if (ids is null || ids.Count == 0)
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(ids, cancellationToken);
+            string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferences);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
         /// <summary> Asynchronously retrieves the 2D bounding box enclosing country administrative areas. </summary>
         /// <param name="cancellationToken">A cancellation token that can be used by the called method to indicate that the operation should be canceled.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("boundingbox2D", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetBoundingBox2DAsync)}")]
         [ProducesResponseType(typeof(BoundingBox2D), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetBoundingBox2DAsync(CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetBoundingBox2DAsync));
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
 
             BoundingBox2D? boundingBox2D = await administrativeAreal2DPostgreSQLConverter.GetBoundingBox2DAsync(cancellationToken);
 
@@ -287,9 +436,16 @@ namespace DiGi.GIS.WebAPI.Classes
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetCodesAsync()
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetCodesAsync));
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
             HashSet<string>? codes = await administrativeAreal2DPostgreSQLConverter.GetCodesAsync();
             if (codes is null || codes.Count == 0)
             {
@@ -307,19 +463,52 @@ namespace DiGi.GIS.WebAPI.Classes
             return Content(json, "application/json");
         }
 
+        /// <summary> Retrieves the count of administrative areas. </summary>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpGet("count", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetCountAsync)}")]
+        [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetCountAsync(CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetCountAsync));
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            long count = await administrativeAreal2DPostgreSQLConverter.GetCountAsync(cancellationToken);
+            if (count < 0)
+            {
+                return NotFound();
+            }
+
+            return Ok(count);
+        }
+
         /// <summary> Retrieves the identifier for a given code. </summary>
         /// <param name="code">The unique code of the administrative area.</param>
         /// <param name="administrativeArealType">The optional type of the administrative area to filter the search.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("idbycode", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetIdByCodeAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetIdByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetIdByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetIdByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(code))
+
+            if (string.IsNullOrWhiteSpace(code) || administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
             {
                 return BadRequest();
             }
@@ -333,26 +522,100 @@ namespace DiGi.GIS.WebAPI.Classes
             return Ok(id.Value);
         }
 
+        /// <summary> Retrieves all identifiers for a given code. </summary>
+        /// <param name="code">The code of the administrative area.</param>
+        /// <param name="administrativeArealType">The optional type of the administrative area to filter the search.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpGet("idsbycode", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetIdsByCodeAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(HashSet<int>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetIdsByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetIdsByCodeAsync));
+            Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
+
+            if (string.IsNullOrWhiteSpace(code) || administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            HashSet<int>? ids = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, administrativeArealType, cancellationToken);
+            if (ids is null || ids.Count == 0)
+            {
+                return NotFound();
+            }
+
+            return Ok(ids);
+        }
+
+        /// <summary> Retrieves all identifiers for a given administrative area type. </summary>
+        /// <param name="administrativeArealType">The administrative area type. Bound as nullable so an omitted parameter can be rejected: a non-nullable binding would silently take <see cref="AdministrativeArealType.Country"/>, because that is <c>default</c> of the enum while <see cref="AdministrativeArealType.Undefined"/> is -1.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpGet("idsbyadministrativearealtype", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetIdsByAdministrativeArealTypeAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(HashSet<int>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetIdsByAdministrativeArealTypeAsync([FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetIdsByAdministrativeArealTypeAsync));
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
+
+            if (administrativeArealType is null || administrativeArealType.Value == AdministrativeArealType.Undefined)
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            HashSet<int>? ids = await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(administrativeArealType.Value, cancellationToken);
+            if (ids is null || ids.Count == 0)
+            {
+                return NotFound();
+            }
+
+            return Ok(ids);
+        }
+
         /// <summary> Retrieves an administrative area item by its code and optional type. </summary>
         /// <param name="code">The unique code of the administrative area to retrieve.</param>
         /// <param name="administrativeArealType">The optional type of the administrative area to filter the search.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itembycode", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemByCodeAsync)}")]
         [ProducesResponseType(typeof(GIS.Classes.AdministrativeAreal2D), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType)
+        public async Task<IActionResult> GetItemByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
             Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(code))
+
+            if (string.IsNullOrWhiteSpace(code) || administrativeArealType == AdministrativeArealType.Undefined)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid code provided");
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid code or administrative areal type provided");
                 return BadRequest();
             }
 
-            AdministrativeAreal2D? administrativeAreal2D_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByCodeAsync(code, administrativeArealType);
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            AdministrativeAreal2D? administrativeAreal2D_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByCodeAsync(code, administrativeArealType, cancellationToken);
             if (administrativeAreal2D_PostgreSQL is null)
             {
                 return NotFound();
@@ -370,15 +633,28 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Asynchronously retrieves an administrative area item by its unique identifier. </summary>
         /// <param name="id">The integer identifier of the administrative area item to retrieve.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itembyid", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemByIdAsync)}")]
         [ProducesResponseType(typeof(GIS.Classes.AdministrativeAreal2D), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemByIdAsync([FromQuery(Name = "id")] int id)
+        public async Task<IActionResult> GetItemByIdAsync([FromQuery(Name = "id")] int id, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemByIdAsync));
             Serilog.Modify.Log("Id provided: {Id}", id);
+
+            if (id <= 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid id provided: {Id}", id);
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
             AdministrativeAreal2D? administrativeAreal2D_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByIdAsync(id);
             if (administrativeAreal2D_PostgreSQL is null)
             {
@@ -396,28 +672,34 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary> Retrieves all administrative area items filtered by administrative area type. </summary>
-        /// <param name="administrativeArealType">The administrative area type used to filter the results.</param>
+        /// <param name="administrativeArealType">The administrative area type used to filter the results. Bound as nullable so an omitted parameter can be rejected: a non-nullable binding would silently take <see cref="AdministrativeArealType.Country"/>, because that is <c>default</c> of the enum while <see cref="AdministrativeArealType.Undefined"/> is -1.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itemsbyadministrativearealtype", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemsByAdministrativeArealTypeAsync)}")]
         [ProducesResponseType(typeof(List<GIS.Classes.AdministrativeAreal2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByAdministrativeArealTypeAsync([FromQuery(Name = "administrativearealtype")] AdministrativeArealType administrativeArealType)
+        public async Task<IActionResult> GetItemsByAdministrativeArealTypeAsync([FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByAdministrativeArealTypeAsync));
-            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType.ToString() ?? string.Empty);
+            Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
 
-            if (administrativeArealType == AdministrativeArealType.Undefined)
+            if (administrativeArealType is null || administrativeArealType.Value == AdministrativeArealType.Undefined)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Invalid AdministrativeArealType provided");
                 return BadRequest();
             }
 
-            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealTypeAsync(administrativeArealType);
-            if (administrativeAreal2Ds_PostgreSQL is null)
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealTypeAsync(administrativeArealType.Value);
+            if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
             {
                 Serilog.Modify.Log("No content found");
-                return NoContent();
+                return NotFound();
             }
 
             Serilog.Modify.Log("content found: {Count} items", administrativeAreal2Ds_PostgreSQL.Count);
@@ -434,7 +716,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeAreal2Ds.Add(administrativeAreal2D);
             }
 
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            if (administrativeAreal2Ds.Count == 0)
             {
                 Serilog.Modify.Log("No content found");
                 return NotFound();
@@ -458,15 +740,29 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="y_2">The Y-coordinate of the second corner of the bounding box.</param>
         /// <param name="tolerance">An optional tolerance value for the spatial query. If not provided, a default macro distance is used.</param>
         /// <param name="administrativeArealType">An optional filter to restrict results to a specific type of administrative area.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("itemsbyboundingbox", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemsByBoundingBoxAsync)}")]
         [ProducesResponseType(typeof(List<GIS.Classes.AdministrativeAreal2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByBoundingBoxAsync([FromQuery(Name = "x_1")] double x_1, [FromQuery(Name = "y_1")] double y_1, [FromQuery(Name = "x_2")] double x_2, [FromQuery(Name = "y_2")] double y_2, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType)
+        public async Task<IActionResult> GetItemsByBoundingBoxAsync(
+            [FromQuery(Name = "x_1")] double x_1,
+            [FromQuery(Name = "y_1")] double y_1,
+            [FromQuery(Name = "x_2")] double x_2,
+            [FromQuery(Name = "y_2")] double y_2,
+            [FromQuery(Name = "tolerance")] double? tolerance,
+            [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType,
+            CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByBoundingBoxAsync));
-            if (double.IsNaN(x_1) || double.IsNaN(y_1) || double.IsNaN(x_2) || double.IsNaN(y_2))
+
+            if (double.IsNaN(x_1) || double.IsNaN(y_1) || double.IsNaN(x_2) || double.IsNaN(y_2) || (tolerance.HasValue && (double.IsNaN(tolerance.Value) || tolerance.Value < 0)) || administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
             {
                 return BadRequest();
             }
@@ -482,7 +778,8 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeArealTypes = [administrativeArealType.Value];
             }
 
-            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(new BoundingBox2D(new Core.Classes.Range<double>(x_1, x_2), new Core.Classes.Range<double>(y_1, y_2)), administrativeArealTypes, tolerance.Value);
+            BoundingBox2D boundingBox2D = new(new Core.Classes.Range<double>(x_1, x_2), new Core.Classes.Range<double>(y_1, y_2));
+            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, administrativeArealTypes, tolerance.Value, cancellationToken);
             if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
             {
                 return NotFound();
@@ -500,7 +797,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeAreal2Ds.Add(administrativeAreal2D);
             }
 
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            if (administrativeAreal2Ds.Count == 0)
             {
                 return NotFound();
             }
@@ -521,16 +818,29 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="diameter">The diameter of the search circle.</param>
         /// <param name="tolerance">The tolerance value for the spatial query.</param>
         /// <param name="administrativeArealType">The type of administrative area to retrieve.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>An <see cref="IActionResult" /> containing a list of administrative area items if found, or an error response.</returns>
-
         [HttpGet("itemsbycircle", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemsByCircleAsync)}")]
         [ProducesResponseType(typeof(List<GIS.Classes.AdministrativeAreal2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByCircleAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "radius")] double? radius, [FromQuery(Name = "diameter")] double? diameter, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType)
+        public async Task<IActionResult> GetItemsByCircleAsync(
+            [FromQuery(Name = "x")] double x,
+            [FromQuery(Name = "y")] double y,
+            [FromQuery(Name = "radius")] double? radius,
+            [FromQuery(Name = "diameter")] double? diameter,
+            [FromQuery(Name = "tolerance")] double? tolerance,
+            [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType,
+            CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByCircleAsync));
-            if (double.IsNaN(x) || double.IsNaN(y))
+
+            if (double.IsNaN(x) || double.IsNaN(y) || (tolerance.HasValue && (double.IsNaN(tolerance.Value) || tolerance.Value < 0)) || administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
             {
                 return BadRequest();
             }
@@ -554,7 +864,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 }
             }
 
-            if (double.IsNaN(radius_Temp))
+            if (double.IsNaN(radius_Temp) || radius_Temp <= 0)
             {
                 return BadRequest();
             }
@@ -570,7 +880,9 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeArealTypes = [administrativeArealType.Value];
             }
 
-            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), administrativeArealTypes, tolerance.Value);
+            Point2D point2D = new(x, y);
+            Circle2D circle2D = new(point2D, radius_Temp);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByCircle2DAsync(circle2D, administrativeArealTypes, tolerance.Value);
             if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
             {
                 return NotFound();
@@ -588,7 +900,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeAreal2Ds.Add(administrativeAreal2D);
             }
 
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            if (administrativeAreal2Ds.Count == 0)
             {
                 return NotFound();
             }
@@ -605,22 +917,28 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves administrative area items filtered by code. </summary>
         /// <param name="code">The code used to filter the administrative area items.</param>
         /// <param name="administrativeArealType">The optional type of administrative area to filter by.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>An <see cref="IActionResult" /> containing a list of matching administrative area items, or an error response if the code is invalid or no items are found.</returns>
-
         [HttpGet("itemsbycode", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemsByCodeAsync)}")]
         [ProducesResponseType(typeof(List<GIS.Classes.AdministrativeAreal2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType)
+        public async Task<IActionResult> GetItemsByCodeAsync([FromQuery(Name = "code")] string code, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
-            if (string.IsNullOrWhiteSpace(code))
+
+            if (string.IsNullOrWhiteSpace(code) || administrativeArealType == AdministrativeArealType.Undefined)
             {
                 return BadRequest();
             }
 
-            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByCodeAsync(code, administrativeArealType);
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByCodeAsync(code, administrativeArealType, cancellationToken);
             if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
             {
                 return NotFound();
@@ -638,7 +956,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeAreal2Ds.Add(administrativeAreal2D);
             }
 
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            if (administrativeAreal2Ds.Count == 0)
             {
                 return NotFound();
             }
@@ -654,16 +972,22 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves administrative area items filtered by multiple codes. </summary>
         /// <param name="codes">The list of codes used to filter the administrative area items.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-
         [HttpPost("itemsbycodes", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemsByCodesAsync)}")]
         [ProducesResponseType(typeof(List<GIS.Classes.AdministrativeAreal2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByCodesAsync([FromBody] List<string> codes)
+        public async Task<IActionResult> GetItemsByCodesAsync([FromBody] List<string> codes, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByCodesAsync));
+
             if (codes == null || codes.Count == 0)
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
             {
                 return BadRequest();
             }
@@ -671,7 +995,7 @@ namespace DiGi.GIS.WebAPI.Classes
             List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByCodesAsync(codes);
             if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
             {
-                return NoContent();
+                return NotFound();
             }
 
             List<GIS.Classes.AdministrativeAreal2D> administrativeAreal2Ds = [];
@@ -686,7 +1010,61 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeAreal2Ds.Add(administrativeAreal2D);
             }
 
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            if (administrativeAreal2Ds.Count == 0)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(administrativeAreal2Ds);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary> Retrieves administrative area items filtered by a list of identifiers. </summary>
+        /// <param name="ids">The list of identifiers used to retrieve the administrative area items.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpPost("itemsbyids", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemsByIdsAsync)}")]
+        [ProducesResponseType(typeof(List<GIS.Classes.AdministrativeAreal2D>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetItemsByIdsAsync([FromBody] List<int> ids, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByIdsAsync));
+
+            if (ids is null || ids.Count == 0)
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByIdsAsync(ids);
+            if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
+            {
+                return NotFound();
+            }
+
+            List<GIS.Classes.AdministrativeAreal2D> administrativeAreal2Ds = [];
+            foreach (AdministrativeAreal2D administrativeAreal2D_PostgreSQL in administrativeAreal2Ds_PostgreSQL)
+            {
+                GIS.Classes.AdministrativeAreal2D? administrativeAreal2D = administrativeAreal2D_PostgreSQL.ToDiGi();
+                if (administrativeAreal2D is null)
+                {
+                    continue;
+                }
+
+                administrativeAreal2Ds.Add(administrativeAreal2D);
+            }
+
+            if (administrativeAreal2Ds.Count == 0)
             {
                 return NotFound();
             }
@@ -705,16 +1083,22 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="y">The Y-coordinate of the search point.</param>
         /// <param name="tolerance">The optional tolerance distance to use when searching for items near the specified point. If null, a default macro distance is used.</param>
         /// <param name="administrativeArealType">The optional type filter for the administrative area items to be retrieved.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-
         [HttpGet("itemsbypoint", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetItemsByPointAsync)}")]
         [ProducesResponseType(typeof(List<GIS.Classes.AdministrativeAreal2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByPointAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType)
+        public async Task<IActionResult> GetItemsByPointAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByPointAsync));
-            if (double.IsNaN(x) || double.IsNaN(y))
+
+            if (double.IsNaN(x) || double.IsNaN(y) || (tolerance.HasValue && (double.IsNaN(tolerance.Value) || tolerance.Value < 0)) || administrativeArealType == AdministrativeArealType.Undefined)
+            {
+                return BadRequest();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
             {
                 return BadRequest();
             }
@@ -730,10 +1114,11 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeArealTypes = [administrativeArealType.Value];
             }
 
-            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByPoint2DAsync(new Point2D(x, y), administrativeArealTypes, tolerance.Value);
+            Point2D point2D = new(x, y);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByPoint2DAsync(point2D, administrativeArealTypes, tolerance.Value);
             if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
             {
-                return NoContent();
+                return NotFound();
             }
 
             List<GIS.Classes.AdministrativeAreal2D> administrativeAreal2Ds = [];
@@ -748,7 +1133,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeAreal2Ds.Add(administrativeAreal2D);
             }
 
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
+            if (administrativeAreal2Ds.Count == 0)
             {
                 return NotFound();
             }
@@ -764,23 +1149,29 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves subcodes for a given code. </summary>
         /// <param name="code">The administrative area code used to retrieve the associated subcodes.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-
         [HttpGet("subcodes", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(GetSubCodesAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetSubCodesAsync([FromQuery(Name = "code")] string code)
+        public async Task<IActionResult> GetSubCodesAsync([FromQuery(Name = "code")] string code, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetSubCodesAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
+
             if (string.IsNullOrWhiteSpace(code))
             {
                 return BadRequest();
             }
 
-            HashSet<string>? subcodes = await administrativeAreal2DPostgreSQLConverter.GetSubCodesAsync(code);
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            HashSet<string>? subcodes = await administrativeAreal2DPostgreSQLConverter.GetSubCodesAsync(code, cancellationToken);
             if (subcodes is null || subcodes.Count == 0)
             {
                 return NotFound();
@@ -798,27 +1189,32 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary> Updates a single administrative area item. </summary>
-        /// <param name="jsonObject">The <see cref="T:System.Text.Json.Nodes.JsonObject" /> containing the data used to update the administrative area item. This value can be null.</param>
+        /// <param name="jsonObject">The <see cref="JsonObject" /> containing the data used to update the administrative area item.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-
         [HttpPost("updateitem", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(UpdateItemAsync)}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> UpdateItemAsync([FromBody] JsonObject? jsonObject)
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateItemAsync([FromBody] JsonObject? jsonObject, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(UpdateItemAsync));
 
-            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateAdministrativeAreal2D)
+            if (GISWebAPIConfigurationFileWatcher is null || !GISWebAPIConfigurationFileWatcher.AllowUpdateAdministrativeAreal2D)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D update not allowed");
-                return ValidationProblem();
+                return Unauthorized();
             }
 
             if (jsonObject is null)
             {
                 return NoContent();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
             }
 
             GIS.Classes.AdministrativeAreal2D? administrativeAreal2D = Core.Create.SerializableObject<GIS.Classes.AdministrativeAreal2D>(jsonObject);
@@ -844,18 +1240,18 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Updates multiple administrative area items. </summary>
         /// <param name="jsonArray">The JSON array containing the administrative area items to be updated.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-
         [HttpPost("updateitems", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(UpdateItemsAsync)}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray)
+        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(UpdateItemsAsync));
 
-            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateAdministrativeAreal2D)
+            if (GISWebAPIConfigurationFileWatcher is null || !GISWebAPIConfigurationFileWatcher.AllowUpdateAdministrativeAreal2D)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D update not allowed");
                 return Unauthorized();
@@ -864,6 +1260,11 @@ namespace DiGi.GIS.WebAPI.Classes
             if (jsonArray is null || jsonArray.Count == 0)
             {
                 return NoContent();
+            }
+
+            if (administrativeAreal2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
             }
 
             List<GIS.Classes.AdministrativeAreal2D>? administrativeAreal2Ds = Core.Create.SerializableObjects<GIS.Classes.AdministrativeAreal2D>(jsonArray);
@@ -884,7 +1285,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 administrativeAreal2Ds_PostgreSQL.Add(administrativeAreal2D_PostgreSQL);
             }
 
-            if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
+            if (administrativeAreal2Ds_PostgreSQL.Count == 0)
             {
                 return NoContent();
             }
