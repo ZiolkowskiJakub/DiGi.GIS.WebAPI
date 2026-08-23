@@ -79,30 +79,24 @@ namespace DiGi.GIS.WebAPI.Classes
 
             while (building2DReferences is not null && building2DReferences.Count > 0)
             {
-                int? countyId = building2DReferences[0].CountyId;
+                cancellationToken.ThrowIfCancellationRequested();
 
-                Core.Query.Filter(building2DReferences, x => x?.CountyId == countyId, out List<Building2DReference>? building2DReferences_In, out List<Building2DReference>? building2DReferences_Out);
-                building2DReferences = building2DReferences_Out ?? [];
+                List<PostgreSQL.Classes.OrtoDatas> ortoDatasList_PostgreSQL = [];
 
-                Dictionary<int, List<GIS.Classes.OrtoDatas>> dictionary_OrtoDatas = [];
-
-                if (building2DReferences_In != null && building2DReferences_In.Count != 0 && countyId is not null && countyId.HasValue)
+                try
                 {
-                    try
+                    Serilog.Modify.Log("PostgreSQL Building2Ds extraction starting");
+
+                    List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences, fallbackByReference: true, cancellationToken: cancellationToken);
+
+                    Serilog.Modify.Log("PostgreSQL Building2Ds extraction ended");
+
+                    if (building2Ds_PostgreSQL is not null && building2Ds_PostgreSQL.Count > 0)
                     {
-                        Serilog.Modify.Log("PostgreSQL Building2Ds extraction starting");
-
-                        List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences_In, fallbackByReference: true);
-                        if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
-                        {
-                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No PostgreSQL Building2Ds found");
-                            continue;
-                        }
-
-                        Serilog.Modify.Log("PostgreSQL Building2Ds extraction ended");
-
                         foreach (PostgreSQL.Classes.Building2D building2D_PostgreSQL in building2Ds_PostgreSQL)
                         {
+                            cancellationToken.ThrowIfCancellationRequested();
+
                             GIS.Classes.Building2D? building2D = building2D_PostgreSQL.ToDiGi();
                             if (building2D is null)
                             {
@@ -115,64 +109,55 @@ namespace DiGi.GIS.WebAPI.Classes
                                 continue;
                             }
 
-                            int countyId_Temp = building2D_PostgreSQL?.CountyId ?? -1;
-
-                            if(!dictionary_OrtoDatas.TryGetValue(countyId_Temp, out List<GIS.Classes.OrtoDatas>? value))
+                            int? countyId = building2D_PostgreSQL.CountyId > 0 ? building2D_PostgreSQL.CountyId : null;
+                            if (ortoDatas.ToPostgreSQL(countyId) is PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL)
                             {
-                                value = [];
-                                dictionary_OrtoDatas[countyId_Temp] = value;
+                                ortoDatasList_PostgreSQL.Add(ortoDatas_PostgreSQL);
                             }
-
-                            value.Add(ortoDatas);
                         }
 
-                        Serilog.Modify.Log("OrtoDatas extracted {Count}", dictionary_OrtoDatas.Count);
+                        Serilog.Modify.Log("OrtoDatas extracted {Count}", ortoDatasList_PostgreSQL.Count);
                     }
-                    catch (OperationCanceledException)
+                    else
                     {
-                        return false;
-                    }
-                    catch (HttpRequestException)
-                    {
-                        continue;
-                    }
-                    catch (Exception)
-                    {
-                        return false;
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No PostgreSQL Building2Ds found for {Count} references", building2DReferences.Count);
                     }
                 }
-
-                Serilog.Modify.Log("OrtoDatas updating starting");
-
-                List<PostgreSQL.Classes.OrtoDatas> ortoDatasList_PostgreSQL = [];
-                foreach (KeyValuePair<int, List<GIS.Classes.OrtoDatas>> keyValuePair in dictionary_OrtoDatas)
+                catch (OperationCanceledException)
                 {
-                    foreach(GIS.Classes.OrtoDatas ortoDatas in keyValuePair.Value)
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "{Type}:{Name} canceled", nameof(OrtoDatasTask), nameof(ExecuteAsync));
+                    return false;
+                }
+                catch (HttpRequestException httpRequestException)
+                {
+                    Serilog.Modify.Log(httpRequestException, "HTTP error during OrtoDatas extraction");
+                }
+                catch (Exception exception)
+                {
+                    Serilog.Modify.Log(exception, "Unexpected error during OrtoDatas processing");
+                    return false;
+                }
+
+                if (ortoDatasList_PostgreSQL.Count > 0)
+                {
+                    Serilog.Modify.Log("OrtoDatas updating starting");
+
+                    PostgreSQLUpdateResult? postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatasList_PostgreSQL);
+
+                    UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(ortoDatasList_PostgreSQL.Count);
+                    if (updateItemsResult is null)
                     {
-                        if (ortoDatas?.ToPostgreSQL(countyId) is PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL)
-                        {
-                            ortoDatasList_PostgreSQL.Add(ortoDatas_PostgreSQL);
-                        }
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas updating could not be attempted");
                     }
+                    else if (updateItemsResult.Rejected.Count != 0)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
+                    }
+
+                    longProgressWrapper?.Increment(ortoDatasList_PostgreSQL.Count);
+
+                    Serilog.Modify.Log("OrtoDatas updating ended");
                 }
-
-                PostgreSQLUpdateResult? postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatasList_PostgreSQL);
-
-                // The result used to be discarded, so a run could walk every county reporting progress it
-                // had not made.
-                UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(ortoDatasList_PostgreSQL.Count);
-                if (updateItemsResult is null)
-                {
-                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas updating could not be attempted");
-                }
-                else if (updateItemsResult.Rejected.Count != 0)
-                {
-                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
-                }
-
-                longProgressWrapper?.Increment(ortoDatasList_PostgreSQL.Count);
-
-                Serilog.Modify.Log("OrtoDatas updating ended");
 
                 cancellationToken.ThrowIfCancellationRequested();
 
