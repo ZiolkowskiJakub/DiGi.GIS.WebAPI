@@ -92,7 +92,7 @@ namespace DiGi.GIS.WebAPI.Classes
                     {
                         Serilog.Modify.Log("PostgreSQL Building2Ds extraction starting");
 
-                        List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferences(building2DReferences_In, fallbackByReference: true);
+                        List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBuilding2DReferencesAsync(building2DReferences_In, fallbackByReference: true);
                         if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
                         {
                             Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No PostgreSQL Building2Ds found");

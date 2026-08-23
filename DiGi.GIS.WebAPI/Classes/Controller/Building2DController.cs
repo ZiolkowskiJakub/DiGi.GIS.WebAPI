@@ -746,7 +746,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<Point2D>? point2Ds = await building2DPostgreSQLConverter.GetPoint2DsByReferences(references, countyId, cancellationToken);
+            List<Point2D>? point2Ds = await building2DPostgreSQLConverter.GetPoint2DsByReferencesAsync(references, countyId, cancellationToken: cancellationToken);
             if (point2Ds is null)
             {
                 return NotFound();
