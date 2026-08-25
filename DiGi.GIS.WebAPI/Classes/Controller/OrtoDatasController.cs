@@ -153,7 +153,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                     Serilog.Modify.Log("Calculating estimated count for {Code}", administrativeAreal2DReference.Code);
 
-                    List<int>? countyIds = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County))?.ConvertAll(x => x.Id);
+                    List<int>? countyIds = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County))?.ConvertAll(x => x.Id);
                     if (countyIds is null || countyIds.Count == 0)
                     {
                         Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Could not find given County AdministrativeAreal2Ds for given Id");
@@ -301,7 +301,7 @@ namespace DiGi.GIS.WebAPI.Classes
                     continue;
                 }
 
-                List<int>? countyIds_AdministrativeAreal2DReference = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County))?.ConvertAll(x => x.Id);
+                List<int>? countyIds_AdministrativeAreal2DReference = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County))?.ConvertAll(x => x.Id);
                 if (countyIds_AdministrativeAreal2DReference is null || countyIds_AdministrativeAreal2DReference.Count == 0)
                 {
                     dictionary[administrativeAreal2DReference.Id] = (-1, -1);
