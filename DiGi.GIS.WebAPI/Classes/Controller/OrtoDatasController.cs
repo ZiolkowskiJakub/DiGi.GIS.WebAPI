@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DiGi.GIS.WebAPI.Classes
@@ -42,11 +43,16 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously checks for the existence of a collection of references, optionally filtered by a county identifier.
         /// </summary>
         /// <param name="references">A list of strings representing the references to be checked.</param>
-        /// <param name="countyId">The countyId.</param>
-        /// <param name="inverted">The inverted.</param>
+        /// <param name="countyId">The identifier of the county partition to confine the check to. Omit to search every partition.</param>
+        /// <param name="inverted">Returns the references that are absent rather than the ones present.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpPost("containsbyreferences")]
-        public async Task<IActionResult> ContainsByReferencesAsync([FromBody] List<string>? references, [FromQuery(Name = "countyId")] int? countyId, [FromQuery(Name = "inverted")] bool? inverted)
+        [HttpPost("containsbyreferences", Name = $"{nameof(OrtoDatasController)}_{nameof(ContainsByReferencesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(HashSet<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ContainsByReferencesAsync([FromBody] List<string>? references, [FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "inverted")] bool? inverted, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(ContainsByReferencesAsync));
             Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? "None");
@@ -72,7 +78,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
-                HashSet<string>? referencesExisting = await ortoDatasPostgreSQLConverter.ContainsByReferencesAsync(uniqueReferences, countyId, inverted ?? false);
+                HashSet<string>? referencesExisting = await ortoDatasPostgreSQLConverter.ContainsByReferencesAsync(uniqueReferences, countyId, inverted ?? false, cancellationToken: cancellationToken);
 
                 referencesExisting ??= [];
 
@@ -89,10 +95,13 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Retrieves the estimated coverage factor for a specified administrative area 2D identifier.
         /// </summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> containing the estimated coverage factor or an error status code.</returns>
-        [HttpGet("estimatedcoveragefactor")]
+        [HttpGet("estimatedcoveragefactor", Name = $"{nameof(OrtoDatasController)}_{nameof(GetEstimatedCoverageFactorAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
-        public async Task<IActionResult> GetEstimatedCoverageFactorAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId)
+        [ProducesResponseType(typeof(double), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetEstimatedCoverageFactorAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetEstimatedCoverageFactorAsync));
             Serilog.Modify.Log("AdministrativeAreal2D Id provided: {Id}", administrativeAreal2DId);
@@ -115,7 +124,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            PostgreSQL.Classes.AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByIdAsync(administrativeAreal2DId);
+            PostgreSQL.Classes.AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByIdAsync(administrativeAreal2DId, cancellationToken);
             if (administrativeAreal2DReference is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Could not find given AdministrativeAreal2D");
@@ -132,14 +141,14 @@ namespace DiGi.GIS.WebAPI.Classes
                 case AdministrativeArealType.Subdivision:
                 case AdministrativeArealType.Municipality:
                     Serilog.Modify.Log("Calculating estimated count for {Id}", administrativeAreal2DReference.CountyId?.ToString() ?? "???");
-                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId);
-                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId);
+                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId, cancellationToken: cancellationToken);
+                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId, cancellationToken: cancellationToken);
                     break;
 
                 case AdministrativeArealType.County:
                     Serilog.Modify.Log("Calculating estimated count for {Id}", administrativeAreal2DReference.Id.ToString() ?? "???");
-                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id);
-                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id);
+                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, cancellationToken: cancellationToken);
+                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, cancellationToken: cancellationToken);
                     break;
 
                 case AdministrativeArealType.Voivodeship:
@@ -153,7 +162,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                     Serilog.Modify.Log("Calculating estimated count for {Code}", administrativeAreal2DReference.Code);
 
-                    List<int>? countyIds = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County))?.ConvertAll(x => x.Id);
+                    List<int>? countyIds = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County, cancellationToken))?.ConvertAll(x => x.Id);
                     if (countyIds is null || countyIds.Count == 0)
                     {
                         Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Could not find given County AdministrativeAreal2Ds for given Id");
@@ -162,8 +171,8 @@ namespace DiGi.GIS.WebAPI.Classes
 
                     Serilog.Modify.Log("Calculating estimated count for {Ids}", string.Join(",", countyIds));
 
-                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyIds);
-                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyIds);
+                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyIds, cancellationToken: cancellationToken);
+                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyIds, cancellationToken: cancellationToken);
                     break;
             }
 
@@ -193,9 +202,13 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="administrativeAreal2DIds">The collection of administrative area 2D identifiers to be processed.</param>
         /// <param name="analyze">An optional flag indicating whether to perform an analysis during the retrieval process.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpPost("estimatedcoveragefactors")]
-        public async Task<IActionResult> GetEstimatedCoverageFactorsAsync([FromBody] IEnumerable<int> administrativeAreal2DIds, bool? analyze)
+        [HttpPost("estimatedcoveragefactors", Name = $"{nameof(OrtoDatasController)}_{nameof(GetEstimatedCoverageFactorsAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<double>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetEstimatedCoverageFactorsAsync([FromBody] IEnumerable<int> administrativeAreal2DIds, [FromQuery(Name = "analyze")] bool? analyze, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetEstimatedCoverageFactorsAsync));
             Serilog.Modify.Log("AdministrativeAreal2D Ids provided: {Ids}", string.Join(",", administrativeAreal2DIds ?? []));
@@ -227,7 +240,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(administrativeAreal2DIds_Temp);
+            List<PostgreSQL.Classes.AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(administrativeAreal2DIds_Temp, cancellationToken);
             if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "AdministrativeAreal2Ds could not be found in database");
@@ -268,7 +281,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_County)
             {
-                long count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, analyze ?? false);
+                long count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, analyze ?? false, cancellationToken);
                 long count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, analyze ?? false);
 
                 dictionary[administrativeAreal2DReference.Id] = (count_Building2D, count_OrtoDatas);
@@ -283,7 +296,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 if (!dictionary.TryGetValue(countyId, out (long, long) value))
                 {
-                    long count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze ?? false);
+                    long count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze ?? false, cancellationToken);
                     long count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze ?? false);
 
                     value = (count_Building2D, count_OrtoDatas);
@@ -315,7 +328,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 {
                     if (!dictionary.TryGetValue(countyId_AdministrativeAreal2DReference, out (long Count_Building2D, long Count_OrtoDatas) value))
                     {
-                        long count_Building2D_County = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyId_AdministrativeAreal2DReference, analyze ?? false);
+                        long count_Building2D_County = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyId_AdministrativeAreal2DReference, analyze ?? false, cancellationToken);
                         long count_OrtoDatas_County = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyId_AdministrativeAreal2DReference, analyze ?? false);
 
                         value = (count_Building2D_County, count_OrtoDatas_County);
@@ -375,14 +388,245 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves the number of orthophoto rows stored for one county partition.
+        /// <para>The cheapest question that can be asked of the store, and the one that separates a county nothing was ever downloaded for from one that was downloaded and holds nothing.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county partition to count.</param>
+        /// <param name="estimated">Reads the planner's row estimate instead of counting the rows. Far faster on a large partition and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the count, or 404 when the county has no partition.</returns>
+        [HttpGet("countbycountyid", Name = $"{nameof(OrtoDatasController)}_{nameof(GetCountByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetCountByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(OrtoDatasController), nameof(GetCountByCountyIdAsync), countyId);
+
+            if (ortoDatasPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatasPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            long count;
+            try
+            {
+                count = estimated
+                    ? await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyId, false, cancellationToken)
+                    : await ortoDatasPostgreSQLConverter.GetCountAsync(countyId, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            // A missing partition answers -1 rather than zero, and the two mean different things: never
+            // downloaded against downloaded and empty. Reporting both as zero would hide a county nothing has
+            // ever reached.
+            if (count < 0)
+            {
+                Serilog.Modify.Log("County {CountyId} has no orthophoto partition", countyId);
+                return NotFound();
+            }
+
+            return Ok(count);
+        }
+
+        /// <summary>
+        /// Asynchronously summarises what each of the named county partitions holds: how many rows, how many name a subdivision, how many distinct subdivisions they are spread across, and when they were written.
+        /// <para>The measurement to take either side of a refresh. A building's subdivision is resolved in another database and pushed across, so <see cref="PostgreSQL.Classes.OrtoDatasCountyResult.WithSubdivisionIdCount"/> can only ever be gained - a run that lowers it is clearing subdivisions rather than filling them in, which is the defect of issues #23, #31 and #36.</para>
+        /// <para>Naming no county summarises every partition, in one grouped statement. Counties holding no row are absent from the result rather than present with a zero.</para>
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the county partitions to summarise, repeated once per county. Omit to summarise every one.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the summaries as JSON, or an error status.</returns>
+        [HttpGet("summariesbycountyids", Name = $"{nameof(OrtoDatasController)}_{nameof(GetSummariesByCountyIdsAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<PostgreSQL.Classes.OrtoDatasCountyResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetSummariesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for {CountyCount} counties", nameof(OrtoDatasController), nameof(GetSummariesByCountyIdsAsync), countyIds?.Count ?? 0);
+
+            if (ortoDatasPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatasPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            if (countyIds is not null && countyIds.Count > Constants.OrtoDatas.MaximumSummaryCountyCount)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Too many counties named: {Count}, the limit is {Maximum}", countyIds.Count, Constants.OrtoDatas.MaximumSummaryCountyCount);
+                return BadRequest($"At most {Constants.OrtoDatas.MaximumSummaryCountyCount} counties may be named. Omit the parameter to summarise every one.");
+            }
+
+            List<PostgreSQL.Classes.OrtoDatasCountyResult>? ortoDatasCountyResults;
+            try
+            {
+                ortoDatasCountyResults = await ortoDatasPostgreSQLConverter.GetSummariesByCountyIdsAsync(countyIds is null || countyIds.Count == 0 ? null : countyIds, commandTimeout, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            if (ortoDatasCountyResults is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(ortoDatasCountyResults);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            Serilog.Modify.Log("Number of OrtoDatasCountyResults to be returned: {Count}", ortoDatasCountyResults.Count);
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously compares, for one county, the subdivision each building is filed under against the one its orthophoto row carries.
+        /// <para>The two tables live in different databases, so nothing keeps them in step on its own and no query can join them - each side is read once and matched in memory. This is the only place the two can be seen together.</para>
+        /// <para>Read the result across a run rather than on its own. <c>OrtoDatasOnlyCount</c> counts rows whose orthophoto knows a subdivision the building no longer does, and nothing legitimate removes one, so a refresh that lowers it is doing damage. <c>Building2DOnlyCount</c> counts what a refresh exists to fix: it should fall to near zero and stay there, and climbing again once the download drains the queue is issue #36.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county to compare. One polygon part, not a code - a multi-part county is compared a part at a time.</param>
+        /// <param name="sampleCount">How many references to name back per disagreeing category. The counts are exact whatever this is; the samples are what make a disagreement actionable.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the comparison as JSON, or an error status.</returns>
+        [HttpGet("subdivisionlinksbycountyid", Name = $"{nameof(OrtoDatasController)}_{nameof(GetSubdivisionLinksByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(PostgreSQL.Classes.OrtoDatasSubdivisionResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetSubdivisionLinksByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "samplecount")] int sampleCount = 20, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(OrtoDatasController), nameof(GetSubdivisionLinksByCountyIdAsync), countyId);
+
+            if (ortoDatasPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatasPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Building2DPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            if (sampleCount < 0 || sampleCount > Constants.OrtoDatas.MaximumSampleCount)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Sample count out of range: {Count}, the limit is {Maximum}", sampleCount, Constants.OrtoDatas.MaximumSampleCount);
+                return BadRequest($"Sample count must be between 0 and {Constants.OrtoDatas.MaximumSampleCount}.");
+            }
+
+            PostgreSQL.Classes.OrtoDatasSubdivisionResult? ortoDatasSubdivisionResult;
+            try
+            {
+                ortoDatasSubdivisionResult = await ortoDatasPostgreSQLConverter.SubdivisionLinksAsync(building2DPostgreSQLConverter, countyId, sampleCount, commandTimeout, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            if (ortoDatasSubdivisionResult is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(ortoDatasSubdivisionResult);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            Serilog.Modify.Log(
+                "County {CountyId} compared: {MatchedCount} matched, orthophoto only {OrtoDatasOnlyCount}, building only {Building2DOnlyCount}, disagreeing {DisagreeCount}",
+                countyId, ortoDatasSubdivisionResult.MatchedCount, ortoDatasSubdivisionResult.OrtoDatasOnlyCount, ortoDatasSubdivisionResult.Building2DOnlyCount, ortoDatasSubdivisionResult.DisagreeCount);
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously reports what each of the named counties still has waiting in the orthophoto download queue.
+        /// <para>Reads the queue without taking anything out of it, unlike <see cref="NextBuilding2DReferencesAsync(int)"/>, which deletes the rows it returns. It is the only way to see what a refresh queued, and the way to watch the refresh and the download move against each other.</para>
+        /// <para>Naming no county reports every one. Counties with nothing waiting are absent from the result rather than present with a zero, so an empty result means the queue is drained.</para>
+        /// </summary>
+        /// <param name="countyIds">The identifiers of the counties to report on, repeated once per county. Omit to report every one.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the queue depths as JSON, or an error status.</returns>
+        [HttpGet("queuesummariesbycountyids", Name = $"{nameof(OrtoDatasController)}_{nameof(GetQueueSummariesByCountyIdsAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<PostgreSQL.Classes.OrtoDatasQueueResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetQueueSummariesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for {CountyCount} counties", nameof(OrtoDatasController), nameof(GetQueueSummariesByCountyIdsAsync), countyIds?.Count ?? 0);
+
+            if (ortoDatasPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatasPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            if (countyIds is not null && countyIds.Count > Constants.OrtoDatas.MaximumSummaryCountyCount)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Too many counties named: {Count}, the limit is {Maximum}", countyIds.Count, Constants.OrtoDatas.MaximumSummaryCountyCount);
+                return BadRequest($"At most {Constants.OrtoDatas.MaximumSummaryCountyCount} counties may be named. Omit the parameter to report every one.");
+            }
+
+            List<PostgreSQL.Classes.OrtoDatasQueueResult>? ortoDatasQueueResults;
+            try
+            {
+                ortoDatasQueueResults = await ortoDatasPostgreSQLConverter.GetQueueSummariesByCountyIdsAsync(countyIds is null || countyIds.Count == 0 ? null : countyIds, commandTimeout, cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            // Null rather than empty means the queue table has never been created, which is to say no refresh
+            // has ever run - a different fact to a queue that is simply drained.
+            if (ortoDatasQueueResults is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(ortoDatasQueueResults);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            Serilog.Modify.Log("Number of OrtoDatasQueueResults to be returned: {Count}", ortoDatasQueueResults.Count);
+            return Content(json, "application/json");
+        }
+        /// <summary>
         /// Asynchronously retrieves an orthodata item based on the specified reference and optional county identifier.
         /// </summary>
         /// <param name="reference">The unique reference string used to locate the orthodata item.</param>
         /// <param name="countyId">The optional identifier of the county associated with the orthodata item.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpGet("itembyreference")]
+        [HttpGet("itembyreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetItemByReferenceAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
-        public async Task<IActionResult> GetItemByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId = null)
+        public async Task<IActionResult> GetItemByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetItemByReferenceAsync));
             Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
@@ -394,7 +638,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest("Reference cannot be null or whitespace.");
             }
 
-            PostgreSQL.Classes.OrtoDatas? ortoDatas = await ortoDatasPostgreSQLConverter.GetOrtoDatasByReferenceAsync(reference, countyId);
+            PostgreSQL.Classes.OrtoDatas? ortoDatas = await ortoDatasPostgreSQLConverter.GetOrtoDatasByReferenceAsync(reference, countyId, cancellationToken: cancellationToken);
             if (ortoDatas is null)
             {
                 return NoContent();
@@ -414,10 +658,14 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="count">The maximum number of building 2D reference objects to retrieve. Defaults to 100.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpPost("nextbuilding2Dreferences")]
-        public async Task<IActionResult> NextBuilding2DReferences([FromQuery(Name = "count")] int count = 100)
+        [HttpPost("nextbuilding2dreferences", Name = $"{nameof(OrtoDatasController)}_{nameof(NextBuilding2DReferencesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReference>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> NextBuilding2DReferencesAsync([FromQuery(Name = "count")] int count = 100)
         {
-            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(NextBuilding2DReferences));
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(NextBuilding2DReferencesAsync));
             Serilog.Modify.Log("Count provided: {Count}", count);
 
             if (count <= 0)
@@ -456,7 +704,8 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="jsonArray">The JSON array containing the updated item data.</param>
         /// <param name="code">The unique identifier or code used to identify the items for update.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpPost("updateitemsbycode")]
+        [HttpPost("updateitemsbycode", Name = $"{nameof(OrtoDatasController)}_{nameof(UpdateItemsByCodeAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -519,7 +768,8 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="jsonArray">The JSON array containing the orthodata items to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the entries belong to. Normally every polygon part of one county.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpPost("updateitemsbycountyids")]
+        [HttpPost("updateitemsbycountyids", Name = $"{nameof(OrtoDatasController)}_{nameof(UpdateItemsByCountyIdsAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -661,14 +911,15 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="reference">The unique reference string of the orthophoto image.</param>
         /// <param name="year">The production or capture year of the orthophoto image.</param>
         /// <param name="countyId">The optional identifier of the county associated with the orthophoto data.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        [HttpGet("imagebyreference")]
+        [HttpGet("imagebyreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetImageByReferenceAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [Produces("image/jpeg")]
         [ProducesResponseType(typeof(FileContentResult), 200)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> GetImageByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "year")] short year, [FromQuery(Name = "countyid")] int? countyId = null)
+        public async Task<IActionResult> GetImageByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "year")] short year, [FromQuery(Name = "countyid")] int? countyId = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetImageByReferenceAsync));
             Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
@@ -681,13 +932,13 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest("Reference cannot be null or whitespace.");
             }
 
-            PostgreSQL.Classes.OrtoDatas? ortoDatas = await ortoDatasPostgreSQLConverter.GetOrtoDatasByReferenceAsync(reference, countyId);
+            PostgreSQL.Classes.OrtoDatas? ortoDatas = await ortoDatasPostgreSQLConverter.GetOrtoDatasByReferenceAsync(reference, countyId, cancellationToken: cancellationToken);
             if (ortoDatas is null)
             {
                 return NotFound();
             }
 
-            byte[]? bytes = ortoDatas?.ToDiGi()?.GetBytes(new DateTime(year, 1, 1));
+            byte[]? bytes = ortoDatas.ToDiGi()?.GetBytes(new DateTime(year, 1, 1));
             if (bytes is null)
             {
                 return NotFound();

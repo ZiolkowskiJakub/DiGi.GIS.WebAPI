@@ -26,7 +26,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
-            HttpClient? httpClient_OrtoDatas = GISWebAPIManager.CreateHttpClient<OrtoDatasController>(nameof(OrtoDatasController.NextBuilding2DReferences), out string? path_OrtoDatas);
+            HttpClient? httpClient_OrtoDatas = GISWebAPIManager.CreateHttpClient<OrtoDatasController>(nameof(OrtoDatasController.NextBuilding2DReferencesAsync), out string? path_OrtoDatas);
             if (httpClient_OrtoDatas is null || string.IsNullOrWhiteSpace(path_OrtoDatas))
             {
                 return false;
