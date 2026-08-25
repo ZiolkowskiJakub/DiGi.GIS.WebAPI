@@ -41,9 +41,11 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Gets or sets the maximum count of rows per page. Defaults to 250.
+        /// <para>Capped because a building data row carries every derived column of a building, so a page is far heavier than its row count suggests. Ask for more pages rather than a bigger one.</para>
         /// </summary>
         /// <example>100</example>
         [DefaultValue(250)]
+        [Range(1, 10000)]
         public int PageSize { get; set; } = 250;
 
         /// <summary>

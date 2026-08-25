@@ -2540,6 +2540,8 @@ eyJpZCI6MTIzfQ==
 
 Gets or sets the maximum count of rows per page\. Defaults to 250\.
 
+Capped because a building data row carries every derived column of a building, so a page is far heavier than its row count suggests. Ask for more pages rather than a bigger one.
+
 ```csharp
 public int PageSize { get; set; }
 ```
@@ -2747,353 +2749,719 @@ public class BuildingDataController : DiGi.WebAPI.Classes.WebAPIController
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [Microsoft\.AspNetCore\.Mvc\.ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase 'Microsoft\.AspNetCore\.Mvc\.ControllerBase') → [DiGi\.WebAPI\.Classes\.WebAPIController](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.webapicontroller 'DiGi\.WebAPI\.Classes\.WebAPIController') → BuildingDataController
 ### Constructors
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter)'></a>
 
-## BuildingDataController\(BuildingDataPostgreSQLConverter\) Constructor
+## BuildingDataController\(BuildingDataPostgreSQLConverter, Building2DPostgreSQLConverter\) Constructor
 
 Initializes a new instance of the BuildingDataController class\.
 
+Both converters are taken on the one constructor rather than the building data one alone, because the coverage read compares two tables that sit in different databases. A second constructor is not an option: a controller with more than one public constructor fails activation and answers 500 on every one of its endpoints.
+
 ```csharp
-public BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter);
+public BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter).buildingDataPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter).buildingDataPostgreSQLConverter'></a>
 
 `buildingDataPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.buildingdatapostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter')
 
 The [DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.buildingdatapostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter') used to handle building data operations and database conversions\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter).building2DPostgreSQLConverter'></a>
+
+`building2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
+
+The [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter') used to read the buildings a county holds, which is the other half of the coverage comparison\.
+### Fields
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.referenceCount_Maximum'></a>
+
+## BuildingDataController\.referenceCount\_Maximum Field
+
+The largest number of references one request may ask for\.
+
+The whole collection travels into a single statement, so an unbounded list is an unbounded statement. A caller with more than this to ask about should page rather than widen the request.
+
+```csharp
+private const int referenceCount_Maximum = 10000;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 ### Methods
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCategoriesAsync()'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCategoriesAsync(int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetCategoriesAsync\(\) Method
+## BuildingDataController\.GetCategoriesAsync\(int, CancellationToken\) Method
 
 Asynchronously retrieves all available building data column categories\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCategoriesAsync();
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCategoriesAsync(int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCategoriesAsync(int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCategoriesAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnReferencesAsync(System.Collections.Generic.List_string_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnReferencesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetColumnReferencesAsync\(List\<string\>\) Method
+## BuildingDataController\.GetColumnReferencesAsync\(List\<string\>, int, CancellationToken\) Method
 
 Asynchronously retrieves all column references, optionally filtered by the specified categories\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnReferencesAsync(System.Collections.Generic.List<string>? categories=null);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnReferencesAsync(System.Collections.Generic.List<string>? categories=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnReferencesAsync(System.Collections.Generic.List_string_).categories'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnReferencesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).categories'></a>
 
 `categories` [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
 
 An optional list of category names to filter the column references by\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnReferencesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnReferencesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a list of column references\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsAsync()'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsAsync(int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetColumnsAsync\(\) Method
+## BuildingDataController\.GetColumnsAsync\(int, CancellationToken\) Method
 
 Asynchronously retrieves all available column definitions for building data\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnsAsync();
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnsAsync(int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsAsync(int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesAsync(System.Collections.Generic.List_string_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetColumnsByCategoriesAsync\(List\<string\>\) Method
+## BuildingDataController\.GetColumnsByCategoriesAsync\(List\<string\>, int, CancellationToken\) Method
 
 Asynchronously retrieves all columns filtered by the specified categories\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnsByCategoriesAsync(System.Collections.Generic.List<string>? categories=null);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnsByCategoriesAsync(System.Collections.Generic.List<string>? categories=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesAsync(System.Collections.Generic.List_string_).categories'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).categories'></a>
 
 `categories` [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
 
 An optional list of category names to filter the columns by\. If null, the filtering behavior is determined by the underlying data source\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesParameterAsync(DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesParameterAsync(DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetColumnsByCategoriesParameterAsync\(ColumnsByCategoriesParameter\) Method
+## BuildingDataController\.GetColumnsByCategoriesParameterAsync\(ColumnsByCategoriesParameter, int, CancellationToken\) Method
 
 Retrieves all columns with given categories by columns by categories parameter \(which contains categories\)\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnsByCategoriesParameterAsync(DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter columnsByCategoriesParameter);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnsByCategoriesParameterAsync(DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter columnsByCategoriesParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesParameterAsync(DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter).columnsByCategoriesParameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesParameterAsync(DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter,int,System.Threading.CancellationToken).columnsByCategoriesParameter'></a>
 
 `columnsByCategoriesParameter` [ColumnsByCategoriesParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter 'DiGi\.GIS\.WebAPI\.Classes\.ColumnsByCategoriesParameter')
 
 The parameter containing the categories for querying columns\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesParameterAsync(DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesParameterAsync(DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 Column [DiGi\.PostgreSQL\.Table\.Classes\.Column](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.classes.column 'DiGi\.PostgreSQL\.Table\.Classes\.Column')
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnUniqueIdsAsync(System.Collections.Generic.List_string_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnUniqueIdsAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetColumnUniqueIdsAsync\(List\<string\>\) Method
+## BuildingDataController\.GetColumnUniqueIdsAsync\(List\<string\>, int, CancellationToken\) Method
 
 Retrieves the unique identifiers for columns, optionally filtered by the specified categories\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnUniqueIdsAsync(System.Collections.Generic.List<string>? categories=null);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetColumnUniqueIdsAsync(System.Collections.Generic.List<string>? categories=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnUniqueIdsAsync(System.Collections.Generic.List_string_).categories'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnUniqueIdsAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).categories'></a>
 
 `categories` [System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')
 
 An optional list of category names used to filter the column references\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnUniqueIdsAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnUniqueIdsAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetHistogramSummaryAsync\(HistogramRequestParameter\) Method
+## BuildingDataController\.GetCountByCountyIdAsync\(int, bool, int, CancellationToken\) Method
+
+Asynchronously retrieves the number of building data rows stored for one county\.
+
+The cheapest question that can be asked of the table, and the one that separates a county no run has reached from one a run reached and wrote nothing for.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCountByCountyIdAsync(int countyId, bool estimated=false, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county to count\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken).estimated'></a>
+
+`estimated` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+Reads the planner's row estimate instead of counting the rows\. Far faster on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment\. A partition that has never been analysed carries no estimate and answers 404 the same way a missing one does, so a 404 under this option does not on its own mean the county is unwritten \- repeat without it to tell the two apart\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountByCountyIdAsync(int,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the count, or 404 when the county has no partition\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountyIdsByReferenceAsync(string,int,System.Threading.CancellationToken)'></a>
+
+## BuildingDataController\.GetCountyIdsByReferenceAsync\(string, int, CancellationToken\) Method
+
+Asynchronously retrieves the counties whose building data holds a row for one reference\.
+
+A reference addresses one building of one county, so more than one identifier coming back means the reference was written outside the county it belongs to.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCountyIdsByReferenceAsync(string reference, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountyIdsByReferenceAsync(string,int,System.Threading.CancellationToken).reference'></a>
+
+`reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The building reference to look up\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountyIdsByReferenceAsync(string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountyIdsByReferenceAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the county identifiers in ascending order, or 404 when the reference is not stored\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCoverageByCountyIdAsync(int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingDataController\.GetCoverageByCountyIdAsync\(int, int, CancellationToken\) Method
+
+Asynchronously measures what one county's building data holds against the buildings that county actually has\.
+
+What a row count cannot answer: how much was left out, and how much of that no run could have reached. A shortfall larger than the unresolved subdivision count is a run that did not finish what it could have.
+
+Reads both databases - the buildings from the main one and their data from the storage one - so it costs more than a count. Call it per county rather than in a sweep.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCoverageByCountyIdAsync(int countyId, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCoverageByCountyIdAsync(int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county to measure\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCoverageByCountyIdAsync(int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCoverageByCountyIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the [DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataCoverageResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.buildingdatacoverageresult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataCoverageResult'), or 404 when either side could not be read\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken)'></a>
+
+## BuildingDataController\.GetDuplicateReferencesAsync\(int, int, CancellationToken\) Method
+
+Asynchronously retrieves the references the building data holds under more than one county, ordered by collision count descending\.
+
+Expected to come back empty. A reference addresses one building of one county, so anything listed here was written outside the county it belongs to and nothing removes it afterwards.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetDuplicateReferencesAsync(int limit=100, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of references to return\. Defaults to 100\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the duplicated references, or 404 when there are none\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter,int,System.Threading.CancellationToken)'></a>
+
+## BuildingDataController\.GetHistogramSummaryAsync\(HistogramRequestParameter, int, CancellationToken\) Method
 
 Generates a value range distribution histogram for a specific building data column inside a county partition, applying optional dynamic filters\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter histogramRequestParameter);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter histogramRequestParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter).histogramRequestParameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter,int,System.Threading.CancellationToken).histogramRequestParameter'></a>
 
 `histogramRequestParameter` [HistogramRequestParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.HistogramRequestParameter 'DiGi\.GIS\.WebAPI\.Classes\.HistogramRequestParameter')
 
 The parameter containing the target column, county identifier, desired bucket count, and optional dynamic filters\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning the histogram bucket list as a JSON array\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetMultivalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetMultivalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetMultivalueAggregateSummaryAsync\(MultivalueAggregateRequestParameter\) Method
+## BuildingDataController\.GetMultivalueAggregateSummaryAsync\(MultivalueAggregateRequestParameter, int, CancellationToken\) Method
 
 Computes multi\-value statistical summaries \(SplitDistinctCount, SplitValueDistribution\) on a partition column\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetMultivalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter multivalueAggregateRequestParameter);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetMultivalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter multivalueAggregateRequestParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetMultivalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter).multivalueAggregateRequestParameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetMultivalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter,int,System.Threading.CancellationToken).multivalueAggregateRequestParameter'></a>
 
 `multivalueAggregateRequestParameter` [MultivalueAggregateRequestParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter 'DiGi\.GIS\.WebAPI\.Classes\.MultivalueAggregateRequestParameter')
 
 The parameter containing target column, multi\-value aggregate function, county identifier, and optional separator\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetMultivalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetMultivalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning the aggregate result as a JSON node\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetSinglevalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetSinglevalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetSinglevalueAggregateSummaryAsync\(SinglevalueAggregateRequestParameter\) Method
+## BuildingDataController\.GetSinglevalueAggregateSummaryAsync\(SinglevalueAggregateRequestParameter, int, CancellationToken\) Method
 
 Computes single\-value statistical summaries \(Avg, Sum, Min, Max, Count, DistinctCount\) on a partition column\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetSinglevalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter singlevalueAggregateRequestParameter);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetSinglevalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter singlevalueAggregateRequestParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetSinglevalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter).singlevalueAggregateRequestParameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetSinglevalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter,int,System.Threading.CancellationToken).singlevalueAggregateRequestParameter'></a>
 
 `singlevalueAggregateRequestParameter` [SinglevalueAggregateRequestParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter 'DiGi\.GIS\.WebAPI\.Classes\.SinglevalueAggregateRequestParameter')
 
 The parameter containing target column, single\-value aggregate function, and county identifier\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetSinglevalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetSinglevalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning the aggregate result as a JSON node\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetTableByBuildingDataByPagingParameterAsync\(BuildingDataByPagingParameter\) Method
+## BuildingDataController\.GetTableByBuildingDataByPagingParameterAsync\(BuildingDataByPagingParameter, int, CancellationToken\) Method
 
 Retrieves a building data table using keyset\-based paginated cursor streaming\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter buildingDataByPagingParameter);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter buildingDataByPagingParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter).buildingDataByPagingParameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter,int,System.Threading.CancellationToken).buildingDataByPagingParameter'></a>
 
 `buildingDataByPagingParameter` [BuildingDataByPagingParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter 'DiGi\.GIS\.WebAPI\.Classes\.BuildingDataByPagingParameter')
 
 The parameter containing paging options, including column projections, county identifier, cursor, and page size\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning the populated table\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetTableByBuildingDataByReferencesParameterAsync\(BuildingDataByReferencesParameter\) Method
+## BuildingDataController\.GetTableByBuildingDataByReferencesParameterAsync\(BuildingDataByReferencesParameter, int, CancellationToken\) Method
 
 Retrieves a building data table by building data by references parameter \(column unique ids, county id and references\)\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter buildingDataByReferencesParameter);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter buildingDataByReferencesParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter).buildingDataByReferencesParameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter,int,System.Threading.CancellationToken).buildingDataByReferencesParameter'></a>
 
 `buildingDataByReferencesParameter` [BuildingDataByReferencesParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter 'DiGi\.GIS\.WebAPI\.Classes\.BuildingDataByReferencesParameter')
 
 The parameter containing references for querying building data, including column unique identifiers, county identifier, and specific references\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the operation, typically containing a [DiGi\.PostgreSQL\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.classes.table 'DiGi\.PostgreSQL\.Table\.Classes\.Table') if found\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetTableByBuildingDataBySubdivisionIdsParameterAsync\(BuildingDataBySubdivisionIdsParameter\) Method
+## BuildingDataController\.GetTableByBuildingDataBySubdivisionIdsParameterAsync\(BuildingDataBySubdivisionIdsParameter, int, CancellationToken\) Method
 
 Retrieves a building data table by building data by subdivision ids parameter \(column unique ids, subdivision ids\)\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter buildingDataBySubdivisionIdsParameter);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter buildingDataBySubdivisionIdsParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter).buildingDataBySubdivisionIdsParameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter,int,System.Threading.CancellationToken).buildingDataBySubdivisionIdsParameter'></a>
 
 `buildingDataBySubdivisionIdsParameter` [BuildingDataBySubdivisionIdsParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter 'DiGi\.GIS\.WebAPI\.Classes\.BuildingDataBySubdivisionIdsParameter')
 
 The parameter containing the subdivision IDs and optional column unique identifiers for querying building data\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByFilterGroupAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByFilterGroupAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetTableByFilterGroupAsync\(BuildingDataByFilterGroupParameter\) Method
+## BuildingDataController\.GetTableByFilterGroupAsync\(BuildingDataByFilterGroupParameter, int, CancellationToken\) Method
 
 Retrieves a building data table filtered by the specified dynamic hierarchical filters\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByFilterGroupAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter buildingDataByFilterGroupParameter);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByFilterGroupAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter buildingDataByFilterGroupParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByFilterGroupAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter).buildingDataByFilterGroupParameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByFilterGroupAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter,int,System.Threading.CancellationToken).buildingDataByFilterGroupParameter'></a>
 
 `buildingDataByFilterGroupParameter` [BuildingDataByFilterGroupParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter 'DiGi\.GIS\.WebAPI\.Classes\.BuildingDataByFilterGroupParameter')
 
 The parameter containing the dynamic filter group and optional column unique identifiers\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByFilterGroupAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByFilterGroupAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning the populated filtered table\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByReferenceAsync(string,System.Nullable_int_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByReferenceAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetTableByReferenceAsync\(string, Nullable\<int\>\) Method
+## BuildingDataController\.GetTableByReferenceAsync\(string, Nullable\<int\>, int, CancellationToken\) Method
 
 Retrieves a building data table for one specific building\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByReferenceAsync(string reference, System.Nullable<int> countyId=null);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByReferenceAsync(string reference, System.Nullable<int> countyId=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByReferenceAsync(string,System.Nullable_int_).reference'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByReferenceAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).reference'></a>
 
 `reference` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 Building reference
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByReferenceAsync(string,System.Nullable_int_).countyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByReferenceAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The unique identifier of the county for which building belongs to\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByReferenceAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByReferenceAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning the populated filtered table with data for sigle building\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesAsync(string,System.Nullable_int_)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetUniqueValuesAsync\(string, Nullable\<int\>\) Method
+## BuildingDataController\.GetUniqueValuesAsync\(string, Nullable\<int\>, int, CancellationToken\) Method
 
 Retrieves unique values for a specified column unique identifier and an optional county identifier\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetUniqueValuesAsync(string columnUniqueId, System.Nullable<int> countyId=null);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetUniqueValuesAsync(string columnUniqueId, System.Nullable<int> countyId=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesAsync(string,System.Nullable_int_).columnUniqueId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).columnUniqueId'></a>
 
 `columnUniqueId` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique identifier of the column from which to retrieve unique values\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesAsync(string,System.Nullable_int_).countyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional integer identifier of the county used to filter the results\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesByColumnUniqueIdParameterAsync(DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesByColumnUniqueIdParameterAsync(DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter,int,System.Threading.CancellationToken)'></a>
 
-## BuildingDataController\.GetUniqueValuesByColumnUniqueIdParameterAsync\(UniqueValuesByColumnUniqueIdParameter\) Method
+## BuildingDataController\.GetUniqueValuesByColumnUniqueIdParameterAsync\(UniqueValuesByColumnUniqueIdParameter, int, CancellationToken\) Method
 
 Retrieves unique values for a given [UniqueValuesByColumnUniqueIdParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter 'DiGi\.GIS\.WebAPI\.Classes\.UniqueValuesByColumnUniqueIdParameter') \(column unique id and optionally county id\), applying optional dynamic filters\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetUniqueValuesByColumnUniqueIdParameterAsync(DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter uniqueValuesByColumnUniqueIdParameter);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetUniqueValuesByColumnUniqueIdParameterAsync(DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter uniqueValuesByColumnUniqueIdParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesByColumnUniqueIdParameterAsync(DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter).uniqueValuesByColumnUniqueIdParameter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesByColumnUniqueIdParameterAsync(DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter,int,System.Threading.CancellationToken).uniqueValuesByColumnUniqueIdParameter'></a>
 
 `uniqueValuesByColumnUniqueIdParameter` [UniqueValuesByColumnUniqueIdParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter 'DiGi\.GIS\.WebAPI\.Classes\.UniqueValuesByColumnUniqueIdParameter')
 
 The parameter containing the column unique identifier, optional county identifier, and optional dynamic filters\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesByColumnUniqueIdParameterAsync(DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesByColumnUniqueIdParameterAsync(DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -4271,6 +4639,8 @@ The JSON object containing data used to initialize the parameter\.
 ## HistogramRequestParameter\.BucketCount Property
 
 Gets or sets the total number of histogram buckets\. Defaults to 10\.
+
+Capped because the bucket count is width_bucket's divisor rather than a page size: the server builds and returns one row per bucket whatever the table holds, so an unbounded value turns a cheap aggregate into an arbitrarily large response.
 
 ```csharp
 public int BucketCount { get; set; }

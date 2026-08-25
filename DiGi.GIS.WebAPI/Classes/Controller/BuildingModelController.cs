@@ -90,7 +90,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             // Only the reference and the county are needed to key the building model lookup, so the lighter
             // reference query is used rather than pulling footprint geometry that would then be discarded.
-            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value, cancellationToken);
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value, cancellationToken: cancellationToken);
             if (building2DReferences is null || building2DReferences.Count == 0)
             {
                 return NotFound();
@@ -107,7 +107,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 List<string> references = [.. grouping.Select(building2DReference => building2DReference.Reference!).Distinct()];
 
-                List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, null, true, cancellationToken);
+                List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, null, true, cancellationToken: cancellationToken);
                 if (buildingModels_PostgreSQL is null || buildingModels_PostgreSQL.Count == 0)
                 {
                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No BuildingModels stored for county {CountyId}. Requested references: {Count}", countyId, references.Count);
@@ -178,7 +178,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, limit, true, cancellationToken);
+            List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, limit, true, cancellationToken: cancellationToken);
             if (buildingModels_PostgreSQL is null || buildingModels_PostgreSQL.Count == 0)
             {
                 return NotFound();

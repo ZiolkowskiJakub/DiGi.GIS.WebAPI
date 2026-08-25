@@ -412,7 +412,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(new BoundingBox2D(new Core.Classes.Range<double>(x_1, x_2), new Core.Classes.Range<double>(y_1, y_2)), tolerance.Value, cancellationToken);
+            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByBoundingBox2DAsync(new BoundingBox2D(new Core.Classes.Range<double>(x_1, x_2), new Core.Classes.Range<double>(y_1, y_2)), tolerance.Value, cancellationToken: cancellationToken);
             if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
             {
                 return NotFound();
@@ -568,7 +568,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value, cancellationToken);
+            List<PostgreSQL.Classes.Building2D>? building2Ds_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DsByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value, cancellationToken: cancellationToken);
             if (building2Ds_PostgreSQL is null || building2Ds_PostgreSQL.Count == 0)
             {
                 return NotFound();

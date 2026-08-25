@@ -40,8 +40,10 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Gets or sets the total number of histogram buckets. Defaults to 10.
+        /// <para>Capped because the bucket count is width_bucket's divisor rather than a page size: the server builds and returns one row per bucket whatever the table holds, so an unbounded value turns a cheap aggregate into an arbitrarily large response.</para>
         /// </summary>
         /// <example>20</example>
+        [Range(1, 1000)]
         public int BucketCount { get; set; } = 10;
 
         /// <summary>
