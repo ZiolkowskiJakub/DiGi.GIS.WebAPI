@@ -654,6 +654,176 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
+        /// Retrieves an orthodata reference by its unique reference code and an optional county identifier.
+        /// </summary>
+        /// <param name="reference">The unique reference string of the building to retrieve orthodata metadata for.</param>
+        /// <param name="countyId">The optional integer identifier of the county used to filter the search.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search across all partitions if not matched by county.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpGet("ortodatasreferencebyreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetOrtoDatasReferenceByReferenceAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(PostgreSQL.Classes.OrtoDatasReference), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetOrtoDatasReferenceByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetOrtoDatasReferenceByReferenceAsync));
+            Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
+
+            if (string.IsNullOrWhiteSpace(reference) || (countyId is not null && countyId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (ortoDatasPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            PostgreSQL.Classes.OrtoDatasReference? ortoDatasReference = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferenceByReferenceAsync(reference, countyId, fallbackByReference, cancellationToken);
+            if (ortoDatasReference is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(ortoDatasReference);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Retrieves a list of orthodata references for the specified building reference codes and optional county identifier.
+        /// </summary>
+        /// <param name="references">A collection of unique reference strings to query.</param>
+        /// <param name="countyId">The optional integer identifier of the county used to filter the search.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search across all partitions if not matched by county.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpPost("ortodatasreferencesbyreferences", Name = $"{nameof(OrtoDatasController)}_{nameof(GetOrtoDatasReferencesByReferencesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<PostgreSQL.Classes.OrtoDatasReference>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetOrtoDatasReferencesByReferencesAsync([FromBody] IEnumerable<string> references, [FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetOrtoDatasReferencesByReferencesAsync));
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
+
+            if (references is null || !references.Any() || (countyId is not null && countyId <= 0))
+            {
+                return BadRequest();
+            }
+
+            if (ortoDatasPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.OrtoDatasReference>? ortoDatasReferences = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferencesByReferencesAsync(references, countyId, fallbackByReference, cancellationToken);
+            if (ortoDatasReferences is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(ortoDatasReferences);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Retrieves a list of orthodata references for the specified building 2D reference objects.
+        /// </summary>
+        /// <param name="building2DReferences">A collection of <see cref="PostgreSQL.Classes.Building2DReference"/> objects to query.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search across all partitions if not matched by county.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpPost("ortodatasreferencesbybuilding2dreferences", Name = $"{nameof(OrtoDatasController)}_{nameof(GetOrtoDatasReferencesByBuilding2DReferencesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<PostgreSQL.Classes.OrtoDatasReference>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetOrtoDatasReferencesByBuilding2DReferencesAsync([FromBody] IEnumerable<PostgreSQL.Classes.Building2DReference> building2DReferences, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetOrtoDatasReferencesByBuilding2DReferencesAsync));
+
+            if (building2DReferences is null || !building2DReferences.Any())
+            {
+                return BadRequest();
+            }
+
+            if (ortoDatasPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.OrtoDatasReference>? ortoDatasReferences = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferencesByBuilding2DReferencesAsync(building2DReferences, fallbackByReference, cancellationToken);
+            if (ortoDatasReferences is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(ortoDatasReferences);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Retrieves a list of orthodata references for a specified county, with optional subdivision filtering.
+        /// </summary>
+        /// <param name="countyId">The integer identifier of the county.</param>
+        /// <param name="subdivisionIds">An optional array of subdivision identifiers to filter by.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpGet("ortodatasreferencesbycountyid", Name = $"{nameof(OrtoDatasController)}_{nameof(GetOrtoDatasReferencesByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<PostgreSQL.Classes.OrtoDatasReference>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetOrtoDatasReferencesByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "subdivisionids")] int[]? subdivisionIds = null, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetOrtoDatasReferencesByCountyIdAsync));
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
+
+            if (countyId <= 0)
+            {
+                return BadRequest();
+            }
+
+            if (ortoDatasPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.OrtoDatasReference>? ortoDatasReferences = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferencesByCountyIdAsync(countyId, subdivisionIds, cancellationToken);
+            if (ortoDatasReferences is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(ortoDatasReferences);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
         /// Retrieves the next batch of building 2D reference objects.
         /// </summary>
         /// <param name="count">The maximum number of building 2D reference objects to retrieve. Defaults to 100.</param>
