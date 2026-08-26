@@ -67,10 +67,13 @@ namespace DiGi.GIS.WebAPI.Classes
             int count = 5;
             Serilog.Modify.Log("Items count: {Count}", count);
 
+            // Null is the queue failing to answer, not the queue being empty - a drained queue answers an
+            // empty list and the loop below simply does not run. Saying "none found" for both is what made
+            // a broken claim read as an ordinary idle run.
             List<Building2DReference>? building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, cancellationToken: cancellationToken);
             if (building2DReferences is null)
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No Building2DReferences found in database");
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Building2DReferences could not be claimed from the queue - see the preceding entry for the database error");
                 return false;
             }
 
@@ -81,6 +84,11 @@ namespace DiGi.GIS.WebAPI.Classes
             while (building2DReferences is not null && building2DReferences.Count > 0)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                // Held for the rest of the iteration because the loop reassigns building2DReferences at the
+                // end, and a catch between here and the acknowledgment costs the compiler what it knew about
+                // it. These are the references this pass claimed and is answerable for.
+                List<Building2DReference> building2DReferences_Claimed = building2DReferences;
 
                 List<PostgreSQL.Classes.OrtoDatas> ortoDatasList_PostgreSQL = [];
 
@@ -114,7 +122,7 @@ namespace DiGi.GIS.WebAPI.Classes
                             int? subdivisionId = building2D_PostgreSQL.SubdivisionId;
                             if (subdivisionId is null && building2DReferences is not null)
                             {
-                                Building2DReference? matchingReference = building2DReferences.FirstOrDefault(r => r is not null && r.Reference == building2D_PostgreSQL.Reference);
+                                Building2DReference? matchingReference = building2DReferences_Claimed.FirstOrDefault(r => r is not null && r.Reference == building2D_PostgreSQL.Reference);
                                 subdivisionId = matchingReference?.SubdivisionId;
                             }
 
@@ -155,33 +163,65 @@ namespace DiGi.GIS.WebAPI.Classes
                     UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(ortoDatasList_PostgreSQL.Count);
                     if (updateItemsResult is null)
                     {
-                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas updating could not be attempted");
+                        // Nothing was written, so nothing may be acknowledged. Leaving the claim alone is
+                        // what lets the lease expire and the batch be tried again; deleting it here would
+                        // discard the work permanently, which is the one thing the queue exists to prevent.
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatas updating could not be attempted - the batch stays claimed and returns to the queue when its lease expires");
                     }
-                    else if (updateItemsResult.Rejected.Count != 0)
+                    else
                     {
-                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
-                    }
-
-                    longProgressWrapper?.Increment(ortoDatasList_PostgreSQL.Count);
-
-                    Serilog.Modify.Log("OrtoDatas updating ended");
-
-                    List<long> ids = [];
-                    if (building2DReferences is not null)
-                    {
-                        foreach (Building2DReference building2DReference in building2DReferences)
+                        if (updateItemsResult.Rejected.Count != 0)
                         {
-                            if (building2DReference is not null && building2DReference.Id > 0)
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
+                        }
+
+                        // Only what actually reached the database is retired from the queue. A reference the
+                        // batch produced nothing for - no Building2D, or nothing from the imagery service -
+                        // and one the write rejected are both left claimed, so they come round again rather
+                        // than being deleted as though they had been stored.
+                        HashSet<string> references_Rejected = [.. updateItemsResult.Rejected.Where(x => !string.IsNullOrWhiteSpace(x?.Reference)).Select(x => x.Reference!)];
+
+                        HashSet<string> references_Stored = [];
+                        foreach (PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL in ortoDatasList_PostgreSQL)
+                        {
+                            if (string.IsNullOrWhiteSpace(ortoDatas_PostgreSQL?.Reference) || references_Rejected.Contains(ortoDatas_PostgreSQL.Reference))
                             {
-                                ids.Add(building2DReference.Id);
+                                continue;
                             }
+
+                            references_Stored.Add(ortoDatas_PostgreSQL.Reference);
+                        }
+
+                        List<long> ids = [];
+                        foreach (Building2DReference building2DReference in building2DReferences_Claimed)
+                        {
+                            if (building2DReference is null || building2DReference.Id <= 0)
+                            {
+                                continue;
+                            }
+
+                            if (string.IsNullOrWhiteSpace(building2DReference.Reference) || !references_Stored.Contains(building2DReference.Reference))
+                            {
+                                continue;
+                            }
+
+                            ids.Add(building2DReference.Id);
+                        }
+
+                        longProgressWrapper?.Increment(ids.Count);
+
+                        if (ids.Count > 0)
+                        {
+                            await ortoDatasPostgreSQLConverter.AcknowledgeBuilding2DReferencesAsync(ids, cancellationToken: cancellationToken);
+                        }
+
+                        if (ids.Count != building2DReferences_Claimed.Count)
+                        {
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas claimed but not stored: {Count}/{Total} references stay claimed and return to the queue when their lease expires", building2DReferences_Claimed.Count - ids.Count, building2DReferences_Claimed.Count);
                         }
                     }
 
-                    if (ids.Count > 0)
-                    {
-                        await ortoDatasPostgreSQLConverter.AcknowledgeBuilding2DReferencesAsync(ids, cancellationToken: cancellationToken);
-                    }
+                    Serilog.Modify.Log("OrtoDatas updating ended");
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
