@@ -1,4 +1,4 @@
-﻿using DiGi.Core.Classes;
+using DiGi.Core.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.PostgreSQL.Classes;
 using DiGi.WebAPI.Classes;
@@ -45,6 +45,8 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 return false;
             }
+
+            HttpClient? httpClient_OrtoDatas_Acknowledge = GISWebAPIManager.CreateHttpClient<OrtoDatasController>(nameof(OrtoDatasController.AcknowledgeBuilding2DReferencesAsync), out string? path_OrtoDatas_Acknowledge);
 
             string requestUri_Building2D = new UrlBuilder(path_Building2D).ToString();
 
@@ -110,10 +112,33 @@ namespace DiGi.GIS.WebAPI.Classes
                                 ortoDatasList.Add(ortoDatas);
                             }
 
-                            bool succeeded = await ExecuteAsync(ortoDatasList, countyId.Value, longProgressWrapper, cancellationToken); //await GISWebAPIManager.UpdateItemsAsync(ortoDatasList, countyId.Value, postOptions);
+                            bool succeeded = await ExecuteAsync(ortoDatasList, countyId.Value, longProgressWrapper, cancellationToken);
                             if (!succeeded)
                             {
                                 return false;
+                            }
+
+                            List<long> ids = [];
+                            foreach (Building2DReference building2DReference in building2DReference_In)
+                            {
+                                if (building2DReference is not null && building2DReference.Id > 0)
+                                {
+                                    ids.Add(building2DReference.Id);
+                                }
+                            }
+
+                            if (ids.Count > 0 && httpClient_OrtoDatas_Acknowledge is not null && !string.IsNullOrWhiteSpace(path_OrtoDatas_Acknowledge))
+                            {
+                                using CancellationTokenSource cancellationTokenSource_Ack = new(postOptions.Delay);
+                                string? json_Ack = System.Text.Json.JsonSerializer.Serialize(ids);
+                                if (!string.IsNullOrWhiteSpace(json_Ack))
+                                {
+                                    using HttpContent? httpContent_Ack = await Create.HttpContent(json_Ack, cancellationTokenSource_Ack.Token).ConfigureAwait(false);
+                                    if (httpContent_Ack is not null)
+                                    {
+                                        await DiGi.WebAPI.Modify.PostAsync(httpClient_OrtoDatas_Acknowledge, path_OrtoDatas_Acknowledge, httpContent_Ack, postOptions);
+                                    }
+                                }
                             }
                         }
                         catch (OperationCanceledException)

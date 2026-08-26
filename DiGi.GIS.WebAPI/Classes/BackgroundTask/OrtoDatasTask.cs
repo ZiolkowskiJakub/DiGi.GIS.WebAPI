@@ -67,7 +67,7 @@ namespace DiGi.GIS.WebAPI.Classes
             int count = 5;
             Serilog.Modify.Log("Items count: {Count}", count);
 
-            List<Building2DReference>? building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count);
+            List<Building2DReference>? building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, cancellationToken: cancellationToken);
             if (building2DReferences is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No Building2DReferences found in database");
@@ -165,13 +165,30 @@ namespace DiGi.GIS.WebAPI.Classes
                     longProgressWrapper?.Increment(ortoDatasList_PostgreSQL.Count);
 
                     Serilog.Modify.Log("OrtoDatas updating ended");
+
+                    List<long> ids = [];
+                    if (building2DReferences is not null)
+                    {
+                        foreach (Building2DReference building2DReference in building2DReferences)
+                        {
+                            if (building2DReference is not null && building2DReference.Id > 0)
+                            {
+                                ids.Add(building2DReference.Id);
+                            }
+                        }
+                    }
+
+                    if (ids.Count > 0)
+                    {
+                        await ortoDatasPostgreSQLConverter.AcknowledgeBuilding2DReferencesAsync(ids, cancellationToken: cancellationToken);
+                    }
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
 
                 Serilog.Modify.Log("Getting new Building2DReferences");
 
-                building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count);
+                building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, cancellationToken: cancellationToken);
 
                 Serilog.Modify.Log("Getting new Building2DReferences ended. Count: {Count}", building2DReferences?.Count ?? 0);
             }

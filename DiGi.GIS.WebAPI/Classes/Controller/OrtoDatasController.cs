@@ -561,7 +561,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Asynchronously reports what each of the named counties still has waiting in the orthophoto download queue.
-        /// <para>Reads the queue without taking anything out of it, unlike <see cref="NextBuilding2DReferencesAsync(int)"/>, which deletes the rows it returns. It is the only way to see what a refresh queued, and the way to watch the refresh and the download move against each other.</para>
+        /// <para>Reads the queue without claiming anything from it, unlike <see cref="NextBuilding2DReferencesAsync(int, int, CancellationToken)"/>, which claims the rows it returns. It is the only way to see what a refresh queued, and the way to watch the refresh and the download move against each other.</para>
         /// <para>Naming no county reports every one. Counties with nothing waiting are absent from the result rather than present with a zero, so an empty result means the queue is drained.</para>
         /// </summary>
         /// <param name="countyIds">The identifiers of the counties to report on, repeated once per county. Omit to report every one.</param>
@@ -824,24 +824,32 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Retrieves the next batch of building 2D reference objects.
+        /// Retrieves and claims the next batch of building 2D reference objects from the update queue.
         /// </summary>
         /// <param name="count">The maximum number of building 2D reference objects to retrieve. Defaults to 100.</param>
+        /// <param name="claimTimeoutMinutes">The duration in minutes before an unacknowledged claim expires and returns to the queue. Defaults to 30.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("nextbuilding2dreferences", Name = $"{nameof(OrtoDatasController)}_{nameof(NextBuilding2DReferencesAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> NextBuilding2DReferencesAsync([FromQuery(Name = "count")] int count = 100)
+        public async Task<IActionResult> NextBuilding2DReferencesAsync([FromQuery(Name = "count")] int count = 100, [FromQuery(Name = "claimtimeoutminutes")] int claimTimeoutMinutes = 30, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(NextBuilding2DReferencesAsync));
-            Serilog.Modify.Log("Count provided: {Count}", count);
+            Serilog.Modify.Log("Count provided: {Count}, ClaimTimeoutMinutes: {ClaimTimeoutMinutes}", count, claimTimeoutMinutes);
 
             if (count <= 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Count must be greater than 0");
                 return BadRequest("Count must be greater than 0.");
+            }
+
+            if (claimTimeoutMinutes <= 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Claim timeout minutes must be greater than 0");
+                return BadRequest("Claim timeout minutes must be greater than 0.");
             }
 
             if (ortoDatasPostgreSQLConverter is null)
@@ -852,7 +860,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("Extracting data starting");
 
-            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count);
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, claimTimeoutMinutes, cancellationToken: cancellationToken);
 
             Serilog.Modify.Log("Extracting data ended");
 
@@ -865,6 +873,52 @@ namespace DiGi.GIS.WebAPI.Classes
             Serilog.Modify.Log("{Count} items extracted", building2DReferences.Count);
 
             return Content(Core.Convert.ToSystem_String(building2DReferences) ?? string.Empty, "application/json");
+        }
+
+        /// <summary>
+        /// Acknowledges and deletes completed building 2D reference objects from the update queue.
+        /// </summary>
+        /// <param name="ids">The collection of queue entry identifiers to acknowledge and remove from the queue.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpPost("acknowledgebuilding2dreferences", Name = $"{nameof(OrtoDatasController)}_{nameof(AcknowledgeBuilding2DReferencesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> AcknowledgeBuilding2DReferencesAsync([FromBody] IEnumerable<long>? ids, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(AcknowledgeBuilding2DReferencesAsync));
+
+            if (ids is null || !ids.Any())
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Ids collection cannot be null or empty");
+                return BadRequest("The ids collection cannot be null or empty.");
+            }
+
+            if (ortoDatasPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatasPostgreSQLConverter is null");
+                return BadRequest();
+            }
+
+            try
+            {
+                long count_Deleted = await ortoDatasPostgreSQLConverter.AcknowledgeBuilding2DReferencesAsync(ids, cancellationToken: cancellationToken);
+                if (count_Deleted < 0)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Error occurred during acknowledgement in database");
+                    return StatusCode(500, "Internal server error during acknowledgement");
+                }
+
+                Serilog.Modify.Log("{Count} items acknowledged and removed from queue", count_Deleted);
+                return Ok(count_Deleted);
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be updated during acknowledgement");
+                return StatusCode(500, "Internal server error during database update");
+            }
         }
 
         /// <summary>

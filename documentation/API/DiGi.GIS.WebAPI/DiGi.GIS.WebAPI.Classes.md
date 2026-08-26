@@ -5206,6 +5206,33 @@ The converter used for handling Building 2D data operations within the PostgreSQ
 The converter used for handling Administrative Areal 2D data operations within the PostgreSQL database\.
 ### Methods
 
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.AcknowledgeBuilding2DReferencesAsync(System.Collections.Generic.IEnumerable_long_,System.Threading.CancellationToken)'></a>
+
+## OrtoDatasController\.AcknowledgeBuilding2DReferencesAsync\(IEnumerable\<long\>, CancellationToken\) Method
+
+Acknowledges and deletes completed building 2D reference objects from the update queue\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AcknowledgeBuilding2DReferencesAsync(System.Collections.Generic.IEnumerable<long>? ids, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.AcknowledgeBuilding2DReferencesAsync(System.Collections.Generic.IEnumerable_long_,System.Threading.CancellationToken).ids'></a>
+
+`ids` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of queue entry identifiers to acknowledge and remove from the queue\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.AcknowledgeBuilding2DReferencesAsync(System.Collections.Generic.IEnumerable_long_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.ContainsByReferencesAsync(System.Collections.Generic.List_string_,System.Nullable_int_,System.Nullable_bool_,System.Threading.CancellationToken)'></a>
 
 ## OrtoDatasController\.ContainsByReferencesAsync\(List\<string\>, Nullable\<int\>, Nullable\<bool\>, CancellationToken\) Method
@@ -5562,7 +5589,7 @@ A task that represents the asynchronous operation\.
 
 Asynchronously reports what each of the named counties still has waiting in the orthophoto download queue\.
 
-Reads the queue without taking anything out of it, unlike [NextBuilding2DReferencesAsync\(int\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int) 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasController\.NextBuilding2DReferencesAsync\(int\)'), which deletes the rows it returns. It is the only way to see what a refresh queued, and the way to watch the refresh and the download move against each other.
+Reads the queue without claiming anything from it, unlike [NextBuilding2DReferencesAsync\(int, int, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasController\.NextBuilding2DReferencesAsync\(int, int, System\.Threading\.CancellationToken\)'), which claims the rows it returns. It is the only way to see what a refresh queued, and the way to watch the refresh and the download move against each other.
 
 Naming no county reports every one. Counties with nothing waiting are absent from the result rather than present with a zero, so an empty result means the queue is drained.
 
@@ -5673,22 +5700,34 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the summaries as JSON, or an error status\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasController\.NextBuilding2DReferencesAsync\(int\) Method
+## OrtoDatasController\.NextBuilding2DReferencesAsync\(int, int, CancellationToken\) Method
 
-Retrieves the next batch of building 2D reference objects\.
+Retrieves and claims the next batch of building 2D reference objects from the update queue\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> NextBuilding2DReferencesAsync(int count=100);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> NextBuilding2DReferencesAsync(int count=100, int claimTimeoutMinutes=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int).count'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,System.Threading.CancellationToken).count'></a>
 
 `count` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The maximum number of building 2D reference objects to retrieve\. Defaults to 100\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,System.Threading.CancellationToken).claimTimeoutMinutes'></a>
+
+`claimTimeoutMinutes` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The duration in minutes before an unacknowledged claim expires and returns to the queue\. Defaults to 30\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
