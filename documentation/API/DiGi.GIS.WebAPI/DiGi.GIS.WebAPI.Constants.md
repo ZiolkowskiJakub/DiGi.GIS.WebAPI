@@ -96,6 +96,23 @@ public static class OrtoDatas
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → OrtoDatas
 ### Fields
 
+<a name='DiGi.GIS.WebAPI.Constants.OrtoDatas.MaximumCoverageCountyCount'></a>
+
+## OrtoDatas\.MaximumCoverageCountyCount Field
+
+The largest number of distinct counties one coverage request may have measured exactly\.
+
+A subdivision or a municipality has no partition of its own, so its coverage is counted rather than estimated - one read per side of the county it sits in, measured at 0.10 s for a county of 33 000 buildings and 0.63 s for the largest in the country. Every subdivision and municipality of one county is served from that single pass, so the cost follows the counties named and not the identifiers.
+
+The drill-down pages only ever span one county and never approach this. The cap is for the listing that loads every municipality in the country at once, which spans roughly 380 - identifiers beyond it are answered as not measured rather than failing the request or being given their county's figure.
+
+```csharp
+public static readonly int MaximumCoverageCountyCount;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
 <a name='DiGi.GIS.WebAPI.Constants.OrtoDatas.MaximumSampleCount'></a>
 
 ## OrtoDatas\.MaximumSampleCount Field

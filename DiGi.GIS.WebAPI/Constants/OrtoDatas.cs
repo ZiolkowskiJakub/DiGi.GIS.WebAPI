@@ -16,5 +16,12 @@ namespace DiGi.GIS.WebAPI.Constants
         /// <para>The comparison itself walks a whole county, and the counts it returns are exact whatever this is set to. The samples exist to make a disagreement actionable without returning a hundred thousand strings, so the ceiling bounds the response rather than the work.</para>
         /// </summary>
         public static readonly int MaximumSampleCount = 1000;
+
+        /// <summary>
+        /// The largest number of distinct counties one coverage request may have measured exactly.
+        /// <para>A subdivision or a municipality has no partition of its own, so its coverage is counted rather than estimated - one read per side of the county it sits in, measured at 0.10 s for a county of 33 000 buildings and 0.63 s for the largest in the country. Every subdivision and municipality of one county is served from that single pass, so the cost follows the counties named and not the identifiers.</para>
+        /// <para>The drill-down pages only ever span one county and never approach this. The cap is for the listing that loads every municipality in the country at once, which spans roughly 380 - identifiers beyond it are answered as not measured rather than failing the request or being given their county's figure.</para>
+        /// </summary>
+        public static readonly int MaximumCoverageCountyCount = 10;
     }
 }

@@ -5335,7 +5335,11 @@ An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us
 
 ## OrtoDatasController\.GetEstimatedCoverageFactorAsync\(int, int, CancellationToken\) Method
 
-Retrieves the estimated coverage factor for a specified administrative area 2D identifier\.
+Retrieves the orthophoto coverage factor for a specified administrative area 2D identifier\.
+
+Below county level the figure is counted rather than estimated. A subdivision and a municipality have no partition of their own - both tables are partitioned by `county_id` - so the coverage is measured over that area's own buildings, by reading its county once per side and matching the references in memory. County and above keep the planner's row estimate, which is what makes a voivodeship or a country affordable at all, so an exact sub-county figure and its county's estimate can differ by a few percent and both be right.
+
+A coverage that cannot be measured answers 204 NoContent, never zero. A county nothing has ever been downloaded for and a county that was downloaded and holds nothing are different facts, and reporting both as 0.0 hid the first behind a plausible number.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetEstimatedCoverageFactorAsync(int administrativeAreal2DId, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -5362,15 +5366,19 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing the estimated coverage factor or an error status code\.
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the coverage factor, 204 NoContent when it could not be measured, or an error status code\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetEstimatedCoverageFactorsAsync(System.Collections.Generic.IEnumerable_int_,System.Nullable_bool_,int,System.Threading.CancellationToken)'></a>
 
 ## OrtoDatasController\.GetEstimatedCoverageFactorsAsync\(IEnumerable\<int\>, Nullable\<bool\>, int, CancellationToken\) Method
 
-Retrieves the estimated coverage factors for the specified administrative area identifiers\.
+Retrieves the orthophoto coverage factors for the specified administrative area identifiers\.
 
-Every identifier is resolved to the counties it stands for - a voivodeship or country expands to all of its county rows - and the two row estimates are then read for the whole set in one query per table.
+The values come back in the order the identifiers were given, one per identifier, so a caller can update one row per value without matching anything up. A value is `null` where the coverage could not be measured, which is never the same thing as zero.
+
+A county, a voivodeship and a country are answered from the two tables row estimates - every identifier is resolved to the counties it stands for and both estimates are read for the whole set in one query per table. A subdivision and a municipality have no partition of their own and are instead counted, over their own buildings, by reading their county once per side; every subdivision and municipality of one county is served from that single pass.
+
+Because counting reads a whole county, at most [MaximumCoverageCountyCount](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.OrtoDatas.MaximumCoverageCountyCount 'DiGi\.GIS\.WebAPI\.Constants\.OrtoDatas\.MaximumCoverageCountyCount') distinct counties are counted per request, taken in the order the identifiers were given. Identifiers sitting in counties beyond that are answered `null` rather than given their county figure or failing the request.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetEstimatedCoverageFactorsAsync(System.Collections.Generic.IEnumerable<int> administrativeAreal2DIds, System.Nullable<bool> analyze, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -5387,7 +5395,7 @@ The collection of administrative area 2D identifiers to be processed\.
 
 `analyze` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
-Refreshes the statistics before reading them\. This costs one `VACUUM ANALYZE` per resolved county partition on each of the two tables \- for a country identifier that is several hundred maintenance statements against live partitions, so raise `commandtimeout` to match or leave the flag off\.
+Refreshes the statistics before reading them\. This applies only to the estimated county\-and\-above path and does nothing for a subdivision or a municipality, which are counted\. It costs one `VACUUM ANALYZE` per resolved county partition on each of the two tables \- for a country identifier that is several hundred maintenance statements against live partitions, so raise `commandtimeout` to match or leave the flag off\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetEstimatedCoverageFactorsAsync(System.Collections.Generic.IEnumerable_int_,System.Nullable_bool_,int,System.Threading.CancellationToken).commandTimeout'></a>
 

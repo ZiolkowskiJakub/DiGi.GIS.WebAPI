@@ -92,15 +92,18 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Retrieves the estimated coverage factor for a specified administrative area 2D identifier.
+        /// Retrieves the orthophoto coverage factor for a specified administrative area 2D identifier.
+        /// <para>Below county level the figure is counted rather than estimated. A subdivision and a municipality have no partition of their own - both tables are partitioned by <c>county_id</c> - so the coverage is measured over that area's own buildings, by reading its county once per side and matching the references in memory. County and above keep the planner's row estimate, which is what makes a voivodeship or a country affordable at all, so an exact sub-county figure and its county's estimate can differ by a few percent and both be right.</para>
+        /// <para>A coverage that cannot be measured answers 204 NoContent, never zero. A county nothing has ever been downloaded for and a county that was downloaded and holds nothing are different facts, and reporting both as 0.0 hid the first behind a plausible number.</para>
         /// </summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
-        /// <returns>An <see cref="IActionResult"/> containing the estimated coverage factor or an error status code.</returns>
+        /// <returns>An <see cref="IActionResult"/> carrying the coverage factor, 204 NoContent when it could not be measured, or an error status code.</returns>
         [HttpGet("estimatedcoveragefactor", Name = $"{nameof(OrtoDatasController)}_{nameof(GetEstimatedCoverageFactorAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(double), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetEstimatedCoverageFactorAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
@@ -141,9 +144,45 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 case AdministrativeArealType.Subdivision:
                 case AdministrativeArealType.Municipality:
-                    Serilog.Modify.Log("Calculating estimated count for {Id}", administrativeAreal2DReference.CountyId?.ToString() ?? "???");
-                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken) ?? -1;
-                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken) ?? -1;
+
+                    if (administrativeAreal2DReference.CountyId is not int countyId_Parent)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D names no county, so its coverage cannot be measured. Id: {Id}", administrativeAreal2DId);
+                        return NoContent();
+                    }
+
+                    Serilog.Modify.Log("Counting coverage within county {CountyId}", countyId_Parent);
+
+                    List<PostgreSQL.Classes.OrtoDatasCoverageResult>? ortoDatasCoverageResults = await ortoDatasPostgreSQLConverter.SubdivisionCoveragesAsync(building2DPostgreSQLConverter, countyId_Parent, commandTimeout, cancellationToken);
+                    if (ortoDatasCoverageResults is null)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Coverage could not be counted for county {CountyId}", countyId_Parent);
+                        return NoContent();
+                    }
+
+                    HashSet<int>? subdivisionIds = await SubdivisionIdsAsync(administrativeAreal2DReference, countyId_Parent);
+                    if (subdivisionIds is null)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Subdivisions could not be resolved for AdministrativeAreal2D {Id}", administrativeAreal2DId);
+                        return NoContent();
+                    }
+
+                    count_Building2D = 0;
+                    count_OrtoDatas = 0;
+
+                    foreach (PostgreSQL.Classes.OrtoDatasCoverageResult ortoDatasCoverageResult in ortoDatasCoverageResults)
+                    {
+                        // A result carrying no subdivision is the county's unresolved buildings. They belong to
+                        // no subdivision and to no municipality, so nothing below county level counts them.
+                        if (ortoDatasCoverageResult?.SubdivisionId is not int subdivisionId || !subdivisionIds.Contains(subdivisionId))
+                        {
+                            continue;
+                        }
+
+                        count_Building2D += ortoDatasCoverageResult.Building2DCount;
+                        count_OrtoDatas += ortoDatasCoverageResult.OrtoDatasCount;
+                    }
+
                     break;
 
                 case AdministrativeArealType.County:
@@ -177,39 +216,70 @@ namespace DiGi.GIS.WebAPI.Classes
                     break;
             }
 
-            double result = 0;
-            if (count_Building2D != -1 && count_OrtoDatas != -1)
+            if (count_Building2D < 0 || count_OrtoDatas < 0)
             {
-                result = Math.Clamp(count_OrtoDatas == 0 ? 0.0 : (double)count_OrtoDatas / (double)count_Building2D, 0.0, 1.0);
-            }
-            else
-            {
-                if (count_Building2D == -1)
-                {
-                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2D count could not be calculated");
-                }
-
-                if (count_OrtoDatas == -1)
-                {
-                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas count could not be calculated");
-                }
+                // Answered rather than logged and rounded down to zero. A negative count means the partition is
+                // absent or has never been analysed, which is not the same fact as an uncovered county, and a
+                // caller handed 0.0 for it cannot tell the two apart.
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Coverage could not be measured. Building2D count: {Count_Building2D}, OrtoDatas count: {Count_OrtoDatas}", count_Building2D, count_OrtoDatas);
+                return NoContent();
             }
 
-            return Ok(result);
+            if (count_Building2D == 0)
+            {
+                // No buildings is not zero coverage. There is nothing there to be covered, and the fraction has
+                // no denominator.
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No buildings to measure coverage against. Id: {Id}", administrativeAreal2DId);
+                return NoContent();
+            }
+
+            return Ok(Math.Clamp((double)count_OrtoDatas / (double)count_Building2D, 0.0, 1.0));
+
+            // Which subdivisions the requested area is made of. A subdivision is itself; a municipality is every
+            // subdivision naming it, read from the county's own subdivision rows rather than by walking the
+            // municipality, so one query serves a county however many of its municipalities are asked about. A
+            // subdivision naming no municipality hangs off the county directly - m. Poznan holds no gmina
+            // feature - and therefore counts toward no municipality, which falling out of this filter gives.
+            async Task<HashSet<int>?> SubdivisionIdsAsync(PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference_Requested, int countyId)
+            {
+                if (administrativeAreal2DReference_Requested.AdministrativeArealType == AdministrativeArealType.Subdivision)
+                {
+                    return [administrativeAreal2DReference_Requested.Id];
+                }
+
+                List<PostgreSQL.Classes.AdministrativeAreal2DReference>? administrativeAreal2DReferences_Subdivision = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivision, countyId, false, commandTimeout, cancellationToken);
+                if (administrativeAreal2DReferences_Subdivision is null)
+                {
+                    return null;
+                }
+
+                HashSet<int> subdivisionIds_Municipality = [];
+                foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference_Subdivision in administrativeAreal2DReferences_Subdivision)
+                {
+                    if (administrativeAreal2DReference_Subdivision?.MunicipalityId == administrativeAreal2DReference_Requested.Id)
+                    {
+                        subdivisionIds_Municipality.Add(administrativeAreal2DReference_Subdivision.Id);
+                    }
+                }
+
+                return subdivisionIds_Municipality;
+            }
         }
 
         /// <summary>
-        /// Retrieves the estimated coverage factors for the specified administrative area identifiers.
-        /// <para>Every identifier is resolved to the counties it stands for - a voivodeship or country expands to all of its county rows - and the two row estimates are then read for the whole set in one query per table.</para>
+        /// Retrieves the orthophoto coverage factors for the specified administrative area identifiers.
+        /// <para>The values come back in the order the identifiers were given, one per identifier, so a caller can update one row per value without matching anything up. A value is <c>null</c> where the coverage could not be measured, which is never the same thing as zero.</para>
+        /// <para>A county, a voivodeship and a country are answered from the two tables row estimates - every identifier is resolved to the counties it stands for and both estimates are read for the whole set in one query per table. A subdivision and a municipality have no partition of their own and are instead counted, over their own buildings, by reading their county once per side; every subdivision and municipality of one county is served from that single pass.</para>
+        /// <para>Because counting reads a whole county, at most <see cref="Constants.OrtoDatas.MaximumCoverageCountyCount"/> distinct counties are counted per request, taken in the order the identifiers were given. Identifiers sitting in counties beyond that are answered <c>null</c> rather than given their county figure or failing the request.</para>
         /// </summary>
         /// <param name="administrativeAreal2DIds">The collection of administrative area 2D identifiers to be processed.</param>
-        /// <param name="analyze">Refreshes the statistics before reading them. This costs one <c>VACUUM ANALYZE</c> per resolved county partition on each of the two tables - for a country identifier that is several hundred maintenance statements against live partitions, so raise <c>commandtimeout</c> to match or leave the flag off.</param>
+        /// <param name="analyze">Refreshes the statistics before reading them. This applies only to the estimated county-and-above path and does nothing for a subdivision or a municipality, which are counted. It costs one <c>VACUUM ANALYZE</c> per resolved county partition on each of the two tables - for a country identifier that is several hundred maintenance statements against live partitions, so raise <c>commandtimeout</c> to match or leave the flag off.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("estimatedcoveragefactors", Name = $"{nameof(OrtoDatasController)}_{nameof(GetEstimatedCoverageFactorsAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
-        [ProducesResponseType(typeof(List<double>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<double?>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetEstimatedCoverageFactorsAsync([FromBody] IEnumerable<int> administrativeAreal2DIds, [FromQuery(Name = "analyze")] bool? analyze, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
@@ -280,7 +350,11 @@ namespace DiGi.GIS.WebAPI.Classes
                 }
             }
 
-            // Resolve which counties every requested identifier stands for BEFORE touching the count tables.
+            // An identifier with no entry here is one that could not be measured, and is answered null further
+            // down. That is the whole vocabulary: an entry means a measurement, an absence means there is none.
+            Dictionary<int, (long Count_Building2D, long Count_OrtoDatas)> dictionary = [];
+
+            // Resolve which counties every estimated identifier stands for BEFORE touching the count tables.
             // A country expands to all 406 county rows, so asking per county per table cost ~1 624 statements
             // for one request; the two batched reads below replace all of them.
             Dictionary<int, List<int>> countyIds_ByAdministrativeAreal2DId = [];
@@ -292,17 +366,6 @@ namespace DiGi.GIS.WebAPI.Classes
                 countyIds.Add(administrativeAreal2DReference.Id);
             }
 
-            foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_SubdivisionMunicipality)
-            {
-                if (administrativeAreal2DReference?.CountyId is not int countyId)
-                {
-                    continue;
-                }
-
-                countyIds_ByAdministrativeAreal2DId[administrativeAreal2DReference.Id] = [countyId];
-                countyIds.Add(countyId);
-            }
-
             foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_VoivodeshipCountry)
             {
                 if (administrativeAreal2DReference.Code is not string code || string.IsNullOrWhiteSpace(code))
@@ -312,85 +375,219 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 List<int>? countyIds_AdministrativeAreal2DReference = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(code, AdministrativeArealType.County, cancellationToken))?.ConvertAll(x => x.Id);
 
-                // An empty list is kept rather than skipped: it is what marks the identifier as unresolvable
-                // further down, and answers 0 for it exactly as the per-county version did.
-                countyIds_ByAdministrativeAreal2DId[administrativeAreal2DReference.Id] = countyIds_AdministrativeAreal2DReference ?? [];
-
-                if (countyIds_AdministrativeAreal2DReference is not null)
+                // An identifier that resolves to no county is left without an entry, which answers null for it -
+                // the same thing the singular endpoint does when it cannot measure.
+                if (countyIds_AdministrativeAreal2DReference is null || countyIds_AdministrativeAreal2DReference.Count == 0)
                 {
-                    countyIds.UnionWith(countyIds_AdministrativeAreal2DReference);
-                }
-            }
-
-            Serilog.Modify.Log("Counties resolved: {Count}", countyIds.Count);
-
-            Dictionary<int, long>? counts_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountsAsync(countyIds, analyze ?? false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
-            Dictionary<int, long>? counts_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountsAsync(countyIds, analyze ?? false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
-
-            Dictionary<int, (long Count_Building2D, long Count_OrtoDatas)> dictionary = [];
-
-            foreach (KeyValuePair<int, List<int>> keyValuePair in countyIds_ByAdministrativeAreal2DId)
-            {
-                if (keyValuePair.Value.Count == 0)
-                {
-                    dictionary[keyValuePair.Key] = (-1, -1);
                     continue;
                 }
 
-                long count_Building2D = 0;
-                long count_OrtoDatas = 0;
-
-                foreach (int countyId in keyValuePair.Value)
-                {
-                    // A county absent from a dictionary has no partition; one carrying -1 has a partition that
-                    // has never been analysed. Both contribute nothing rather than subtracting, matching the
-                    // converter sums. See ZiolkowskiJakub/DiGi.GIS.PostgreSQL#44.
-                    if (counts_Building2D is not null && counts_Building2D.TryGetValue(countyId, out long count_Building2D_County) && count_Building2D_County > 0)
-                    {
-                        count_Building2D += count_Building2D_County;
-                    }
-
-                    if (counts_OrtoDatas is not null && counts_OrtoDatas.TryGetValue(countyId, out long count_OrtoDatas_County) && count_OrtoDatas_County > 0)
-                    {
-                        count_OrtoDatas += count_OrtoDatas_County;
-                    }
-                }
-
-                dictionary[keyValuePair.Key] = (count_Building2D, count_OrtoDatas);
+                countyIds_ByAdministrativeAreal2DId[administrativeAreal2DReference.Id] = countyIds_AdministrativeAreal2DReference;
+                countyIds.UnionWith(countyIds_AdministrativeAreal2DReference);
             }
 
-            Func<long, long, double> estimatedCoverageFactor = new((count_Building2D, count_OrtoDatas) =>
+            Serilog.Modify.Log("Counties resolved for estimated counts: {Count}", countyIds.Count);
+
+            if (countyIds.Count != 0)
             {
-                if (count_Building2D < 0 || count_OrtoDatas < 0)
+                Dictionary<int, long>? counts_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountsAsync(countyIds, analyze ?? false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                Dictionary<int, long>? counts_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountsAsync(countyIds, analyze ?? false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+
+                foreach (KeyValuePair<int, List<int>> keyValuePair in countyIds_ByAdministrativeAreal2DId)
                 {
-                    return double.NaN;
+                    long count_Building2D = 0;
+                    long count_OrtoDatas = 0;
+
+                    // Whether any county behind this identifier had a figure to give at all, which is a
+                    // different question from what the figures add up to. A county absent from a dictionary has
+                    // no partition and one carrying -1 has a partition that has never been analysed; both are
+                    // "not known", not "nought". Summing them as nought is what reported a county nothing had
+                    // ever been downloaded for as 0 % covered - see issue #8 - so an identifier whose counties
+                    // all came back unknown is answered as not measured instead. Where some counties did answer,
+                    // the sum stands as the lower bound it has always been, tracked by
+                    // ZiolkowskiJakub/DiGi.GIS.PostgreSQL#44.
+                    bool hasCount_Building2D = false;
+                    bool hasCount_OrtoDatas = false;
+
+                    foreach (int countyId in keyValuePair.Value)
+                    {
+                        if (counts_Building2D is not null && counts_Building2D.TryGetValue(countyId, out long count_Building2D_County) && count_Building2D_County >= 0)
+                        {
+                            hasCount_Building2D = true;
+                            count_Building2D += count_Building2D_County;
+                        }
+
+                        if (counts_OrtoDatas is not null && counts_OrtoDatas.TryGetValue(countyId, out long count_OrtoDatas_County) && count_OrtoDatas_County >= 0)
+                        {
+                            hasCount_OrtoDatas = true;
+                            count_OrtoDatas += count_OrtoDatas_County;
+                        }
+                    }
+
+                    dictionary[keyValuePair.Key] = (hasCount_Building2D ? count_Building2D : -1, hasCount_OrtoDatas ? count_OrtoDatas : -1);
+                }
+            }
+
+            // Everything below county level is counted rather than estimated, and the cost follows the counties
+            // named rather than the identifiers: the identifiers are grouped by their county first so that one
+            // pass over a county serves every subdivision and municipality of it that was asked about.
+            Dictionary<int, List<PostgreSQL.Classes.AdministrativeAreal2DReference>> administrativeAreal2DReferences_ByCountyId = [];
+            List<int> countyIds_Coverage = [];
+
+            Dictionary<int, PostgreSQL.Classes.AdministrativeAreal2DReference> administrativeAreal2DReferences_ById = [];
+            foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_SubdivisionMunicipality)
+            {
+                administrativeAreal2DReferences_ById[administrativeAreal2DReference.Id] = administrativeAreal2DReference;
+            }
+
+            // Walked in the order the identifiers were given rather than in the order the database returned
+            // them, because that order is what decides which counties fall inside the cap below. Reading the
+            // references back sorts them by identifier, so grouping from that list would silently cap by
+            // identifier and make the documented "in the order given" untrue.
+            HashSet<int> administrativeAreal2DIds_Seen = [];
+            foreach (int administrativeAreal2DId in administrativeAreal2DIds_Temp)
+            {
+                if (!administrativeAreal2DIds_Seen.Add(administrativeAreal2DId))
+                {
+                    continue;
                 }
 
-                if (count_Building2D == 0 || count_OrtoDatas == 0)
+                if (!administrativeAreal2DReferences_ById.TryGetValue(administrativeAreal2DId, out PostgreSQL.Classes.AdministrativeAreal2DReference? administrativeAreal2DReference))
                 {
-                    return 0;
+                    continue;
                 }
 
-                return Math.Clamp(count_OrtoDatas == 0 ? 0.0 : (double)count_OrtoDatas / (double)count_Building2D, 0.0, 1.0);
+                if (administrativeAreal2DReference?.CountyId is not int countyId)
+                {
+                    continue;
+                }
+
+                if (!administrativeAreal2DReferences_ByCountyId.TryGetValue(countyId, out List<PostgreSQL.Classes.AdministrativeAreal2DReference>? administrativeAreal2DReferences_County_Temp))
+                {
+                    administrativeAreal2DReferences_County_Temp = [];
+                    administrativeAreal2DReferences_ByCountyId[countyId] = administrativeAreal2DReferences_County_Temp;
+                    countyIds_Coverage.Add(countyId);
+                }
+
+                administrativeAreal2DReferences_County_Temp.Add(administrativeAreal2DReference);
+            }
+
+            if (countyIds_Coverage.Count > Constants.OrtoDatas.MaximumCoverageCountyCount)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Coverage counting capped: {Count} counties named, at most {Maximum} are counted. The rest are answered as not measured.", countyIds_Coverage.Count, Constants.OrtoDatas.MaximumCoverageCountyCount);
+                countyIds_Coverage = countyIds_Coverage.GetRange(0, Constants.OrtoDatas.MaximumCoverageCountyCount);
+            }
+
+            // Sequentially, deliberately. Firing these together exhausts the connection pool, which takes every
+            // other endpoint reading the same store down with it until the service is restarted.
+            foreach (int countyId in countyIds_Coverage)
+            {
+                List<PostgreSQL.Classes.OrtoDatasCoverageResult>? ortoDatasCoverageResults = await ortoDatasPostgreSQLConverter.SubdivisionCoveragesAsync(building2DPostgreSQLConverter, countyId, commandTimeout, cancellationToken);
+                if (ortoDatasCoverageResults is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Coverage could not be counted for county {CountyId}", countyId);
+                    continue;
+                }
+
+                Dictionary<int, (long Count_Building2D, long Count_OrtoDatas)> counts_BySubdivisionId = [];
+                foreach (PostgreSQL.Classes.OrtoDatasCoverageResult ortoDatasCoverageResult in ortoDatasCoverageResults)
+                {
+                    // A result carrying no subdivision is the county's unresolved buildings. They belong to no
+                    // subdivision and to no municipality, so nothing below county level counts them.
+                    if (ortoDatasCoverageResult?.SubdivisionId is not int subdivisionId)
+                    {
+                        continue;
+                    }
+
+                    counts_BySubdivisionId[subdivisionId] = (ortoDatasCoverageResult.Building2DCount, ortoDatasCoverageResult.OrtoDatasCount);
+                }
+
+                List<PostgreSQL.Classes.AdministrativeAreal2DReference> administrativeAreal2DReferences_County_Coverage = administrativeAreal2DReferences_ByCountyId[countyId];
+
+                // Read once per county and only when a municipality is among what was asked about, since a
+                // subdivision is its own answer and needs no lookup. Each row carries the municipality it names,
+                // which is what turns a municipality into the set of subdivisions to sum. A subdivision naming no
+                // municipality hangs off the county directly - m. Poznan holds no gmina feature - and therefore
+                // counts toward no municipality.
+                List<PostgreSQL.Classes.AdministrativeAreal2DReference>? administrativeAreal2DReferences_Subdivision = null;
+                if (administrativeAreal2DReferences_County_Coverage.Exists(x => x.AdministrativeArealType == AdministrativeArealType.Municipality))
+                {
+                    administrativeAreal2DReferences_Subdivision = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(AdministrativeArealType.Subdivision, countyId, false, commandTimeout, cancellationToken);
+                }
+
+                foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_County_Coverage)
+                {
+                    HashSet<int> subdivisionIds = [];
+
+                    if (administrativeAreal2DReference.AdministrativeArealType == AdministrativeArealType.Subdivision)
+                    {
+                        subdivisionIds.Add(administrativeAreal2DReference.Id);
+                    }
+                    else
+                    {
+                        if (administrativeAreal2DReferences_Subdivision is null)
+                        {
+                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Subdivisions could not be resolved for AdministrativeAreal2D {Id}", administrativeAreal2DReference.Id);
+                            continue;
+                        }
+
+                        foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference_Subdivision in administrativeAreal2DReferences_Subdivision)
+                        {
+                            if (administrativeAreal2DReference_Subdivision?.MunicipalityId == administrativeAreal2DReference.Id)
+                            {
+                                subdivisionIds.Add(administrativeAreal2DReference_Subdivision.Id);
+                            }
+                        }
+                    }
+
+                    long count_Building2D = 0;
+                    long count_OrtoDatas = 0;
+
+                    foreach (int subdivisionId in subdivisionIds)
+                    {
+                        if (!counts_BySubdivisionId.TryGetValue(subdivisionId, out (long Count_Building2D, long Count_OrtoDatas) value_Subdivision))
+                        {
+                            continue;
+                        }
+
+                        count_Building2D += value_Subdivision.Count_Building2D;
+                        count_OrtoDatas += value_Subdivision.Count_OrtoDatas;
+                    }
+
+                    dictionary[administrativeAreal2DReference.Id] = (count_Building2D, count_OrtoDatas);
+                }
+            }
+
+            Func<long, long, double?> coverageFactor = new((count_Building2D, count_OrtoDatas) =>
+            {
+                // Null rather than zero, in both cases. A negative count means the partition is absent or has
+                // never been analysed; a zero denominator means there are no buildings there to be covered.
+                // Neither is a measurement of nought per cent, and answering one as if it were hid a county
+                // nothing had ever been downloaded for behind a plausible number.
+                if (count_Building2D <= 0 || count_OrtoDatas < 0)
+                {
+                    return null;
+                }
+
+                return Math.Clamp((double)count_OrtoDatas / (double)count_Building2D, 0.0, 1.0);
             });
 
             Serilog.Modify.Log("Counts calculated: {Count}", dictionary.Count);
 
-            List<double> result = [];
+            List<double?> result = [];
             foreach (int id in administrativeAreal2DIds_Temp)
             {
-                Serilog.Modify.Log("AdministrativeAreal2D calculation started Id: {Id}", id);
                 if (!dictionary.TryGetValue(id, out (long Count_Building2D, long Count_OrtoDatas) value))
                 {
-                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2Ds has no data. Id: {Id}", id);
-                    result.Add(0);
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D has no measurement. Id: {Id}", id);
+                    result.Add(null);
                     continue;
                 }
 
-                double factor = estimatedCoverageFactor(value.Count_Building2D, value.Count_OrtoDatas);
-                Serilog.Modify.Log("Factor calculated: {Factor}", factor);
+                double? factor = coverageFactor(value.Count_Building2D, value.Count_OrtoDatas);
+                Serilog.Modify.Log("Factor calculated: {Factor}", factor?.ToString() ?? "None");
 
-                result.Add(double.IsNaN(factor) ? 0 : factor);
+                result.Add(factor);
             }
 
             return Ok(result);
