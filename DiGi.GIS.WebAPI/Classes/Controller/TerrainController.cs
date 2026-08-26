@@ -204,25 +204,38 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>The cheapest question that can be asked of the store, and the one that separates a county that was never sampled from one that was sampled and holds nothing.</para>
         /// </summary>
         /// <param name="countyId">The identifier of the county partition to count.</param>
-        /// <param name="estimated">Reads the planner's row estimate instead of counting the rows. Far faster on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment.</param>
+        /// <param name="estimated">Reads the planner's row estimate instead of counting the rows. Far faster on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment. An unanalysed partition returns 204 NoContent.</param>
+        /// <param name="analyze">A boolean value indicating whether to perform an ANALYZE operation before reading the estimate to ensure statistics are current.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
-        /// <returns>An <see cref="IActionResult"/> carrying the count, or 404 when the county has no partition.</returns>
+        /// <returns>An <see cref="IActionResult"/> carrying the count, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county has no partition.</returns>
         [HttpGet("countbycountyid", Name = $"{nameof(TerrainController)}_{nameof(GetCountByCountyIdAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetCountByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetCountByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(TerrainController), nameof(GetCountByCountyIdAsync), countyId);
 
-            long count;
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
+
+            long? count;
             try
             {
                 count = estimated
-                    ? await terrainPointPostgreSQLConverter.GetEstimatedCountAsync(countyId, false, cancellationToken)
+                    ? await terrainPointPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, cancellationToken)
                     : await terrainPointPostgreSQLConverter.GetCountAsync(countyId, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception exception)
             {
@@ -230,15 +243,19 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Internal server error during database query");
             }
 
-            // A missing partition answers -1 rather than zero, and the two mean different things: never imported
-            // against imported and empty. Reporting both as zero would hide a county a run never reached.
-            if (count < 0)
+            if (count is null || (!estimated && count < 0))
             {
                 Serilog.Modify.Log("County {CountyId} has no terrain point partition", countyId);
                 return NotFound();
             }
 
-            return Ok(count);
+            if (estimated && count < 0)
+            {
+                Serilog.Modify.Log("County {CountyId} terrain point partition exists but has not been analysed", countyId);
+                return NoContent();
+            }
+
+            return Ok(count.Value);
         }
 
         /// <summary>

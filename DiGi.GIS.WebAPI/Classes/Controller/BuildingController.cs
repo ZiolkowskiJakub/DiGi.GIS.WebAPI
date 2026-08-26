@@ -299,16 +299,19 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously retrieves the count of building records from the database, optionally filtered by a county identifier.
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter the count; if null, the count is retrieved across all counties.</param>
-        /// <param name="estimated">A boolean value indicating whether to read the estimated count from database statistics for faster execution on large partitions.</param>
+        /// <param name="estimated">A boolean value indicating whether to read the estimated count from database statistics for faster execution on large partitions. An unanalysed partition returns 204 NoContent.</param>
         /// <param name="analyze">A boolean value indicating whether to run an analysis operation before fetching the estimated count to ensure higher accuracy.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
-        /// <returns>An <see cref="IActionResult"/> containing the row count as a long integer, or 404 when the county partition does not exist.</returns>
+        /// <returns>An <see cref="IActionResult"/> containing the row count as a long integer, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county partition does not exist.</returns>
         [HttpGet("count", Name = $"{nameof(BuildingController)}_{nameof(GetCountAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetCountAsync([FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, CancellationToken cancellationToken = default)
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetCountAsync([FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(BuildingController), nameof(GetCountAsync), countyId?.ToString() ?? string.Empty);
 
@@ -318,12 +321,22 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            long count;
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
+
+            long? count;
             try
             {
                 count = estimated
                     ? await buildingPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, cancellationToken)
                     : await buildingPostgreSQLConverter.GetCountAsync(countyId, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception exception)
             {
@@ -331,13 +344,19 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Internal server error during database query");
             }
 
-            if (count < 0)
+            if (count is null || (!estimated && count < 0))
             {
                 Serilog.Modify.Log("County {CountyId} has no building partition", countyId?.ToString() ?? string.Empty);
                 return NotFound();
             }
 
-            return Ok(count);
+            if (estimated && count < 0)
+            {
+                Serilog.Modify.Log("County {CountyId} building partition exists but has not been analysed", countyId?.ToString() ?? string.Empty);
+                return NoContent();
+            }
+
+            return Ok(count.Value);
         }
 
         /// <summary>

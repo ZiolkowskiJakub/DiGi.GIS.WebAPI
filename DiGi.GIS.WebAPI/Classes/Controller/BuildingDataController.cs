@@ -364,17 +364,19 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>The cheapest question that can be asked of the table, and the one that separates a county no run has reached from one a run reached and wrote nothing for.</para>
         /// </summary>
         /// <param name="countyId">The identifier of the county to count.</param>
-        /// <param name="estimated">Reads the planner's row estimate instead of counting the rows. Far faster on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment. A partition that has never been analysed carries no estimate and answers 404 the same way a missing one does, so a 404 under this option does not on its own mean the county is unwritten - repeat without it to tell the two apart.</param>
+        /// <param name="estimated">Reads the planner's row estimate instead of counting the rows. Far faster on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment. An unanalysed partition returns 204 NoContent.</param>
+        /// <param name="analyze">A boolean value indicating whether to perform an ANALYZE operation before reading the estimate to ensure statistics are current.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>An <see cref="IActionResult"/> carrying the count, or 404 when the county has no partition.</returns>
+        /// <returns>An <see cref="IActionResult"/> carrying the count, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county has no partition.</returns>
         [HttpGet("countbycountyid", Name = $"{nameof(BuildingDataController)}_{nameof(GetCountByCountyIdAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetCountByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetCountByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(BuildingDataController), nameof(GetCountByCountyIdAsync), countyId);
 
@@ -384,11 +386,11 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            long count;
+            long? count;
             try
             {
                 count = estimated
-                    ? await buildingDataPostgreSQLConverter.GetEstimatedCountAsync(countyId, false, commandTimeout, cancellationToken)
+                    ? await buildingDataPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, commandTimeout, cancellationToken)
                     : await buildingDataPostgreSQLConverter.GetCountAsync(countyId, commandTimeout, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -401,15 +403,19 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Internal server error during database query");
             }
 
-            // A missing partition answers -1 rather than zero, and the two mean different things: never written
-            // against written and empty. Reporting both as zero would hide a county no run has reached.
-            if (count < 0)
+            if (count is null || (!estimated && count < 0))
             {
                 Serilog.Modify.Log("County {CountyId} has no building data partition", countyId);
                 return NotFound();
             }
 
-            return Content(count.ToString(), "application/json");
+            if (estimated && count < 0)
+            {
+                Serilog.Modify.Log("County {CountyId} building data partition exists but has not been analysed", countyId);
+                return NoContent();
+            }
+
+            return Content(count.Value.ToString(), "application/json");
         }
 
         /// <summary>
