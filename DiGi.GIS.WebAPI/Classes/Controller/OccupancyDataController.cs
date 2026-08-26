@@ -413,5 +413,118 @@ namespace DiGi.GIS.WebAPI.Classes
 
             return Content(Core.Convert.ToSystem_String(occupancyDatas) ?? string.Empty, "application/json");
         }
+
+        /// <summary>
+        /// Asynchronously retrieves the building references that hold more than one occupancy data record, optionally filtered by county identifier.
+        /// </summary>
+        /// <param name="countyId">The optional integer identifier of the county to filter by; if null, searches across all counties.</param>
+        /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
+        /// <returns>An <see cref="IActionResult"/> containing the list of duplicate references, or 404 if none are found.</returns>
+        [HttpGet("building2d/duplicatereferences", Name = $"{nameof(OccupancyDataController)}_{nameof(GetBuilding2DDuplicateReferencesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<Building2DReferenceDuplicate>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetBuilding2DDuplicateReferencesAsync([FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "limit")] int limit = 100, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(GetBuilding2DDuplicateReferencesAsync));
+
+            if (limit <= 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Limit has to be greater than zero");
+                return BadRequest();
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
+
+            if (building2DOccupancyDataPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Building2DOccupancyDataPostgreSQLConverter is null");
+                return BadRequest();
+            }
+
+            try
+            {
+                List<Building2DReferenceDuplicate>? building2DReferenceDuplicates = await building2DOccupancyDataPostgreSQLConverter.GetBuilding2DReferenceDuplicatesAsync(countyId, limit, commandTimeout, cancellationToken);
+                if (building2DReferenceDuplicates is null || building2DReferenceDuplicates.Count == 0)
+                {
+                    return NotFound();
+                }
+
+                string? json = Core.Convert.ToSystem_String(building2DReferenceDuplicates);
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    return NotFound();
+                }
+
+                return Content(json, "application/json");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(OccupancyDataController), nameof(GetBuilding2DDuplicateReferencesAsync));
+                return StatusCode(500, "Internal server error during database query");
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the total count of building references that hold more than one occupancy data record, optionally filtered by county identifier.
+        /// </summary>
+        /// <param name="countyId">The optional integer identifier of the county to filter by; if null, counts across all counties.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the duplicates count, or 404 if the partition does not exist or count is negative.</returns>
+        [HttpGet("building2d/duplicatescount", Name = $"{nameof(OccupancyDataController)}_{nameof(GetBuilding2DDuplicatesCountAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetBuilding2DDuplicatesCountAsync([FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(GetBuilding2DDuplicatesCountAsync));
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
+
+            if (building2DOccupancyDataPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Building2DOccupancyDataPostgreSQLConverter is null");
+                return BadRequest();
+            }
+
+            try
+            {
+                long count = await building2DOccupancyDataPostgreSQLConverter.GetDuplicatesCountAsync(countyId, commandTimeout, cancellationToken);
+                if (count < 0)
+                {
+                    return NotFound();
+                }
+
+                return Content(count.ToString(), "application/json");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(OccupancyDataController), nameof(GetBuilding2DDuplicatesCountAsync));
+                return StatusCode(500, "Internal server error during database query");
+            }
+        }
     }
 }
