@@ -5,6 +5,7 @@ using DiGi.GIS.PostgreSQL.Classes;
 using DiGi.GIS.PostgreSQL.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -110,7 +111,14 @@ namespace DiGi.GIS.WebAPI.Classes
                             }
 
                             int? countyId = building2D_PostgreSQL.CountyId > 0 ? building2D_PostgreSQL.CountyId : null;
-                            if (ortoDatas.ToPostgreSQL(countyId) is PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL)
+                            int? subdivisionId = building2D_PostgreSQL.SubdivisionId;
+                            if (subdivisionId is null && building2DReferences is not null)
+                            {
+                                Building2DReference? matchingReference = building2DReferences.FirstOrDefault(r => r is not null && r.Reference == building2D_PostgreSQL.Reference);
+                                subdivisionId = matchingReference?.SubdivisionId;
+                            }
+
+                            if (ortoDatas.ToPostgreSQL(countyId, subdivisionId) is PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL)
                             {
                                 ortoDatasList_PostgreSQL.Add(ortoDatas_PostgreSQL);
                             }
