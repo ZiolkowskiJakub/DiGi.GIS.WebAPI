@@ -230,7 +230,7 @@ namespace DiGi.GIS.WebAPI.Classes
             try
             {
                 count = estimated
-                    ? await terrainPointPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, cancellationToken)
+                    ? await terrainPointPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, commandTimeout, cancellationToken)
                     : await terrainPointPostgreSQLConverter.GetCountAsync(countyId, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

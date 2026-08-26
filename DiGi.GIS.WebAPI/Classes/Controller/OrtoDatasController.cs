@@ -95,13 +95,14 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Retrieves the estimated coverage factor for a specified administrative area 2D identifier.
         /// </summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> containing the estimated coverage factor or an error status code.</returns>
         [HttpGet("estimatedcoveragefactor", Name = $"{nameof(OrtoDatasController)}_{nameof(GetEstimatedCoverageFactorAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(double), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetEstimatedCoverageFactorAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetEstimatedCoverageFactorAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetEstimatedCoverageFactorAsync));
             Serilog.Modify.Log("AdministrativeAreal2D Id provided: {Id}", administrativeAreal2DId);
@@ -141,14 +142,14 @@ namespace DiGi.GIS.WebAPI.Classes
                 case AdministrativeArealType.Subdivision:
                 case AdministrativeArealType.Municipality:
                     Serilog.Modify.Log("Calculating estimated count for {Id}", administrativeAreal2DReference.CountyId?.ToString() ?? "???");
-                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId, cancellationToken: cancellationToken) ?? -1;
-                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId, cancellationToken: cancellationToken) ?? -1;
+                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken) ?? -1;
+                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.CountyId, commandTimeout: commandTimeout, cancellationToken: cancellationToken) ?? -1;
                     break;
 
                 case AdministrativeArealType.County:
                     Serilog.Modify.Log("Calculating estimated count for {Id}", administrativeAreal2DReference.Id.ToString() ?? "???");
-                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, cancellationToken: cancellationToken) ?? -1;
-                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, cancellationToken: cancellationToken) ?? -1;
+                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, commandTimeout: commandTimeout, cancellationToken: cancellationToken) ?? -1;
+                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, commandTimeout: commandTimeout, cancellationToken: cancellationToken) ?? -1;
                     break;
 
                 case AdministrativeArealType.Voivodeship:
@@ -162,7 +163,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                     Serilog.Modify.Log("Calculating estimated count for {Code}", administrativeAreal2DReference.Code);
 
-                    List<int>? countyIds = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County, cancellationToken))?.ConvertAll(x => x.Id);
+                    List<int>? countyIds = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County, cancellationToken: cancellationToken))?.ConvertAll(x => x.Id);
                     if (countyIds is null || countyIds.Count == 0)
                     {
                         Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Could not find given County AdministrativeAreal2Ds for given Id");
@@ -171,8 +172,8 @@ namespace DiGi.GIS.WebAPI.Classes
 
                     Serilog.Modify.Log("Calculating estimated count for {Ids}", string.Join(",", countyIds));
 
-                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyIds, cancellationToken: cancellationToken);
-                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyIds, cancellationToken: cancellationToken);
+                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyIds, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyIds, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                     break;
             }
 
@@ -199,16 +200,18 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Retrieves the estimated coverage factors for the specified administrative area identifiers.
+        /// <para>Every identifier is resolved to the counties it stands for - a voivodeship or country expands to all of its county rows - and the two row estimates are then read for the whole set in one query per table.</para>
         /// </summary>
         /// <param name="administrativeAreal2DIds">The collection of administrative area 2D identifiers to be processed.</param>
-        /// <param name="analyze">An optional flag indicating whether to perform an analysis during the retrieval process.</param>
+        /// <param name="analyze">Refreshes the statistics before reading them. This costs one <c>VACUUM ANALYZE</c> per resolved county partition on each of the two tables - for a country identifier that is several hundred maintenance statements against live partitions, so raise <c>commandtimeout</c> to match or leave the flag off.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("estimatedcoveragefactors", Name = $"{nameof(OrtoDatasController)}_{nameof(GetEstimatedCoverageFactorsAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<double>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetEstimatedCoverageFactorsAsync([FromBody] IEnumerable<int> administrativeAreal2DIds, [FromQuery(Name = "analyze")] bool? analyze, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetEstimatedCoverageFactorsAsync([FromBody] IEnumerable<int> administrativeAreal2DIds, [FromQuery(Name = "analyze")] bool? analyze, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetEstimatedCoverageFactorsAsync));
             Serilog.Modify.Log("AdministrativeAreal2D Ids provided: {Ids}", string.Join(",", administrativeAreal2DIds ?? []));
@@ -277,14 +280,16 @@ namespace DiGi.GIS.WebAPI.Classes
                 }
             }
 
-            Dictionary<int, (long Count_Building2D, long Count_OrtoDatas)> dictionary = [];
+            // Resolve which counties every requested identifier stands for BEFORE touching the count tables.
+            // A country expands to all 406 county rows, so asking per county per table cost ~1 624 statements
+            // for one request; the two batched reads below replace all of them.
+            Dictionary<int, List<int>> countyIds_ByAdministrativeAreal2DId = [];
+            HashSet<int> countyIds = [];
 
             foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_County)
             {
-                long count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, analyze ?? false, cancellationToken) ?? -1;
-                long count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(administrativeAreal2DReference.Id, analyze ?? false, cancellationToken) ?? -1;
-
-                dictionary[administrativeAreal2DReference.Id] = (count_Building2D, count_OrtoDatas);
+                countyIds_ByAdministrativeAreal2DId[administrativeAreal2DReference.Id] = [administrativeAreal2DReference.Id];
+                countyIds.Add(administrativeAreal2DReference.Id);
             }
 
             foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_SubdivisionMunicipality)
@@ -294,17 +299,8 @@ namespace DiGi.GIS.WebAPI.Classes
                     continue;
                 }
 
-                if (!dictionary.TryGetValue(countyId, out (long, long) value))
-                {
-                    long count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze ?? false, cancellationToken) ?? -1;
-                    long count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze ?? false, cancellationToken) ?? -1;
-
-                    value = (count_Building2D, count_OrtoDatas);
-
-                    dictionary[countyId] = value;
-                }
-
-                dictionary[administrativeAreal2DReference.Id] = value;
+                countyIds_ByAdministrativeAreal2DId[administrativeAreal2DReference.Id] = [countyId];
+                countyIds.Add(countyId);
             }
 
             foreach (PostgreSQL.Classes.AdministrativeAreal2DReference administrativeAreal2DReference in administrativeAreal2DReferences_VoivodeshipCountry)
@@ -314,40 +310,53 @@ namespace DiGi.GIS.WebAPI.Classes
                     continue;
                 }
 
-                List<int>? countyIds_AdministrativeAreal2DReference = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County))?.ConvertAll(x => x.Id);
-                if (countyIds_AdministrativeAreal2DReference is null || countyIds_AdministrativeAreal2DReference.Count == 0)
+                List<int>? countyIds_AdministrativeAreal2DReference = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(code, AdministrativeArealType.County, cancellationToken))?.ConvertAll(x => x.Id);
+
+                // An empty list is kept rather than skipped: it is what marks the identifier as unresolvable
+                // further down, and answers 0 for it exactly as the per-county version did.
+                countyIds_ByAdministrativeAreal2DId[administrativeAreal2DReference.Id] = countyIds_AdministrativeAreal2DReference ?? [];
+
+                if (countyIds_AdministrativeAreal2DReference is not null)
                 {
-                    dictionary[administrativeAreal2DReference.Id] = (-1, -1);
+                    countyIds.UnionWith(countyIds_AdministrativeAreal2DReference);
+                }
+            }
+
+            Serilog.Modify.Log("Counties resolved: {Count}", countyIds.Count);
+
+            Dictionary<int, long>? counts_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountsAsync(countyIds, analyze ?? false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+            Dictionary<int, long>? counts_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountsAsync(countyIds, analyze ?? false, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+
+            Dictionary<int, (long Count_Building2D, long Count_OrtoDatas)> dictionary = [];
+
+            foreach (KeyValuePair<int, List<int>> keyValuePair in countyIds_ByAdministrativeAreal2DId)
+            {
+                if (keyValuePair.Value.Count == 0)
+                {
+                    dictionary[keyValuePair.Key] = (-1, -1);
                     continue;
                 }
 
                 long count_Building2D = 0;
                 long count_OrtoDatas = 0;
 
-                foreach (int countyId_AdministrativeAreal2DReference in countyIds_AdministrativeAreal2DReference)
+                foreach (int countyId in keyValuePair.Value)
                 {
-                    if (!dictionary.TryGetValue(countyId_AdministrativeAreal2DReference, out (long Count_Building2D, long Count_OrtoDatas) value))
+                    // A county absent from a dictionary has no partition; one carrying -1 has a partition that
+                    // has never been analysed. Both contribute nothing rather than subtracting, matching the
+                    // converter sums. See ZiolkowskiJakub/DiGi.GIS.PostgreSQL#44.
+                    if (counts_Building2D is not null && counts_Building2D.TryGetValue(countyId, out long count_Building2D_County) && count_Building2D_County > 0)
                     {
-                        long count_Building2D_County = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyId_AdministrativeAreal2DReference, analyze ?? false, cancellationToken) ?? -1;
-                        long count_OrtoDatas_County = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyId_AdministrativeAreal2DReference, analyze ?? false, cancellationToken) ?? -1;
-
-                        value = (count_Building2D_County, count_OrtoDatas_County);
-
-                        dictionary[countyId_AdministrativeAreal2DReference] = value;
+                        count_Building2D += count_Building2D_County;
                     }
 
-                    if (value.Count_Building2D > 0)
+                    if (counts_OrtoDatas is not null && counts_OrtoDatas.TryGetValue(countyId, out long count_OrtoDatas_County) && count_OrtoDatas_County > 0)
                     {
-                        count_Building2D += value.Count_Building2D;
-                    }
-
-                    if (value.Count_OrtoDatas > 0)
-                    {
-                        count_OrtoDatas += value.Count_OrtoDatas;
+                        count_OrtoDatas += count_OrtoDatas_County;
                     }
                 }
 
-                dictionary[administrativeAreal2DReference.Id] = (count_Building2D, count_OrtoDatas);
+                dictionary[keyValuePair.Key] = (count_Building2D, count_OrtoDatas);
             }
 
             Func<long, long, double> estimatedCoverageFactor = new((count_Building2D, count_OrtoDatas) =>
@@ -424,7 +433,7 @@ namespace DiGi.GIS.WebAPI.Classes
             try
             {
                 count = estimated
-                    ? await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, cancellationToken)
+                    ? await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, commandTimeout, cancellationToken)
                     : await ortoDatasPostgreSQLConverter.GetCountAsync(countyId, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
