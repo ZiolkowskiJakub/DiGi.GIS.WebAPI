@@ -5635,7 +5635,7 @@ A task that represents the asynchronous operation\.
 
 Asynchronously reports what each of the named counties still has waiting in the orthophoto download queue\.
 
-Reads the queue without claiming anything from it, unlike [NextBuilding2DReferencesAsync\(int, int, int, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasController\.NextBuilding2DReferencesAsync\(int, int, int, System\.Threading\.CancellationToken\)'), which claims the rows it returns. It is the only way to see what a refresh queued, and the way to watch the refresh and the download move against each other.
+Reads the queue without claiming anything from it, unlike [NextBuilding2DReferencesAsync\(int, int, int, int, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasController\.NextBuilding2DReferencesAsync\(int, int, int, int, System\.Threading\.CancellationToken\)'), which claims the rows it returns. It is the only way to see what a refresh queued, and the way to watch the refresh and the download move against each other.
 
 Naming no county reports every one. Counties with nothing waiting are absent from the result rather than present with a zero, so an empty result means the queue is drained.
 
@@ -5746,36 +5746,42 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the summaries as JSON, or an error status\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasController\.NextBuilding2DReferencesAsync\(int, int, int, CancellationToken\) Method
+## OrtoDatasController\.NextBuilding2DReferencesAsync\(int, int, int, int, CancellationToken\) Method
 
 Retrieves and claims the next batch of building 2D reference objects from the update queue\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> NextBuilding2DReferencesAsync(int count=100, int claimTimeoutMinutes=30, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> NextBuilding2DReferencesAsync(int count=100, int claimTimeoutMinutes=30, int maxAttempts=5, int commandTimeout=60, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken).count'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).count'></a>
 
 `count` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The maximum number of building 2D reference objects to retrieve\. Defaults to 100\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes'></a>
 
 `claimTimeoutMinutes` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The duration in minutes before an unacknowledged claim expires and returns to the queue\. Defaults to 30\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).maxAttempts'></a>
+
+`maxAttempts` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of claim attempts before a reference is retired as a poison row\. Defaults to 5\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 60 seconds\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 

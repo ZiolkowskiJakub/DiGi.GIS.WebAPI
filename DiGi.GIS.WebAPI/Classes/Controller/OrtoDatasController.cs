@@ -824,7 +824,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Asynchronously reports what each of the named counties still has waiting in the orthophoto download queue.
-        /// <para>Reads the queue without claiming anything from it, unlike <see cref="NextBuilding2DReferencesAsync(int, int, int, CancellationToken)"/>, which claims the rows it returns. It is the only way to see what a refresh queued, and the way to watch the refresh and the download move against each other.</para>
+        /// <para>Reads the queue without claiming anything from it, unlike <see cref="NextBuilding2DReferencesAsync(int, int, int, int, CancellationToken)"/>, which claims the rows it returns. It is the only way to see what a refresh queued, and the way to watch the refresh and the download move against each other.</para>
         /// <para>Naming no county reports every one. Counties with nothing waiting are absent from the result rather than present with a zero, so an empty result means the queue is drained.</para>
         /// </summary>
         /// <param name="countyIds">The identifiers of the counties to report on, repeated once per county. Omit to report every one.</param>
@@ -1091,6 +1091,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="count">The maximum number of building 2D reference objects to retrieve. Defaults to 100.</param>
         /// <param name="claimTimeoutMinutes">The duration in minutes before an unacknowledged claim expires and returns to the queue. Defaults to 30.</param>
+        /// <param name="maxAttempts">The maximum number of claim attempts before a reference is retired as a poison row. Defaults to 5.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 60 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -1099,10 +1100,10 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> NextBuilding2DReferencesAsync([FromQuery(Name = "count")] int count = 100, [FromQuery(Name = "claimtimeoutminutes")] int claimTimeoutMinutes = 30, [FromQuery(Name = "commandtimeout")] int commandTimeout = 60, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> NextBuilding2DReferencesAsync([FromQuery(Name = "count")] int count = 100, [FromQuery(Name = "claimtimeoutminutes")] int claimTimeoutMinutes = 30, [FromQuery(Name = "maxattempts")] int maxAttempts = 5, [FromQuery(Name = "commandtimeout")] int commandTimeout = 60, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(NextBuilding2DReferencesAsync));
-            Serilog.Modify.Log("Count provided: {Count}, ClaimTimeoutMinutes: {ClaimTimeoutMinutes}, CommandTimeout: {CommandTimeout}", count, claimTimeoutMinutes, commandTimeout);
+            Serilog.Modify.Log("Count provided: {Count}, ClaimTimeoutMinutes: {ClaimTimeoutMinutes}, MaxAttempts: {MaxAttempts}, CommandTimeout: {CommandTimeout}", count, claimTimeoutMinutes, maxAttempts, commandTimeout);
 
             if (count <= 0)
             {
@@ -1116,6 +1117,12 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest("Claim timeout minutes must be greater than 0.");
             }
 
+            if (maxAttempts <= 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Max attempts must be greater than 0");
+                return BadRequest("Max attempts must be greater than 0.");
+            }
+
             if (ortoDatasPostgreSQLConverter is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatasPostgreSQLConverter is null");
@@ -1124,7 +1131,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("Extracting data starting");
 
-            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, claimTimeoutMinutes, commandTimeout, cancellationToken: cancellationToken);
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, claimTimeoutMinutes, maxAttempts, commandTimeout, cancellationToken: cancellationToken);
 
             Serilog.Modify.Log("Extracting data ended");
 

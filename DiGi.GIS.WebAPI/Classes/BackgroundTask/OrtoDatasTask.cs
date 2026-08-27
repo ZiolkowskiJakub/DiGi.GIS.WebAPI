@@ -70,7 +70,7 @@ namespace DiGi.GIS.WebAPI.Classes
             // Null is the queue failing to answer, not the queue being empty - a drained queue answers an
             // empty list and the loop below simply does not run. Saying "none found" for both is what made
             // a broken claim read as an ordinary idle run.
-            List<Building2DReference>? building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, cancellationToken: cancellationToken);
+            List<Building2DReference>? building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, claimTimeoutMinutes: 30, maxAttempts: 5, cancellationToken: cancellationToken);
             if (building2DReferences is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Building2DReferences could not be claimed from the queue - see the preceding entry for the database error");
@@ -228,7 +228,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 Serilog.Modify.Log("Getting new Building2DReferences");
 
-                building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, cancellationToken: cancellationToken);
+                building2DReferences = await ortoDatasPostgreSQLConverter.GetNextBuilding2DReferencesAsync(count, claimTimeoutMinutes: 30, maxAttempts: 5, cancellationToken: cancellationToken);
 
                 Serilog.Modify.Log("Getting new Building2DReferences ended. Count: {Count}", building2DReferences?.Count ?? 0);
             }
