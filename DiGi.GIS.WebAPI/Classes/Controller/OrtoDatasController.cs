@@ -202,7 +202,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                     Serilog.Modify.Log("Calculating estimated count for {Code}", administrativeAreal2DReference.Code);
 
-                    List<int>? countyIds = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County, cancellationToken: cancellationToken))?.ConvertAll(x => x.Id);
+                    List<int>? countyIds = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(administrativeAreal2DReference.Code, AdministrativeArealType.County, administrativeAreal2DReference.AdministrativeArealType, cancellationToken: cancellationToken))?.ConvertAll(x => x.Id);
                     if (countyIds is null || countyIds.Count == 0)
                     {
                         Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Could not find given County AdministrativeAreal2Ds for given Id");
@@ -409,7 +409,7 @@ namespace DiGi.GIS.WebAPI.Classes
                     continue;
                 }
 
-                List<int>? countyIds_AdministrativeAreal2DReference = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(code, AdministrativeArealType.County, cancellationToken))?.ConvertAll(x => x.Id);
+                List<int>? countyIds_AdministrativeAreal2DReference = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(code, AdministrativeArealType.County, administrativeAreal2DReference.AdministrativeArealType, cancellationToken))?.ConvertAll(x => x.Id);
 
                 // An identifier that resolves to no county is left without an entry, which answers null for it -
                 // the same thing the singular endpoint does when it cannot measure.
