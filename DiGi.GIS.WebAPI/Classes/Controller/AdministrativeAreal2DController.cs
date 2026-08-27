@@ -480,7 +480,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            long count = await administrativeAreal2DPostgreSQLConverter.GetCountAsync(cancellationToken);
+            long count = await administrativeAreal2DPostgreSQLConverter.GetCountAsync(cancellationToken: cancellationToken);
             if (count < 0)
             {
                 return NotFound();

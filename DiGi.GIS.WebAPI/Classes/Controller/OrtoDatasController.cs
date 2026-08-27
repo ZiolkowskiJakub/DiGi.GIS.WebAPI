@@ -631,7 +631,7 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 count = estimated
                     ? await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, commandTimeout, cancellationToken)
-                    : await ortoDatasPostgreSQLConverter.GetCountAsync(countyId, cancellationToken);
+                    : await ortoDatasPostgreSQLConverter.GetCountAsync(countyId, commandTimeout, cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
