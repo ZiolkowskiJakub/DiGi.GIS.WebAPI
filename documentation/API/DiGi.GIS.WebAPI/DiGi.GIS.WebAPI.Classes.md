@@ -5339,7 +5339,7 @@ Retrieves the orthophoto coverage factor for a specified administrative area 2D 
 
 Below county level the figure is counted rather than estimated. A subdivision and a municipality have no partition of their own - both tables are partitioned by `county_id` - so the coverage is measured over that area's own buildings, by reading its county once per side and matching the references in memory. County and above keep the planner's row estimate, which is what makes a voivodeship or a country affordable at all, so an exact sub-county figure and its county's estimate can differ by a few percent and both be right.
 
-A coverage that cannot be measured answers 204 NoContent, never zero. A county nothing has ever been downloaded for and a county that was downloaded and holds nothing are different facts, and reporting both as 0.0 hid the first behind a plausible number.
+A coverage that cannot be measured answers 204 NoContent, never zero. A county nothing has ever been downloaded for and a county that was downloaded and holds nothing are different facts, and reporting both as 0.0 hid the first behind a plausible number. The same 204 is the answer for a voivodeship or a country when any of the counties behind it has no partition or has never been analysed; `countbycountyid?estimated=true` reads the state of one county, answering 200 when it is analysed, 204 when it is not and 404 when it has no partition.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetEstimatedCoverageFactorAsync(int administrativeAreal2DId, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -5374,7 +5374,7 @@ An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us
 
 Retrieves the orthophoto coverage factors for the specified administrative area identifiers\.
 
-The values come back in the order the identifiers were given, one per identifier, so a caller can update one row per value without matching anything up. A value is `null` where the coverage could not be measured, which is never the same thing as zero.
+The values come back in the order the identifiers were given, one per identifier, so a caller can update one row per value without matching anything up. A value is `null` where the coverage could not be measured, which is never the same thing as zero. That includes a voivodeship or a country when any of the counties behind it has no partition or has never been analysed; `countbycountyid?estimated=true` reads the state of one county, answering 200 when it is analysed, 204 when it is not and 404 when it has no partition, and `analyze=true` on this endpoint re-measures the unanalysed counties before reading them.
 
 A county, a voivodeship and a country are answered from the two tables row estimates - every identifier is resolved to the counties it stands for and both estimates are read for the whole set in one query per table. A subdivision and a municipality have no partition of their own and are instead counted, over their own buildings, by reading their county once per side; every subdivision and municipality of one county is served from that single pass.
 

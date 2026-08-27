@@ -94,7 +94,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Retrieves the orthophoto coverage factor for a specified administrative area 2D identifier.
         /// <para>Below county level the figure is counted rather than estimated. A subdivision and a municipality have no partition of their own - both tables are partitioned by <c>county_id</c> - so the coverage is measured over that area's own buildings, by reading its county once per side and matching the references in memory. County and above keep the planner's row estimate, which is what makes a voivodeship or a country affordable at all, so an exact sub-county figure and its county's estimate can differ by a few percent and both be right.</para>
-        /// <para>A coverage that cannot be measured answers 204 NoContent, never zero. A county nothing has ever been downloaded for and a county that was downloaded and holds nothing are different facts, and reporting both as 0.0 hid the first behind a plausible number.</para>
+        /// <para>A coverage that cannot be measured answers 204 NoContent, never zero. A county nothing has ever been downloaded for and a county that was downloaded and holds nothing are different facts, and reporting both as 0.0 hid the first behind a plausible number. The same 204 is the answer for a voivodeship or a country when any of the counties behind it has no partition or has never been analysed; <c>countbycountyid?estimated=true</c> reads the state of one county, answering 200 when it is analysed, 204 when it is not and 404 when it has no partition.</para>
         /// </summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
@@ -211,8 +211,44 @@ namespace DiGi.GIS.WebAPI.Classes
 
                     Serilog.Modify.Log("Calculating estimated count for {Ids}", string.Join(",", countyIds));
 
-                    count_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountAsync(countyIds, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
-                    count_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountAsync(countyIds, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                    Dictionary<int, long>? counts_Building2D = await building2DPostgreSQLConverter.GetEstimatedCountsAsync(countyIds, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                    Dictionary<int, long>? counts_OrtoDatas = await ortoDatasPostgreSQLConverter.GetEstimatedCountsAsync(countyIds, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                    if (counts_Building2D is null || counts_OrtoDatas is null)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Coverage could not be measured. Id: {Id}", administrativeAreal2DId);
+                        return NoContent();
+                    }
+
+                    // A county absent from a dictionary has no partition and one carrying -1 has a partition
+                    // that has never been analysed; in either case the sum would be a lower bound, so the
+                    // identifier is answered as not measured (Issue #44 decision: any unmeasured county makes
+                    // the whole identifier unmeasured). The distinct set is what the summing overloads'
+                    // dictionaries always held, so a county the resolution named twice is counted once.
+                    HashSet<int> countyIds_Temp = [.. countyIds];
+                    long sum_Building2D = 0;
+                    long sum_OrtoDatas = 0;
+                    List<int> countyIds_NotMeasured = [];
+
+                    foreach (int countyId in countyIds_Temp)
+                    {
+                        if (!counts_Building2D.TryGetValue(countyId, out long count_Building2D_County) || count_Building2D_County < 0 || !counts_OrtoDatas.TryGetValue(countyId, out long count_OrtoDatas_County) || count_OrtoDatas_County < 0)
+                        {
+                            countyIds_NotMeasured.Add(countyId);
+                            continue;
+                        }
+
+                        sum_Building2D += count_Building2D_County;
+                        sum_OrtoDatas += count_OrtoDatas_County;
+                    }
+
+                    if (countyIds_NotMeasured.Count > 0)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Coverage could not be measured. Unmeasured counties: {CountyIds}", string.Join(",", countyIds_NotMeasured));
+                        return NoContent();
+                    }
+
+                    count_Building2D = sum_Building2D;
+                    count_OrtoDatas = sum_OrtoDatas;
                     break;
             }
 
@@ -268,7 +304,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Retrieves the orthophoto coverage factors for the specified administrative area identifiers.
-        /// <para>The values come back in the order the identifiers were given, one per identifier, so a caller can update one row per value without matching anything up. A value is <c>null</c> where the coverage could not be measured, which is never the same thing as zero.</para>
+        /// <para>The values come back in the order the identifiers were given, one per identifier, so a caller can update one row per value without matching anything up. A value is <c>null</c> where the coverage could not be measured, which is never the same thing as zero. That includes a voivodeship or a country when any of the counties behind it has no partition or has never been analysed; <c>countbycountyid?estimated=true</c> reads the state of one county, answering 200 when it is analysed, 204 when it is not and 404 when it has no partition, and <c>analyze=true</c> on this endpoint re-measures the unanalysed counties before reading them.</para>
         /// <para>A county, a voivodeship and a country are answered from the two tables row estimates - every identifier is resolved to the counties it stands for and both estimates are read for the whole set in one query per table. A subdivision and a municipality have no partition of their own and are instead counted, over their own buildings, by reading their county once per side; every subdivision and municipality of one county is served from that single pass.</para>
         /// <para>Because counting reads a whole county, at most <see cref="Constants.OrtoDatas.MaximumCoverageCountyCount"/> distinct counties are counted per request, taken in the order the identifiers were given. Identifiers sitting in counties beyond that are answered <c>null</c> rather than given their county figure or failing the request.</para>
         /// </summary>
@@ -395,36 +431,40 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 foreach (KeyValuePair<int, List<int>> keyValuePair in countyIds_ByAdministrativeAreal2DId)
                 {
+                    // An identifier is answered as a measurement only when every county behind it has a
+                    // figure in both tables: a county absent from a dictionary has no partition and one
+                    // carrying -1 has a partition that has never been analysed, and in either case the sum
+                    // would be a lower bound, not a measurement (Issue #44 decision, generalising the #8
+                    // all-unknown rule to any-unknown).
+                    if (counts_Building2D is null || counts_OrtoDatas is null)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D {Id} has no measurement. Counties: {CountyIds}", keyValuePair.Key, string.Join(",", keyValuePair.Value));
+                        continue;
+                    }
+
                     long count_Building2D = 0;
                     long count_OrtoDatas = 0;
-
-                    // Whether any county behind this identifier had a figure to give at all, which is a
-                    // different question from what the figures add up to. A county absent from a dictionary has
-                    // no partition and one carrying -1 has a partition that has never been analysed; both are
-                    // "not known", not "nought". Summing them as nought is what reported a county nothing had
-                    // ever been downloaded for as 0 % covered - see issue #8 - so an identifier whose counties
-                    // all came back unknown is answered as not measured instead. Where some counties did answer,
-                    // the sum stands as the lower bound it has always been, tracked by
-                    // ZiolkowskiJakub/DiGi.GIS.PostgreSQL#44.
-                    bool hasCount_Building2D = false;
-                    bool hasCount_OrtoDatas = false;
+                    List<int> countyIds_NotMeasured = [];
 
                     foreach (int countyId in keyValuePair.Value)
                     {
-                        if (counts_Building2D is not null && counts_Building2D.TryGetValue(countyId, out long count_Building2D_County) && count_Building2D_County >= 0)
+                        if (!counts_Building2D.TryGetValue(countyId, out long count_Building2D_County) || count_Building2D_County < 0 || !counts_OrtoDatas.TryGetValue(countyId, out long count_OrtoDatas_County) || count_OrtoDatas_County < 0)
                         {
-                            hasCount_Building2D = true;
-                            count_Building2D += count_Building2D_County;
+                            countyIds_NotMeasured.Add(countyId);
+                            continue;
                         }
 
-                        if (counts_OrtoDatas is not null && counts_OrtoDatas.TryGetValue(countyId, out long count_OrtoDatas_County) && count_OrtoDatas_County >= 0)
-                        {
-                            hasCount_OrtoDatas = true;
-                            count_OrtoDatas += count_OrtoDatas_County;
-                        }
+                        count_Building2D += count_Building2D_County;
+                        count_OrtoDatas += count_OrtoDatas_County;
                     }
 
-                    dictionary[keyValuePair.Key] = (hasCount_Building2D ? count_Building2D : -1, hasCount_OrtoDatas ? count_OrtoDatas : -1);
+                    if (countyIds_NotMeasured.Count > 0)
+                    {
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D {Id} has no measurement. Unmeasured counties: {CountyIds}", keyValuePair.Key, string.Join(",", countyIds_NotMeasured));
+                        continue;
+                    }
+
+                    dictionary[keyValuePair.Key] = (count_Building2D, count_OrtoDatas);
                 }
             }
 
