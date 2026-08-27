@@ -749,14 +749,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<GIS.Classes.AdministrativeAreal2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByBoundingBoxAsync(
-            [FromQuery(Name = "x_1")] double x_1,
-            [FromQuery(Name = "y_1")] double y_1,
-            [FromQuery(Name = "x_2")] double x_2,
-            [FromQuery(Name = "y_2")] double y_2,
-            [FromQuery(Name = "tolerance")] double? tolerance,
-            [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetItemsByBoundingBoxAsync([FromQuery(Name = "x_1")] double x_1, [FromQuery(Name = "y_1")] double y_1, [FromQuery(Name = "x_2")] double x_2, [FromQuery(Name = "y_2")] double y_2, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByBoundingBoxAsync));
             Serilog.Modify.Log("BoundingBox provided: X_1={X_1}, Y_1={Y_1}, X_2={X_2}, Y_2={Y_2}", x_1, y_1, x_2, y_2);
@@ -830,14 +823,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<GIS.Classes.AdministrativeAreal2D>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemsByCircleAsync(
-            [FromQuery(Name = "x")] double x,
-            [FromQuery(Name = "y")] double y,
-            [FromQuery(Name = "radius")] double? radius,
-            [FromQuery(Name = "diameter")] double? diameter,
-            [FromQuery(Name = "tolerance")] double? tolerance,
-            [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetItemsByCircleAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "radius")] double? radius, [FromQuery(Name = "diameter")] double? diameter, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemsByCircleAsync));
             Serilog.Modify.Log("Coordinates provided: X={X}, Y={Y}", x, y);

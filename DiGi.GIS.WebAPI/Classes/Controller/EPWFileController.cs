@@ -26,9 +26,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="GISWebAPIConfigurationFileWatcher">The configuration file watcher used to monitor changes to the GIS PostgreSQL Web API settings.</param>
         /// <param name="ePWFilePostgreSQLConverter">The converter used for handling EPW file operations within the PostgreSQL database.</param>
-        public EPWFileController(
-            GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher,
-            EPWFilePostgreSQLConverter ePWFilePostgreSQLConverter)
+        public EPWFileController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, EPWFilePostgreSQLConverter ePWFilePostgreSQLConverter)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.ePWFilePostgreSQLConverter = ePWFilePostgreSQLConverter;
