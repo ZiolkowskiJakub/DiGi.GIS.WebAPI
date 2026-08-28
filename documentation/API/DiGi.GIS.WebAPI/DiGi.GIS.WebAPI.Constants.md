@@ -68,16 +68,54 @@ public static class Name
 ```
 
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Name
-### Fields
 
 <a name='DiGi.GIS.WebAPI.Constants.Name.Client'></a>
 
-## Name\.Client Field
+## Name\.Client Class
 
-Represents the identifier for the GIS client\.
+Provides the identifiers for the named HTTP clients created by the Web API\.
 
 ```csharp
-public static string Client;
+public static class Name.Client
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Client
+### Fields
+
+<a name='DiGi.GIS.WebAPI.Constants.Name.Client.Geoportal'></a>
+
+## Name\.Client\.Geoportal Field
+
+The Geoportal client identifier\.
+
+```csharp
+public static string Geoportal;
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.WebAPI.Constants.Name.Client.GIS'></a>
+
+## Name\.Client\.GIS Field
+
+The GIS client identifier\.
+
+```csharp
+public static string GIS;
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.WebAPI.Constants.Name.Client.GUGiK'></a>
+
+## Name\.Client\.GUGiK Field
+
+The GUGiK \(Główny Urząd Geodezji i Kartografii\) client identifier\.
+
+```csharp
+public static string GUGiK;
 ```
 
 #### Field Value

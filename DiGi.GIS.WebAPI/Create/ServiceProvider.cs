@@ -14,7 +14,7 @@ namespace DiGi.GIS.WebAPI
         {
             IServiceCollection serviceCollection = new ServiceCollection();
 
-            serviceCollection.AddHttpClient(Constants.Name.Client, httpClient =>
+            serviceCollection.AddHttpClient(Constants.Name.Client.GIS, httpClient =>
             {
                 httpClient.BaseAddress = Constants.Uri.BaseAddress;
                 httpClient.DefaultRequestHeaders.Add("Accept", "application/json");

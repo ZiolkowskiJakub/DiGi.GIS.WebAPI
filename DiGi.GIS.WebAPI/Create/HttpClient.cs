@@ -13,7 +13,7 @@ namespace DiGi.GIS.WebAPI
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static HttpClient? HttpClient_Geoportal(GISWebAPIManager? GISWebAPIManager)
         {
-            HttpClient? result = GISWebAPIManager?.CreateHttpClient("Geoportal");
+            HttpClient? result = GISWebAPIManager?.CreateHttpClient(Constants.Name.Client.Geoportal);
             if (result is null)
             {
                 return null;
@@ -35,7 +35,7 @@ namespace DiGi.GIS.WebAPI
         /// <returns>A task that represents the asynchronous operation.</returns>
         public static HttpClient? HttpClient_GUGiK(GISWebAPIManager? GISWebAPIManager)
         {
-            HttpClient? result = GISWebAPIManager?.CreateHttpClient("GUGiK");
+            HttpClient? result = GISWebAPIManager?.CreateHttpClient(Constants.Name.Client.GUGiK);
             if (result is null)
             {
                 return null;

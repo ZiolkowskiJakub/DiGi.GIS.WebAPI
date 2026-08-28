@@ -6,8 +6,24 @@ namespace DiGi.GIS.WebAPI.Constants
     public static class Name
     {
         /// <summary>
-        /// Represents the identifier for the GIS client.
+        /// Provides the identifiers for the named HTTP clients created by the Web API.
         /// </summary>
-        public static string Client = "GIS";
+        public static class Client
+        {
+            /// <summary>
+            /// The GIS client identifier.
+            /// </summary>
+            public static string GIS = "GIS";
+
+            /// <summary>
+            /// The Geoportal client identifier.
+            /// </summary>
+            public static string Geoportal = "Geoportal";
+
+            /// <summary>
+            /// The GUGiK (Główny Urząd Geodezji i Kartografii) client identifier.
+            /// </summary>
+            public static string GUGiK = "GUGiK";
+        }
     }
 }

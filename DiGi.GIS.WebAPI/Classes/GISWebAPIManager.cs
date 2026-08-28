@@ -72,7 +72,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return null;
             }
 
-            return CreateHttpClient(Constants.Name.Client);
+            return CreateHttpClient(Constants.Name.Client.GIS);
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return null;
             }
 
-            return CreateHttpClient(Constants.Name.Client);
+            return CreateHttpClient(Constants.Name.Client.GIS);
         }
     }
 }
