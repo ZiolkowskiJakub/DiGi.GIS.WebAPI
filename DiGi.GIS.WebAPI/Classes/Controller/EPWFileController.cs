@@ -36,6 +36,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously updates or inserts a collection of EPW files.
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the EPW files to update or insert.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitems", Name = $"{nameof(EPWFileController)}_{nameof(UpdateItemsAsync)}")]
@@ -44,9 +45,15 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(EPWFileController), nameof(UpdateItemsAsync));
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "EPWFile update not authorized");
+                return Unauthorized();
+            }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateEPWFile)
             {

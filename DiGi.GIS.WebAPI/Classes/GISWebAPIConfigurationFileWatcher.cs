@@ -16,6 +16,47 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
+        /// Gets a value indicating whether write authorization enforcement is enabled.
+        /// <para>False denies every write request; it does not open them.</para>
+        /// </summary>
+        public bool Enabled
+        {
+            get
+            {
+                return ConfigurationFile.GetValue<bool>(nameof(Enabled), defaultValue: !string.IsNullOrWhiteSpace(Key));
+            }
+        }
+
+        /// <summary>
+        /// Gets the secret access token for authorizing write operations, or the value of the DIGI_GIS_WEBAPI_KEY environment variable if not configured in the file.
+        /// </summary>
+        public string? Key
+        {
+            get
+            {
+                string? key = ConfigurationFile.GetValue<string>(nameof(Key));
+                if (!string.IsNullOrWhiteSpace(key))
+                {
+                    return key;
+                }
+
+                return System.Environment.GetEnvironmentVariable("DIGI_GIS_WEBAPI_KEY");
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the key check is explicitly waived, leaving write endpoints reachable without an access key.
+        /// <para>Intended for local development only. This is the sole setting that grants unauthenticated access to write endpoints.</para>
+        /// </summary>
+        public bool Open
+        {
+            get
+            {
+                return ConfigurationFile.GetValue<bool>(nameof(Open), defaultValue: false);
+            }
+        }
+
+        /// <summary>
         /// Gets a value indicating whether updates to administrative areal 2D data are permitted according to the configuration file.
         /// </summary>
         public bool AllowUpdateAdministrativeAreal2D

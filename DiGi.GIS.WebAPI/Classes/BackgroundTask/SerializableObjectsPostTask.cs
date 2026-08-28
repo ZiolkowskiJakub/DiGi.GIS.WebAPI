@@ -29,6 +29,21 @@ namespace DiGi.GIS.WebAPI.Classes
         public SerializableObjectsPostOptions SerializableObjectsPostOptions { get; set; } = new();
 
         /// <summary>
+        /// Gets or sets the API authorization key used for authenticating requests to protected write endpoints.
+        /// </summary>
+        public string? Key
+        {
+            get
+            {
+                return SerializableObjectsPostOptions.Key;
+            }
+            set
+            {
+                SerializableObjectsPostOptions.Key = value;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the collection of serializable objects to be posted.
         /// </summary>
         public IEnumerable<T>? Values { get; set; }

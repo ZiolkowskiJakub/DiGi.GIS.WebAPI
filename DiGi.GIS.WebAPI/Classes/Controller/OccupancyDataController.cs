@@ -44,15 +44,24 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously updates occupancy data items for administrative areal 2D entities.
         /// </summary>
         /// <param name="jsonArray">The <see cref="JsonArray"/> containing the occupancy data items to be updated.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the update operation, returning a bad request if updates are disabled or no content if the input array is null or empty.</returns>
         [HttpPost("administrativeareal2d/updateitems")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> AdministrativeAreal2DUpdateItemsAsync([FromBody] JsonArray? jsonArray)
+        public async Task<IActionResult> AdministrativeAreal2DUpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(AdministrativeAreal2DUpdateItemsAsync));
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OccupancyData update not authorized");
+                return Unauthorized();
+            }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
             {
@@ -126,13 +135,16 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="jsonArray">The <see cref="JsonArray"/> containing the item data to be updated.</param>
         /// <param name="code">The identification code used to validate or categorize the update request.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("building2d/updateitems")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Building2DUpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string code)
+        public async Task<IActionResult> Building2DUpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string code, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(Building2DUpdateItemsAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
@@ -141,6 +153,12 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Code cannot be null or empty");
                 return BadRequest();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OccupancyData update not authorized");
+                return Unauthorized();
             }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
@@ -178,7 +196,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each datum is being filed under the part its Building2D is stored in", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
             }
 
-            return await Building2DUpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved);
+            return await Building2DUpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved, key, cancellationToken);
         }
 
         /// <summary>
@@ -189,16 +207,25 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="jsonArray">The <see cref="JsonArray"/> containing the item data to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the occupancy data belong to. Normally every polygon part of one county.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("building2d/updateitemsbycountyids")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Building2DUpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds)
+        public async Task<IActionResult> Building2DUpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(Building2DUpdateItemsByCountyIdsAsync));
             Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OccupancyData update not authorized");
+                return Unauthorized();
+            }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
             {

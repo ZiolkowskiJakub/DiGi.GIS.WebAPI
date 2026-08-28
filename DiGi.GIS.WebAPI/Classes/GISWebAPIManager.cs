@@ -9,24 +9,53 @@ namespace DiGi.GIS.WebAPI.Classes
     public class GISWebAPIManager
     {
         private readonly IHttpClientFactory? httpClientFactory;
+        private string? key;
 
         /// <summary>
-        /// Initializes a new instance of the GISWebAPIManager class.
+        /// Initializes a new instance of the <see cref="GISWebAPIManager"/> class.
         /// </summary>
         /// <param name="httpClientFactory">The HTTP client factory used to create and manage <see cref="HttpClient"/> instances.</param>
-        public GISWebAPIManager(IHttpClientFactory? httpClientFactory)
+        /// <param name="key">The optional API authorization key used for authenticating requests to protected endpoints.</param>
+        public GISWebAPIManager(IHttpClientFactory? httpClientFactory, string? key = null)
         {
             this.httpClientFactory = httpClientFactory;
+            this.key = key;
+        }
+
+        /// <summary>
+        /// Gets or sets the API authorization key used for authenticating requests to protected endpoints.
+        /// </summary>
+        public string? Key
+        {
+            get
+            {
+                return key;
+            }
+            set
+            {
+                key = value;
+            }
         }
 
         /// <summary>
         /// Creates an HttpClient instance with the specified name.
         /// </summary>
         /// <param name="name">The unique identifier or name of the HTTP client to be created.</param>
-        /// <returns>A task that represents the asynchronous operation.</returns>
+        /// <returns>An <see cref="HttpClient"/> instance configured with the specified client name and authorization key header if configured.</returns>
         public HttpClient? CreateHttpClient(string name)
         {
-            return httpClientFactory?.CreateClient(name);
+            HttpClient? httpClient = httpClientFactory?.CreateClient(name);
+            if (httpClient is not null && !string.IsNullOrWhiteSpace(key))
+            {
+                if (httpClient.DefaultRequestHeaders.Contains("key"))
+                {
+                    httpClient.DefaultRequestHeaders.Remove("key");
+                }
+
+                httpClient.DefaultRequestHeaders.Add("key", key);
+            }
+
+            return httpClient;
         }
 
         /// <summary>

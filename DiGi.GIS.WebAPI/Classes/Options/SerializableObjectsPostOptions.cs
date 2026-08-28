@@ -34,6 +34,7 @@ namespace DiGi.GIS.WebAPI.Classes
             if (serializableObjectsPostOptions is not null)
             {
                 BatchMemorySize = serializableObjectsPostOptions.BatchMemorySize;
+                Key = serializableObjectsPostOptions.Key;
             }
         }
 
@@ -43,5 +44,11 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         [JsonInclude, JsonPropertyName(nameof(BatchMemorySize))]
         public int BatchMemorySize { get; set; } = 3 * 1024 * 1024;
+
+        /// <summary>
+        /// Gets or sets the API authorization key used for authenticating requests to protected write endpoints.
+        /// </summary>
+        [JsonInclude, JsonPropertyName(nameof(Key))]
+        public string? Key { get; set; }
     }
 }

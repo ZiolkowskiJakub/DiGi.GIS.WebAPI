@@ -816,24 +816,30 @@ A cancellation token that can be used by other objects or threads to receive not
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.UpdateItemAsync\(JsonObject, CancellationToken\) Method
+## AdministrativeAreal2DController\.UpdateItemAsync\(JsonObject, string, CancellationToken\) Method
 
 Updates a single administrative area item\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemAsync(System.Text.Json.Nodes.JsonObject? jsonObject, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemAsync(System.Text.Json.Nodes.JsonObject? jsonObject, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,System.Threading.CancellationToken).jsonObject'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Threading.CancellationToken).jsonObject'></a>
 
 `jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
 
 The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the data used to update the administrative area item\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -843,24 +849,30 @@ A cancellation token that can be used by other objects or threads to receive not
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken)'></a>
 
-## AdministrativeAreal2DController\.UpdateItemsAsync\(JsonArray, CancellationToken\) Method
+## AdministrativeAreal2DController\.UpdateItemsAsync\(JsonArray, string, CancellationToken\) Method
 
 Updates multiple administrative area items\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,System.Threading.CancellationToken).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the administrative area items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.AdministrativeAreal2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -1652,36 +1664,42 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning the building reference uniqueness summary\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,string,System.Threading.CancellationToken)'></a>
 
-## Building2DController\.UpdateItemAsync\(JsonObject, string, Nullable\<int\>, CancellationToken\) Method
+## Building2DController\.UpdateItemAsync\(JsonObject, string, Nullable\<int\>, string, CancellationToken\) Method
 
 Updates a single building 2D item\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemAsync(System.Text.Json.Nodes.JsonObject? jsonObject, string? code, System.Nullable<int> countyId=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemAsync(System.Text.Json.Nodes.JsonObject? jsonObject, string? code, System.Nullable<int> countyId=null, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,System.Threading.CancellationToken).jsonObject'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,string,System.Threading.CancellationToken).jsonObject'></a>
 
 `jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
 
 The [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject') containing the data to update the building 2D item\. This value can be null\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,System.Threading.CancellationToken).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,string,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The code identifying the specific building 2D item to be updated\. This value can be null\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,string,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional county identifier associated with the building\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemAsync(System.Text.Json.Nodes.JsonObject,string,System.Nullable_int_,string,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -1691,30 +1709,36 @@ The cancellation token to observe\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken)'></a>
 
-## Building2DController\.UpdateItemsAsync\(JsonArray, string, CancellationToken\) Method
+## Building2DController\.UpdateItemsAsync\(JsonArray, string, string, CancellationToken\) Method
 
 Updates multiple building 2D items based on the provided JSON array and identification code\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the building 2D items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The identification code required for the update operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -1724,30 +1748,36 @@ The cancellation token to observe\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken)'></a>
 
-## Building2DController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], CancellationToken\) Method
+## Building2DController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\) Method
 
 Updates multiple building 2D items in the database for the given county rows\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],System.Threading.CancellationToken).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the building 2D items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
 The identifiers of the county rows the buildings belong to\. Normally every polygon part of one county\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -2308,32 +2338,38 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken)'></a>
 
-## BuildingController\.UpdateItemsAsync\(JsonArray, string, CancellationToken\) Method
+## BuildingController\.UpdateItemsAsync\(JsonArray, string, string, CancellationToken\) Method
 
 Updates multiple building items based on the provided JSON array and identification code\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each building is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\], System\.Threading\.CancellationToken\)') for how that is decided.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each building is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\], string, System\.Threading\.CancellationToken\)') for how that is decided.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the building items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The identification code required for the update operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -2343,13 +2379,13 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the update operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken)'></a>
 
-## BuildingController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], CancellationToken\) Method
+## BuildingController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\) Method
 
 Updates multiple building items in the database for the given county rows\.
 
-The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string, System\.Threading\.CancellationToken\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
+The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string, string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string, string, System\.Threading\.CancellationToken\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
 
 A single identifier is taken as stated and every building is filed under it. Several identifiers are the polygon parts of one multi-part county, and each building is then filed under the part it belongs to, decided in two steps:
 
@@ -2358,23 +2394,29 @@ A single identifier is taken as stated and every building is filed under it. Sev
 2. geometry, for a building no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops a building it cannot place rather than filing it under a guess - such a building is reported as a rejection, not silently omitted.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],System.Threading.CancellationToken).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the building items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
 The identifiers of the county rows the buildings belong to\. Normally every polygon part of one county\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -3651,63 +3693,87 @@ The identifier of the county row the models belong to\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken)'></a>
 
-## BuildingModelController\.UpdateItemsAsync\(JsonArray, string\) Method
+## BuildingModelController\.UpdateItemsAsync\(JsonArray, string, string, CancellationToken\) Method
 
 Updates multiple building model items in the database, keyed by administrative area code\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each model is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\]\)') for how that is decided.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each model is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\], string, System\.Threading\.CancellationToken\)') for how that is decided.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? code, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
-The JSON array containing the building models to be updated\. This value can be null\.
+The JSON array containing the building models to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The administrative area code the building models belong to, resolved server\-side to a county identifier\.
 
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[])'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken)'></a>
 
-## BuildingModelController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\) Method
+## BuildingModelController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\) Method
 
 Updates multiple building model items in the database for the given county rows\.
 
-The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
+The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string, string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string, string, System\.Threading\.CancellationToken\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
 
 A single identifier is taken as stated and every model is filed under it. Several identifiers are the polygon parts of one multi-part county, and each model is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
 
 A model whose reference no part holds is not written: nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the building models to be updated\. This value can be null\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).countyIds'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
 The identifiers of the county rows the building models belong to\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -4192,24 +4258,30 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.EPWFileController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.EPWFileController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken)'></a>
 
-## EPWFileController\.UpdateItemsAsync\(JsonArray, CancellationToken\) Method
+## EPWFileController\.UpdateItemsAsync\(JsonArray, string, CancellationToken\) Method
 
 Asynchronously updates or inserts a collection of EPW files\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.EPWFileController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,System.Threading.CancellationToken).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.EPWFileController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the EPW files to update or insert\.
 
-<a name='DiGi.GIS.WebAPI.Classes.EPWFileController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.EPWFileController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.EPWFileController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -4438,6 +4510,49 @@ public bool AllowUpdateYearBuiltData { get; }
 #### Property Value
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.Enabled'></a>
+
+## GISWebAPIConfigurationFileWatcher\.Enabled Property
+
+Gets a value indicating whether write authorization enforcement is enabled\.
+
+False denies every write request; it does not open them.
+
+```csharp
+public bool Enabled { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.Key'></a>
+
+## GISWebAPIConfigurationFileWatcher\.Key Property
+
+Gets the secret access token for authorizing write operations, or the value of the DIGI\_GIS\_WEBAPI\_KEY environment variable if not configured in the file\.
+
+```csharp
+public string? Key { get; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.Open'></a>
+
+## GISWebAPIConfigurationFileWatcher\.Open Property
+
+Gets a value indicating whether the key check is explicitly waived, leaving write endpoints reachable without an access key\.
+
+Intended for local development only. This is the sole setting that grants unauthenticated access to write endpoints.
+
+```csharp
+public bool Open { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
 <a name='DiGi.GIS.WebAPI.Classes.GISWebAPIManager'></a>
 
 ## GISWebAPIManager Class
@@ -4451,22 +4566,42 @@ public class GISWebAPIManager
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → GISWebAPIManager
 ### Constructors
 
-<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIManager.GISWebAPIManager(System.Net.Http.IHttpClientFactory)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIManager.GISWebAPIManager(System.Net.Http.IHttpClientFactory,string)'></a>
 
-## GISWebAPIManager\(IHttpClientFactory\) Constructor
+## GISWebAPIManager\(IHttpClientFactory, string\) Constructor
 
-Initializes a new instance of the GISWebAPIManager class\.
+Initializes a new instance of the [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager') class\.
 
 ```csharp
-public GISWebAPIManager(System.Net.Http.IHttpClientFactory? httpClientFactory);
+public GISWebAPIManager(System.Net.Http.IHttpClientFactory? httpClientFactory, string? key=null);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIManager.GISWebAPIManager(System.Net.Http.IHttpClientFactory).httpClientFactory'></a>
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIManager.GISWebAPIManager(System.Net.Http.IHttpClientFactory,string).httpClientFactory'></a>
 
 `httpClientFactory` [System\.Net\.Http\.IHttpClientFactory](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.ihttpclientfactory 'System\.Net\.Http\.IHttpClientFactory')
 
 The HTTP client factory used to create and manage [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient') instances\.
+
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIManager.GISWebAPIManager(System.Net.Http.IHttpClientFactory,string).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The optional API authorization key used for authenticating requests to protected endpoints\.
+### Properties
+
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIManager.Key'></a>
+
+## GISWebAPIManager\.Key Property
+
+Gets or sets the API authorization key used for authenticating requests to protected endpoints\.
+
+```csharp
+public string? Key { get; set; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 ### Methods
 
 <a name='DiGi.GIS.WebAPI.Classes.GISWebAPIManager.CreateHttpClient(string)'></a>
@@ -4488,7 +4623,7 @@ The unique identifier or name of the HTTP client to be created\.
 
 #### Returns
 [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient')  
-A task that represents the asynchronous operation\.
+An [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient') instance configured with the specified client name and authorization key header if configured\.
 
 <a name='DiGi.GIS.WebAPI.Classes.GISWebAPIManager.CreateHttpClient_TControllerBase_(string)'></a>
 
@@ -4882,84 +5017,120 @@ The converter for Building2D objects, used to read which county row a reference 
 The converter used for administrative areal 2D data operations in the PostgreSQL database\.
 ### Methods
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.AdministrativeAreal2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.AdministrativeAreal2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken)'></a>
 
-## OccupancyDataController\.AdministrativeAreal2DUpdateItemsAsync\(JsonArray\) Method
+## OccupancyDataController\.AdministrativeAreal2DUpdateItemsAsync\(JsonArray, string, CancellationToken\) Method
 
 Asynchronously updates occupancy data items for administrative areal 2D entities\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AdministrativeAreal2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AdministrativeAreal2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.AdministrativeAreal2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.AdministrativeAreal2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray') containing the occupancy data items to be updated\.
 
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.AdministrativeAreal2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.AdministrativeAreal2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the update operation, returning a bad request if updates are disabled or no content if the input array is null or empty\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken)'></a>
 
-## OccupancyDataController\.Building2DUpdateItemsAsync\(JsonArray, string\) Method
+## OccupancyDataController\.Building2DUpdateItemsAsync\(JsonArray, string, string, CancellationToken\) Method
 
 Asynchronously updates building 2D items based on the provided JSON data and identification code\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each datum is filed under the part it actually belongs to - see [Building2DUpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\]\)') for how that is decided.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each datum is filed under the part it actually belongs to - see [Building2DUpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\], string, System\.Threading\.CancellationToken\)') for how that is decided.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray') containing the item data to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The identification code used to validate or categorize the update request\.
 
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[])'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken)'></a>
 
-## OccupancyDataController\.Building2DUpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\) Method
+## OccupancyDataController\.Building2DUpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\) Method
 
 Asynchronously updates building 2D occupancy items in the database for the given county rows\.
 
-The unambiguous counterpart of [Building2DUpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
+The unambiguous counterpart of [Building2DUpdateItemsAsync\(JsonArray, string, string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string, string, System\.Threading\.CancellationToken\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
 
 A single identifier is taken as stated and every datum is filed under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
 
 A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray') containing the item data to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).countyIds'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
 The identifiers of the county rows the occupancy data belong to\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -5791,38 +5962,50 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray,string)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasController\.UpdateItemsByCodeAsync\(JsonArray, string\) Method
+## OrtoDatasController\.UpdateItemsByCodeAsync\(JsonArray, string, string, CancellationToken\) Method
 
-Updates items identified by a specific code using the provided JSON array\.
+Updates multiple orthophoto data items based on the provided JSON array and code\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each entry is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]) 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\]\)') for how that is decided.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each entry is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\], string, System\.Threading\.CancellationToken\)') for how that is decided.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray,string).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
-The JSON array containing the updated item data\.
+The JSON array containing the orthophoto data items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray,string).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The unique identifier or code used to identify the items for update\.
 
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCodeAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[])'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\) Method
+## OrtoDatasController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\) Method
 
 Updates orthodata items associated with the given county rows\.
 
@@ -5833,21 +6016,33 @@ A single identifier is taken as stated and every entry is filed under it. Severa
 2. geometry, for an entry no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops an entry it cannot place rather than filing it under a guess.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the orthodata items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).countyIds'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
 The identifiers of the county rows the entries belong to\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
@@ -6056,6 +6251,19 @@ public int BatchMemorySize { get; set; }
 #### Property Value
 [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
+<a name='DiGi.GIS.WebAPI.Classes.SerializableObjectsPostOptions.Key'></a>
+
+## SerializableObjectsPostOptions\.Key Property
+
+Gets or sets the API authorization key used for authenticating requests to protected write endpoints\.
+
+```csharp
+public string? Key { get; set; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
 <a name='DiGi.GIS.WebAPI.Classes.SerializableObjectsPostTask_T_'></a>
 
 ## SerializableObjectsPostTask\<T\> Class
@@ -6106,6 +6314,19 @@ public SerializableObjectsPostTask(DiGi.GIS.WebAPI.Classes.GISWebAPIManager gISW
 
 The GIS PostgreSQL Web API manager used to perform database operations\.
 ### Properties
+
+<a name='DiGi.GIS.WebAPI.Classes.SerializableObjectsPostTask_T_.Key'></a>
+
+## SerializableObjectsPostTask\<T\>\.Key Property
+
+Gets or sets the API authorization key used for authenticating requests to protected write endpoints\.
+
+```csharp
+public string? Key { get; set; }
+```
+
+#### Property Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 <a name='DiGi.GIS.WebAPI.Classes.SerializableObjectsPostTask_T_.SerializableObjectsPostOptions'></a>
 
@@ -7181,63 +7402,87 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken)'></a>
 
-## YearBuiltDataController\.UpdateItemsAsync\(JsonArray, string\) Method
+## YearBuiltDataController\.UpdateItemsAsync\(JsonArray, string, string, CancellationToken\) Method
 
 Updates multiple year built data items based on the provided JSON array and identification code\.
 
-A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each datum is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\]\)') for how that is decided.
+A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each datum is filed under the part it actually belongs to - see [UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\], string, System\.Threading\.CancellationToken\)') for how that is decided.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, string code, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the data items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string).code'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).code'></a>
 
 `code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The identification code required for the update operation\.
 
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the update operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[])'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken)'></a>
 
-## YearBuiltDataController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\]\) Method
+## YearBuiltDataController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\) Method
 
 Updates multiple year built data items in the database for the given county rows\.
 
-The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
+The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string, string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string, string, System\.Threading\.CancellationToken\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
 
 A single identifier is taken as stated and every datum is filed under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
 
 A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds);
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the data items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[]).countyIds'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
 The identifiers of the county rows the year built data belong to\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  

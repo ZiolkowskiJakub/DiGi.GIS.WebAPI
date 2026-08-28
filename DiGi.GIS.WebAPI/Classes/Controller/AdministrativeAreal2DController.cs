@@ -1192,6 +1192,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Updates a single administrative area item. </summary>
         /// <param name="jsonObject">The <see cref="JsonObject" /> containing the data used to update the administrative area item.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitem", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(UpdateItemAsync)}")]
@@ -1199,11 +1200,17 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateItemAsync([FromBody] JsonObject? jsonObject, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateItemAsync([FromBody] JsonObject? jsonObject, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(UpdateItemAsync));
 
-            if (GISWebAPIConfigurationFileWatcher is null || !GISWebAPIConfigurationFileWatcher.AllowUpdateAdministrativeAreal2D)
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D update not authorized");
+                return Unauthorized();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateAdministrativeAreal2D)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D update not allowed");
                 return Unauthorized();
@@ -1242,6 +1249,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Updates multiple administrative area items. </summary>
         /// <param name="jsonArray">The JSON array containing the administrative area items to be updated.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitems", Name = $"{nameof(AdministrativeAreal2DController)}_{nameof(UpdateItemsAsync)}")]
@@ -1249,11 +1257,17 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(UpdateItemsAsync));
 
-            if (GISWebAPIConfigurationFileWatcher is null || !GISWebAPIConfigurationFileWatcher.AllowUpdateAdministrativeAreal2D)
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D update not authorized");
+                return Unauthorized();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateAdministrativeAreal2D)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "AdministrativeAreal2D update not allowed");
                 return Unauthorized();

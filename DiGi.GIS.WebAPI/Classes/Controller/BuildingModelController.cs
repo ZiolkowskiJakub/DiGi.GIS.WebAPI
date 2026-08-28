@@ -251,8 +251,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Updates multiple building model items in the database, keyed by administrative area code.
         /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each model is filed under the part it actually belongs to - see <see cref="UpdateItemsByCountyIdsAsync"/> for how that is decided.</para>
         /// </summary>
-        /// <param name="jsonArray">The JSON array containing the building models to be updated. This value can be null.</param>
+        /// <param name="jsonArray">The JSON array containing the building models to be updated.</param>
         /// <param name="code">The administrative area code the building models belong to, resolved server-side to a county identifier.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitems", Name = $"{nameof(BuildingModelController)}_{nameof(UpdateItemsAsync)}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -260,10 +262,16 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string? code)
+        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string? code, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingModelController), nameof(UpdateItemsAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModel update not authorized");
+                return Unauthorized();
+            }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingModel)
             {
@@ -306,7 +314,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each model is being filed under the part its Building2D is stored in", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
             }
 
-            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved);
+            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved, key, cancellationToken);
         }
 
         /// <summary>
@@ -317,6 +325,8 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building models to be updated. This value can be null.</param>
         /// <param name="countyIds">The identifiers of the county rows the building models belong to. Normally every polygon part of one county.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitemsbycountyids", Name = $"{nameof(BuildingModelController)}_{nameof(UpdateItemsByCountyIdsAsync)}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -324,10 +334,16 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds)
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingModelController), nameof(UpdateItemsByCountyIdsAsync));
             Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModel update not authorized");
+                return Unauthorized();
+            }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingModel)
             {

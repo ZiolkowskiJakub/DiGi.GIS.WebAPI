@@ -899,6 +899,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="jsonObject">The <see cref="T:System.Text.Json.Nodes.JsonObject" /> containing the data to update the building 2D item. This value can be null.</param>
         /// <param name="code">The code identifying the specific building 2D item to be updated. This value can be null.</param>
         /// <param name="countyId">The optional county identifier associated with the building.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitem", Name = $"{nameof(Building2DController)}_{nameof(UpdateItemAsync)}")]
@@ -906,11 +907,17 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemAsync([FromBody] JsonObject? jsonObject, [FromQuery(Name = "code")] string? code, [FromQuery(Name = "countyid")] int? countyId = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateItemAsync([FromBody] JsonObject? jsonObject, [FromQuery(Name = "code")] string? code, [FromQuery(Name = "countyid")] int? countyId = null, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(UpdateItemAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
             Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2D update not authorized");
+                return Unauthorized();
+            }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuilding2D)
             {
@@ -968,6 +975,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Updates multiple building 2D items based on the provided JSON array and identification code. </summary>
         /// <param name="jsonArray">The JSON array containing the building 2D items to be updated.</param>
         /// <param name="code">The identification code required for the update operation.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitems", Name = $"{nameof(Building2DController)}_{nameof(UpdateItemsAsync)}")]
@@ -976,10 +984,16 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string? code, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string? code, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(UpdateItemsAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2D update not authorized");
+                return Unauthorized();
+            }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuilding2D)
             {
@@ -1004,7 +1018,7 @@ namespace DiGi.GIS.WebAPI.Classes
                         Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each building is being filed under the part it belongs to", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
                     }
 
-                    return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved, cancellationToken);
+                    return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved, key, cancellationToken);
                 }
             }
 
@@ -1086,6 +1100,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building 2D items to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the buildings belong to. Normally every polygon part of one county.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitemsbycountyids", Name = $"{nameof(Building2DController)}_{nameof(UpdateItemsByCountyIdsAsync)}")]
@@ -1094,10 +1109,16 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(UpdateItemsByCountyIdsAsync));
             Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2D update not authorized");
+                return Unauthorized();
+            }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuilding2D)
             {

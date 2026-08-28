@@ -1193,19 +1193,22 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Updates items identified by a specific code using the provided JSON array.
+        /// Updates multiple orthophoto data items based on the provided JSON array and code.
         /// <para>A county code does not identify a single county row: BDOT10k stores a county whose territory is disconnected as one feature per polygon part, and every part becomes its own row. Every part the code names is passed on, and each entry is filed under the part it actually belongs to - see <see cref="UpdateItemsByCountyIdsAsync"/> for how that is decided.</para>
         /// </summary>
-        /// <param name="jsonArray">The JSON array containing the updated item data.</param>
+        /// <param name="jsonArray">The JSON array containing the orthophoto data items to be updated.</param>
         /// <param name="code">The unique identifier or code used to identify the items for update.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitemsbycode", Name = $"{nameof(OrtoDatasController)}_{nameof(UpdateItemsByCodeAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCodeAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string code)
+        public async Task<IActionResult> UpdateItemsByCodeAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string code, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(UpdateItemsByCodeAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
@@ -1214,6 +1217,12 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "code cannot be null");
                 return BadRequest();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas update not authorized");
+                return Unauthorized();
             }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateOrtoDatas)
@@ -1251,7 +1260,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each entry is being filed under the part it belongs to", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
             }
 
-            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved);
+            return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved, key, cancellationToken);
         }
 
         /// <summary>
@@ -1262,17 +1271,26 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the orthodata items to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the entries belong to. Normally every polygon part of one county.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("updateitemsbycountyids", Name = $"{nameof(OrtoDatasController)}_{nameof(UpdateItemsByCountyIdsAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds)
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(UpdateItemsByCountyIdsAsync));
             Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas update not authorized");
+                return Unauthorized();
+            }
 
             if (!GISWebAPIConfigurationFileWatcher.AllowUpdateOrtoDatas)
             {
