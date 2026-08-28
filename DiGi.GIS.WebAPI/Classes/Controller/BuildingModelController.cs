@@ -453,7 +453,7 @@ namespace DiGi.GIS.WebAPI.Classes
             HashSet<string>? uniqueIds_Superseded;
             try
             {
-                uniqueIds_Superseded = await buildingModelPostgreSQLConverter.GetUniqueIdsByReferencesAsync(references_Written, countyId);
+                uniqueIds_Superseded = await buildingModelPostgreSQLConverter.GetUniqueIdsByReferencesAsync(references_Written, countyId, commandTimeout: 600);
             }
             catch (Exception exception)
             {
@@ -474,7 +474,7 @@ namespace DiGi.GIS.WebAPI.Classes
             HashSet<long>? ids;
             try
             {
-                ids = await buildingModelPostgreSQLConverter.UpdateAsync(buildingModels_PostgreSQL);
+                ids = await buildingModelPostgreSQLConverter.UpdateAsync(buildingModels_PostgreSQL, commandTimeout: 600);
             }
             catch (Exception exception)
             {
@@ -512,7 +512,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 // not a reason to fail the request and have the caller write a third model on the retry.
                 try
                 {
-                    HashSet<long>? ids_Removed = await buildingModelPostgreSQLConverter.RemoveByUniqueIdsAsync(uniqueIds_Superseded, countyId);
+                    HashSet<long>? ids_Removed = await buildingModelPostgreSQLConverter.RemoveByUniqueIdsAsync(uniqueIds_Superseded, countyId, commandTimeout: 600);
 
                     int count = ids_Removed?.Count ?? 0;
                     if (count != uniqueIds_Superseded.Count)
