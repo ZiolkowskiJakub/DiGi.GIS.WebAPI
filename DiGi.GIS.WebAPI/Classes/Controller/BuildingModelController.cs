@@ -51,6 +51,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<BuildingModel>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetItemsByCircleAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, [FromQuery(Name = "radius")] double? radius, [FromQuery(Name = "diameter")] double? diameter, [FromQuery(Name = "tolerance")] double? tolerance = Core.Constants.Tolerance.Distance, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingModelController), nameof(GetItemsByCircleAsync));
@@ -90,7 +91,18 @@ namespace DiGi.GIS.WebAPI.Classes
 
             // Only the reference and the county are needed to key the building model lookup, so the lighter
             // reference query is used rather than pulling footprint geometry that would then be discarded.
-            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value, cancellationToken: cancellationToken);
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences;
+            try
+            {
+                building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCircle2DAsync(new Circle2D(new Point2D(x, y), radius_Temp), tolerance.Value, cancellationToken: cancellationToken);
+            }
+            // A cancellation raised by the caller's token is left to propagate; anything else is a genuine read failure.
+            catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+            {
+                Serilog.Modify.Log(exception, "Building2DReferences could not be read within the circle. SqlState: {SqlState}", exception is Npgsql.PostgresException postgresException ? postgresException.SqlState : string.Empty);
+                return StatusCode(500, "Database read failed.");
+            }
+
             if (building2DReferences is null || building2DReferences.Count == 0)
             {
                 return NotFound();
@@ -107,7 +119,19 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 List<string> references = [.. grouping.Select(building2DReference => building2DReference.Reference!).Distinct()];
 
-                List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, null, true, cancellationToken: cancellationToken);
+                List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL;
+                try
+                {
+                    buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, null, true, cancellationToken: cancellationToken);
+                }
+                // A county that cannot be read is a failure of the whole answer, not a county to skip:
+                // carrying on would return a partial set of models as though it were complete.
+                catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+                {
+                    Serilog.Modify.Log(exception, "BuildingModels could not be read from {TableName} for CountyId {CountyId}. SqlState: {SqlState}", buildingModelPostgreSQLConverter.TableName, countyId, exception is Npgsql.PostgresException postgresException ? postgresException.SqlState : string.Empty);
+                    return StatusCode(500, "Database read failed.");
+                }
+
                 if (buildingModels_PostgreSQL is null || buildingModels_PostgreSQL.Count == 0)
                 {
                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No BuildingModels stored for county {CountyId}. Requested references: {Count}", countyId, references.Count);
@@ -164,6 +188,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<BuildingModel>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetItemsByReferencesAsync([FromQuery(Name = "references")] IEnumerable<string>? references, [FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "limit")] long? limit = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingModelController), nameof(GetItemsByReferencesAsync));
@@ -178,7 +203,19 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, limit, true, cancellationToken: cancellationToken);
+            List<PostgreSQL.Classes.BuildingModel>? buildingModels_PostgreSQL;
+            try
+            {
+                buildingModels_PostgreSQL = await buildingModelPostgreSQLConverter.GetItemsByReferencesAsync(references, countyId, limit, true, cancellationToken: cancellationToken);
+            }
+            // Left unhandled this answers a bare 500 with nothing written to the log, which is what
+            // made a dropped table indistinguishable from an unreachable database from the outside.
+            catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+            {
+                Serilog.Modify.Log(exception, "BuildingModels could not be read from {TableName} for CountyId {CountyId}. SqlState: {SqlState}", buildingModelPostgreSQLConverter.TableName, countyId?.ToString() ?? string.Empty, exception is Npgsql.PostgresException postgresException ? postgresException.SqlState : string.Empty);
+                return StatusCode(500, "Database read failed.");
+            }
+
             if (buildingModels_PostgreSQL is null || buildingModels_PostgreSQL.Count == 0)
             {
                 return NotFound();
@@ -457,7 +494,9 @@ namespace DiGi.GIS.WebAPI.Classes
             }
             catch (Exception exception)
             {
-                Serilog.Modify.Log(exception, "BuildingModels already stored for these references could not be read");
+                // Naming the table, the county and the SQLSTATE is what turns this line into the
+                // diagnosis. Without them a dropped table and an unreachable server read identically.
+                Serilog.Modify.Log(exception, "BuildingModels already stored for these references could not be read from {TableName} for CountyId {CountyId}. References: {Count}. SqlState: {SqlState}", buildingModelPostgreSQLConverter.TableName, countyId, references_Written.Count, exception is Npgsql.PostgresException postgresException ? postgresException.SqlState : string.Empty);
                 return StatusCode(500, "Database read failed.");
             }
 
@@ -478,7 +517,7 @@ namespace DiGi.GIS.WebAPI.Classes
             }
             catch (Exception exception)
             {
-                Serilog.Modify.Log(exception, "Database could not be updated");
+                Serilog.Modify.Log(exception, "Database could not be updated. Table: {TableName}, CountyId: {CountyId}, BuildingModels: {Count}. SqlState: {SqlState}", buildingModelPostgreSQLConverter.TableName, countyId, buildingModels_PostgreSQL.Count, exception is Npgsql.PostgresException postgresException ? postgresException.SqlState : string.Empty);
                 return StatusCode(500, "Database update failed.");
             }
 
