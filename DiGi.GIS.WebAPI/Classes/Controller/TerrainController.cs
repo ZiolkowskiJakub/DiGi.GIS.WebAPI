@@ -640,7 +640,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <returns>The outlines keyed by subdivision identifier, or <see langword="null"/> when the county has none.</returns>
         private async Task<Dictionary<int, PolygonalFace2D>?> PolygonalFace2DsByIdAsync(int countyId, CancellationToken cancellationToken)
         {
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(AdministrativeArealType.Subdivision, countyId, cancellationToken);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByAdministrativeArealType(AdministrativeArealType.Subdivision, countyId, cancellationToken: cancellationToken);
             if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
             {
                 return null;

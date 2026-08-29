@@ -358,7 +358,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<AdministrativeAreal2DOccupancyData>? administrativeAreal2DOccupancyDatas_PostgreSQL = await administrativeAreal2DOccupancyDataPostgreSQLConverter.GetItemsByReferenceAsync(reference, null, cancellationToken);
+            List<AdministrativeAreal2DOccupancyData>? administrativeAreal2DOccupancyDatas_PostgreSQL = await administrativeAreal2DOccupancyDataPostgreSQLConverter.GetItemsByReferenceAsync(reference, null, cancellationToken: cancellationToken);
 
             if (administrativeAreal2DOccupancyDatas_PostgreSQL is null || administrativeAreal2DOccupancyDatas_PostgreSQL.Count == 0)
             {
@@ -413,7 +413,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<Building2DOccupancyData>? building2DOccupancyDatas_PostgreSQL = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferenceAsync(reference, countyId, null, true, cancellationToken);
+            List<Building2DOccupancyData>? building2DOccupancyDatas_PostgreSQL = await building2DOccupancyDataPostgreSQLConverter.GetItemsByReferenceAsync(reference, countyId, null, true, cancellationToken: cancellationToken);
 
             if (building2DOccupancyDatas_PostgreSQL is null || building2DOccupancyDatas_PostgreSQL.Count == 0)
             {

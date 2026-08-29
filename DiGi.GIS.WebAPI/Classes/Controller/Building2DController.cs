@@ -64,7 +64,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            long count = await building2DPostgreSQLConverter.CountAsync(countByAdministrativeAreal2DIdsParameter.AdministrativeAreal2DIds, cancellationToken);
+            long count = await building2DPostgreSQLConverter.CountAsync(countByAdministrativeAreal2DIdsParameter.AdministrativeAreal2DIds, cancellationToken: cancellationToken);
             if (count < 0)
             {
                 return NotFound();
@@ -99,7 +99,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            PostgreSQL.Classes.Building2DReference? building2DReference = await building2DPostgreSQLConverter.GetBuilding2DReferenceByIdAsync(id, countyId, cancellationToken);
+            PostgreSQL.Classes.Building2DReference? building2DReference = await building2DPostgreSQLConverter.GetBuilding2DReferenceByIdAsync(id, countyId, cancellationToken: cancellationToken);
             if (building2DReference is null)
             {
                 return NotFound();
@@ -179,7 +179,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync([administrativeAreal2DId], cancellationToken);
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByAdministrativeAreal2DIdsAsync([administrativeAreal2DId], cancellationToken: cancellationToken);
             string? json = Core.Convert.ToSystem_String(building2DReferences);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -220,7 +220,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 building2DReferencesByPagingParameter.SubdivisionId,
                 building2DReferencesByPagingParameter.Cursor,
                 building2DReferencesByPagingParameter.PageSize,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (building2DReferences is null)
             {
@@ -267,7 +267,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            PostgreSQL.Classes.Building2D? building2D = await building2DPostgreSQLConverter.GetBuilding2DByIdAsync(id, countyId, cancellationToken);
+            PostgreSQL.Classes.Building2D? building2D = await building2DPostgreSQLConverter.GetBuilding2DByIdAsync(id, countyId, cancellationToken: cancellationToken);
             if (building2D is null)
             {
                 return NotFound();
@@ -319,7 +319,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            PostgreSQL.Classes.Building2D? building2D_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(new Point2D(x, y), tolerance.Value, cancellationToken);
+            PostgreSQL.Classes.Building2D? building2D_PostgreSQL = await building2DPostgreSQLConverter.GetBuilding2DByPoint2DAsync(new Point2D(x, y), tolerance.Value, cancellationToken: cancellationToken);
             if (building2D_PostgreSQL is null)
             {
                 return NotFound();
@@ -625,7 +625,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByCountyIdAsync(countyId, cancellationToken);
+            List<PostgreSQL.Classes.Building2D>? building2Ds = await building2DPostgreSQLConverter.GetBuilding2DsByCountyIdAsync(countyId, cancellationToken: cancellationToken);
             if (building2Ds is null)
             {
                 return NotFound();
@@ -1009,7 +1009,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             if (!string.IsNullOrWhiteSpace(code) && administrativeAreal2DPostgreSQLConverter is not null)
             {
-                HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, PostgreSQL.Enums.AdministrativeArealType.County, cancellationToken);
+                HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, PostgreSQL.Enums.AdministrativeArealType.County, cancellationToken: cancellationToken);
                 if (countyIds is not null && countyIds.Count > 0)
                 {
                     int[] countyIds_Resolved = [.. countyIds.OrderBy(x => x)];

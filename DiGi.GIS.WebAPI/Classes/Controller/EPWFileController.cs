@@ -86,7 +86,7 @@ namespace DiGi.GIS.WebAPI.Classes
             List<int> ids = [];
             try
             {
-                ids = await ePWFilePostgreSQLConverter.InsertAsync(ePWFiles, cancellationToken);
+                ids = await ePWFilePostgreSQLConverter.InsertAsync(ePWFiles, cancellationToken: cancellationToken);
             }
             catch (Exception exception)
             {
@@ -134,7 +134,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
-                EPWFile? ePWFile = await ePWFilePostgreSQLConverter.GetEPWFileAsync(x, y, cancellationToken);
+                EPWFile? ePWFile = await ePWFilePostgreSQLConverter.GetEPWFileAsync(x, y, cancellationToken: cancellationToken);
                 if (ePWFile is null)
                 {
                     Serilog.Modify.Log("No EPWFile found for coordinates: X={X}, Y={Y}", x, y);

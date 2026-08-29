@@ -59,7 +59,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByCodeAsync(code, administrativeArealType, cancellationToken);
+            AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByCodeAsync(code, administrativeArealType, cancellationToken: cancellationToken);
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReference);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -94,7 +94,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByIdAsync(id, cancellationToken);
+            AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByIdAsync(id, cancellationToken: cancellationToken);
 
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReference);
             if (string.IsNullOrWhiteSpace(json))
@@ -130,7 +130,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(id, cancellationToken);
+            AdministrativeAreal2DReferencePath? administrativeAreal2DReferencePath = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathAsync(id, cancellationToken: cancellationToken);
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferencePath);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -166,7 +166,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
-                List<AdministrativeAreal2DReferencePath>? administrativeAreal2DReferencePaths = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathsByNameAsync(text, cancellationToken);
+                List<AdministrativeAreal2DReferencePath>? administrativeAreal2DReferencePaths = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathsByNameAsync(text, cancellationToken: cancellationToken);
 
                 if (administrativeAreal2DReferencePaths is null)
                 {
@@ -214,7 +214,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
-                List<AdministrativeAreal2DReferencePath>? administrativeAreal2DReferencePaths = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathsByNameAsync(administrativeAreal2DReferencePathsByNameParameter.Text, cancellationToken);
+                List<AdministrativeAreal2DReferencePath>? administrativeAreal2DReferencePaths = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencePathsByNameAsync(administrativeAreal2DReferencePathsByNameParameter.Text, cancellationToken: cancellationToken);
 
                 if (administrativeAreal2DReferencePaths is null)
                 {
@@ -262,7 +262,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
-                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByNameAsync(administrativeAreal2DReferencesByNameParameter.Text, cancellationToken);
+                List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByNameAsync(administrativeAreal2DReferencesByNameParameter.Text, cancellationToken: cancellationToken);
 
                 if (administrativeAreal2DReferences is null)
                 {
@@ -312,7 +312,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(administrativeArealType.Value, parentId, uniqueCode ?? false, 30, cancellationToken);
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync(administrativeArealType.Value, parentId, uniqueCode ?? false, 30, cancellationToken: cancellationToken);
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferences);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -353,11 +353,11 @@ namespace DiGi.GIS.WebAPI.Classes
 
             if (administrativeArealType != null)
             {
-                administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(code, administrativeArealType.Value, cancellationToken);
+                administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(code, administrativeArealType.Value, cancellationToken: cancellationToken);
             }
             else
             {
-                administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(code, cancellationToken);
+                administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByCodeAsync(code, cancellationToken: cancellationToken);
             }
 
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferences);
@@ -394,7 +394,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(ids, cancellationToken);
+            List<AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(ids, cancellationToken: cancellationToken);
             string? json = Core.Convert.ToSystem_String(administrativeAreal2DReferences);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -420,7 +420,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            BoundingBox2D? boundingBox2D = await administrativeAreal2DPostgreSQLConverter.GetBoundingBox2DAsync(cancellationToken);
+            BoundingBox2D? boundingBox2D = await administrativeAreal2DPostgreSQLConverter.GetBoundingBox2DAsync(cancellationToken: cancellationToken);
 
             string? json = Core.Convert.ToSystem_String(boundingBox2D);
             if (string.IsNullOrWhiteSpace(json))
@@ -550,7 +550,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            HashSet<int>? ids = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, administrativeArealType, cancellationToken);
+            HashSet<int>? ids = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, administrativeArealType, cancellationToken: cancellationToken);
             if (ids is null || ids.Count == 0)
             {
                 return NotFound();
@@ -583,7 +583,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            HashSet<int>? ids = await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(administrativeArealType.Value, cancellationToken);
+            HashSet<int>? ids = await administrativeAreal2DPostgreSQLConverter.GetIdsAsync(administrativeArealType.Value, cancellationToken: cancellationToken);
             if (ids is null || ids.Count == 0)
             {
                 return NotFound();
@@ -618,7 +618,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            AdministrativeAreal2D? administrativeAreal2D_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByCodeAsync(code, administrativeArealType, cancellationToken);
+            AdministrativeAreal2D? administrativeAreal2D_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DByCodeAsync(code, administrativeArealType, cancellationToken: cancellationToken);
             if (administrativeAreal2D_PostgreSQL is null)
             {
                 return NotFound();
@@ -778,7 +778,7 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             BoundingBox2D boundingBox2D = new(new Core.Classes.Range<double>(x_1, x_2), new Core.Classes.Range<double>(y_1, y_2));
-            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, administrativeArealTypes, tolerance.Value, cancellationToken);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, administrativeArealTypes, tolerance.Value, cancellationToken: cancellationToken);
             if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
             {
                 return NotFound();
@@ -935,7 +935,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByCodeAsync(code, administrativeArealType, cancellationToken);
+            List<AdministrativeAreal2D>? administrativeAreal2Ds_PostgreSQL = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByCodeAsync(code, administrativeArealType, cancellationToken: cancellationToken);
             if (administrativeAreal2Ds_PostgreSQL is null || administrativeAreal2Ds_PostgreSQL.Count == 0)
             {
                 return NotFound();
@@ -1173,7 +1173,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            HashSet<string>? subcodes = await administrativeAreal2DPostgreSQLConverter.GetSubCodesAsync(code, cancellationToken);
+            HashSet<string>? subcodes = await administrativeAreal2DPostgreSQLConverter.GetSubCodesAsync(code, cancellationToken: cancellationToken);
             if (subcodes is null || subcodes.Count == 0)
             {
                 return NotFound();

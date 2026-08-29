@@ -89,7 +89,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, PostgreSQL.Enums.AdministrativeArealType.County, cancellationToken);
+            HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetIdsByCodeAsync(code, PostgreSQL.Enums.AdministrativeArealType.County, cancellationToken: cancellationToken);
             if (countyIds is null || countyIds.Count == 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "County code '{Code}' was not found in database", code);
@@ -404,7 +404,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<Building>? buildings_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingsByReferenceAsync(reference, countyId, true, cancellationToken);
+            List<Building>? buildings_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingsByReferenceAsync(reference, countyId, true, cancellationToken: cancellationToken);
 
             if (buildings_PostgreSQL is null || buildings_PostgreSQL.Count == 0)
             {
@@ -547,7 +547,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<Building>? buildings_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingsByReferencesAsync(references, countyId, true, cancellationToken);
+            List<Building>? buildings_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingsByReferencesAsync(references, countyId, true, cancellationToken: cancellationToken);
 
             List<CityGML.Classes.Building> buildings = [];
 
@@ -624,7 +624,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            Building? building_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingByLatestCreatedAtAsync(countyId, cancellationToken);
+            Building? building_PostgreSQL = await buildingPostgreSQLConverter.GetBuildingByLatestCreatedAtAsync(countyId, cancellationToken: cancellationToken);
             if (building_PostgreSQL is null)
             {
                 Serilog.Modify.Log("No Building found for latest created at");

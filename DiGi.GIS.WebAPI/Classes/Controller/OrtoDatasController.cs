@@ -128,7 +128,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            PostgreSQL.Classes.AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByIdAsync(administrativeAreal2DId, cancellationToken);
+            PostgreSQL.Classes.AdministrativeAreal2DReference? administrativeAreal2DReference = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferenceByIdAsync(administrativeAreal2DId, cancellationToken: cancellationToken);
             if (administrativeAreal2DReference is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Could not find given AdministrativeAreal2D");
@@ -349,7 +349,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(administrativeAreal2DIds_Temp, cancellationToken);
+            List<PostgreSQL.Classes.AdministrativeAreal2DReference>? administrativeAreal2DReferences = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByIdsAsync(administrativeAreal2DIds_Temp, cancellationToken: cancellationToken);
             if (administrativeAreal2DReferences is null || administrativeAreal2DReferences.Count == 0)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "AdministrativeAreal2Ds could not be found in database");
@@ -409,7 +409,7 @@ namespace DiGi.GIS.WebAPI.Classes
                     continue;
                 }
 
-                List<int>? countyIds_AdministrativeAreal2DReference = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(code, AdministrativeArealType.County, administrativeAreal2DReference.AdministrativeArealType, cancellationToken))?.ConvertAll(x => x.Id);
+                List<int>? countyIds_AdministrativeAreal2DReference = (await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DReferencesByParentCodeAsync(code, AdministrativeArealType.County, administrativeAreal2DReference.AdministrativeArealType, cancellationToken: cancellationToken))?.ConvertAll(x => x.Id);
 
                 // An identifier that resolves to no county is left without an entry, which answers null for it -
                 // the same thing the singular endpoint does when it cannot measure.
@@ -945,7 +945,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            PostgreSQL.Classes.OrtoDatasReference? ortoDatasReference = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferenceByReferenceAsync(reference, countyId, fallbackByReference, cancellationToken);
+            PostgreSQL.Classes.OrtoDatasReference? ortoDatasReference = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferenceByReferenceAsync(reference, countyId, fallbackByReference, cancellationToken: cancellationToken);
             if (ortoDatasReference is null)
             {
                 return NotFound();
@@ -988,7 +988,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.OrtoDatasReference>? ortoDatasReferences = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferencesByReferencesAsync(references, countyId, fallbackByReference, cancellationToken);
+            List<PostgreSQL.Classes.OrtoDatasReference>? ortoDatasReferences = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferencesByReferencesAsync(references, countyId, fallbackByReference, cancellationToken: cancellationToken);
             if (ortoDatasReferences is null)
             {
                 return NotFound();
@@ -1029,7 +1029,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.OrtoDatasReference>? ortoDatasReferences = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferencesByBuilding2DReferencesAsync(building2DReferences, fallbackByReference, cancellationToken);
+            List<PostgreSQL.Classes.OrtoDatasReference>? ortoDatasReferences = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferencesByBuilding2DReferencesAsync(building2DReferences, fallbackByReference, cancellationToken: cancellationToken);
             if (ortoDatasReferences is null)
             {
                 return NotFound();
@@ -1071,7 +1071,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.OrtoDatasReference>? ortoDatasReferences = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferencesByCountyIdAsync(countyId, subdivisionIds, cancellationToken);
+            List<PostgreSQL.Classes.OrtoDatasReference>? ortoDatasReferences = await ortoDatasPostgreSQLConverter.GetOrtoDatasReferencesByCountyIdAsync(countyId, subdivisionIds, cancellationToken: cancellationToken);
             if (ortoDatasReferences is null)
             {
                 return NotFound();
