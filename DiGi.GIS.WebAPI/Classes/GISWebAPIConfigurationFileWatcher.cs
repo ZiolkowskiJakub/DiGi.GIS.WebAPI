@@ -132,5 +132,16 @@ namespace DiGi.GIS.WebAPI.Classes
                 return ConfigurationFile.GetValue<bool>(nameof(AllowUpdateBuilding));
             }
         }
+
+        /// <summary>
+        /// Gets a value indicating whether updates to territorial unit data are permitted according to the configuration file.
+        /// </summary>
+        public bool AllowUpdateUnit
+        {
+            get
+            {
+                return ConfigurationFile.GetValue<bool>(nameof(AllowUpdateUnit));
+            }
+        }
     }
 }
