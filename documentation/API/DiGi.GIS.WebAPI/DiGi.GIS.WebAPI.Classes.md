@@ -6077,6 +6077,33 @@ public OrtoDatasFromDatabasePostTask(DiGi.GIS.WebAPI.Classes.GISWebAPIManager GI
 `GISWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
 
 The manager responsible for handling GIS PostgreSQL Web API communications\.
+### Properties
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasFromDatabasePostTask.Count'></a>
+
+## OrtoDatasFromDatabasePostTask\.Count Property
+
+Gets or sets the number of items to claim per batch from the update queue\. Defaults to 5\.
+
+```csharp
+public int Count { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasFromDatabasePostTask.OrtoDatasBuilding2DOptions'></a>
+
+## OrtoDatasFromDatabasePostTask\.OrtoDatasBuilding2DOptions Property
+
+Gets or sets the options used for retrieving 2D building orthophoto data\.
+
+```csharp
+public DiGi.GIS.Classes.OrtoDatasBuilding2DOptions? OrtoDatasBuilding2DOptions { get; set; }
+```
+
+#### Property Value
+[DiGi\.GIS\.Classes\.OrtoDatasBuilding2DOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.classes.ortodatasbuilding2doptions 'DiGi\.GIS\.Classes\.OrtoDatasBuilding2DOptions')
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask'></a>
 
