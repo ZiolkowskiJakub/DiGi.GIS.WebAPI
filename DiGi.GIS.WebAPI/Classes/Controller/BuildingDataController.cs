@@ -1,4 +1,5 @@
 using DiGi.Core.IO.Table.Classes;
+using DiGi.GIS.IO;
 using DiGi.GIS.PostgreSQL;
 using DiGi.GIS.PostgreSQL.Classes;
 using DiGi.PostgreSQL.Table;
@@ -26,18 +27,22 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         private const int referenceCount_Maximum = 10000;
 
+        private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
+
         private readonly BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter;
 
         private readonly Building2DPostgreSQLConverter building2DPostgreSQLConverter;
 
         /// <summary>
         /// Initializes a new instance of the BuildingDataController class.
-        /// <para>Both converters are taken on the one constructor rather than the building data one alone, because the coverage read compares two tables that sit in different databases. A second constructor is not an option: a controller with more than one public constructor fails activation and answers 500 on every one of its endpoints.</para>
+        /// <para>Both converters and the configuration watcher are taken on the one constructor, because the coverage read compares two tables that sit in different databases and write operations require authorization. A second constructor is not an option: a controller with more than one public constructor fails activation and answers 500 on every one of its endpoints.</para>
         /// </summary>
+        /// <param name="GISWebAPIConfigurationFileWatcher">The <see cref="Classes.GISWebAPIConfigurationFileWatcher" /> used to verify authorization and permissions for write operations.</param>
         /// <param name="buildingDataPostgreSQLConverter">The <see cref="BuildingDataPostgreSQLConverter" /> used to handle building data operations and database conversions.</param>
         /// <param name="building2DPostgreSQLConverter">The <see cref="Building2DPostgreSQLConverter" /> used to read the buildings a county holds, which is the other half of the coverage comparison.</param>
-        public BuildingDataController(BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter)
+        public BuildingDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter)
         {
+            this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.buildingDataPostgreSQLConverter = buildingDataPostgreSQLConverter;
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
         }
@@ -1167,5 +1172,188 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Internal server error during database query");
             }
         }
+
+        /// <summary>
+        /// Asynchronously updates building data for the specified county identifiers.
+        /// <para>A single identifier files every datum under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
+        /// </summary>
+        /// <param name="jsonObject">The JSON object containing the table structure and data to be updated.</param>
+        /// <param name="countyIds">The identifiers of the county rows the building data belongs to. Normally every polygon part of one county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the database command. Defaults to 600.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A task representing the asynchronous operation with an <see cref="IActionResult"/> containing an <see cref="UpdateItemsResult"/>.</returns>
+        [HttpPost("updateitemsbycountyids", Name = $"{nameof(BuildingDataController)}_{nameof(UpdateItemsByCountyIdsAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(UpdateItemsResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonObject? jsonObject, [FromQuery(Name = "countyids")] int[]? countyIds, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingDataController), nameof(UpdateItemsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingData update not authorized");
+                return Unauthorized();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingData update not allowed");
+                return Unauthorized();
+            }
+
+            if (countyIds is null || countyIds.Length == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CountyIds cannot be null or empty");
+                return BadRequest();
+            }
+
+            if (jsonObject is null)
+            {
+                Serilog.Modify.Log("No BuildingData to update");
+                return NoContent();
+            }
+
+            Table? table = Create.Table(jsonObject);
+            if (table is null || table.RowCount == 0)
+            {
+                Serilog.Modify.Log("No BuildingData rows to update");
+                return NoContent();
+            }
+
+            try
+            {
+                Column? column_Reference = table.Columns.FirstOrDefault(c => string.Equals(c.UniqueId(), "reference", StringComparison.OrdinalIgnoreCase));
+                if (column_Reference is null)
+                {
+                    table.TryGetColumn(IO.Constants.Column.Reference.Name, out column_Reference, caseSensitive: false);
+                }
+
+                if (column_Reference is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Reference column could not be obtained");
+                    return BadRequest();
+                }
+
+                Column? column_CountyId = table.Columns.FirstOrDefault(c => string.Equals(c.UniqueId(), "county_id", StringComparison.OrdinalIgnoreCase));
+                if (column_CountyId is null)
+                {
+                    table.TryGetColumn(IO.Constants.Column.CountyId.Name, out column_CountyId, caseSensitive: false);
+                }
+
+                if (column_CountyId is null)
+                {
+                    column_CountyId = table.AddColumn(IO.Constants.Column.CountyId);
+                }
+
+                if (column_CountyId is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CountyId column could not be obtained");
+                    return BadRequest();
+                }
+
+                List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
+                int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
+
+                Dictionary<string, int>? countyIds_ByReference = null;
+                if (countyId_Single is null)
+                {
+                    List<string> references_ToResolve = [];
+                    foreach (Row row in table.Rows)
+                    {
+                        if (row.TryGetValue(column_Reference.Index, out string? reference) && !string.IsNullOrWhiteSpace(reference))
+                        {
+                            references_ToResolve.Add(reference);
+                        }
+                    }
+
+                    countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(references_ToResolve, countyIds_Candidate);
+                }
+
+                List<UpdateItemsResult.Rejection> rejections = [];
+                Table table_Resolved = new(table.Columns);
+
+                foreach (Row row in table.Rows)
+                {
+                    if (!row.TryGetValue(column_Reference.Index, out string? reference) || string.IsNullOrWhiteSpace(reference))
+                    {
+                        rejections.Add(new UpdateItemsResult.Rejection
+                        {
+                            Reference = null,
+                            Reason = PostgreSQL.Enums.UpdateRejectionReason.Undefined
+                        });
+                        continue;
+                    }
+
+                    int? countyId = countyId_Single;
+                    if (countyId is null)
+                    {
+                        if (countyIds_ByReference is null || !countyIds_ByReference.TryGetValue(reference, out int countyId_Resolved))
+                        {
+                            rejections.Add(new UpdateItemsResult.Rejection
+                            {
+                                Reference = reference,
+                                Reason = PostgreSQL.Enums.UpdateRejectionReason.CountyUnresolved
+                            });
+                            continue;
+                        }
+
+                        countyId = countyId_Resolved;
+                    }
+
+                    IO.Modify.SetValue(row, column_CountyId, countyId.Value);
+                    if (row[column_CountyId.Index] is null)
+                    {
+                        row[column_CountyId.Index] = countyId.Value;
+                    }
+
+                    table_Resolved.AddRow(row);
+                }
+
+                if (table_Resolved.RowCount == 0)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "All {Sent} BuildingData rows were rejected before the database", table.RowCount);
+                    return StatusCode(500, $"All {table.RowCount} BuildingData rows were rejected before the database; none could be filed under a county.");
+                }
+
+                Serilog.Modify.Log("Pushing BuildingData to database started. Rows to push: {Count}", table_Resolved.RowCount);
+
+                bool pushed = await buildingDataPostgreSQLConverter.PushAsync(table_Resolved, batchSize: 1000, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                if (!pushed)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database could not be completed");
+                    return StatusCode(500, "Database update failed.");
+                }
+
+                UpdateItemsResult updateItemsResult = new()
+                {
+                    Sent = table.RowCount,
+                    Updated = table_Resolved.RowCount,
+                    Rejected = rejections
+                };
+
+                if (updateItemsResult.Rejected.Count != 0)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingData rows rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
+                }
+
+                Serilog.Modify.Log("Updating to database ended. Updated BuildingData rows: {After}/{Before}, rejected: {Rejected}", updateItemsResult.Updated, updateItemsResult.Sent, updateItemsResult.Rejected.Count);
+                return Ok(updateItemsResult);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Unhandled error during BuildingDataController.UpdateItemsByCountyIdsAsync");
+                return StatusCode(500, exception.Message);
+            }
+        }
     }
-}
+}

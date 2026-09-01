@@ -254,6 +254,27 @@ public static System.IServiceProvider ServiceProvider();
 [System\.IServiceProvider](https://learn.microsoft.com/en-us/dotnet/api/system.iserviceprovider 'System\.IServiceProvider')  
 An [System\.IServiceProvider](https://learn.microsoft.com/en-us/dotnet/api/system.iserviceprovider 'System\.IServiceProvider') containing the registered services\.
 
+<a name='DiGi.GIS.WebAPI.Create.Table(System.Text.Json.Nodes.JsonObject)'></a>
+
+## Create\.Table\(JsonObject\) Method
+
+Creates a [Table\(JsonObject\)](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Create.Table(System.Text.Json.Nodes.JsonObject) 'DiGi\.GIS\.WebAPI\.Create\.Table\(System\.Text\.Json\.Nodes\.JsonObject\)') instance from a JSON object using [DiGi\.Core\.IO\.Table\.Classes\.TableConverter&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.tableconverter-3 'DiGi\.Core\.IO\.Table\.Classes\.TableConverter\`3')\.
+
+```csharp
+public static DiGi.Core.IO.Table.Classes.Table? Table(System.Text.Json.Nodes.JsonObject? jsonObject);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Create.Table(System.Text.Json.Nodes.JsonObject).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the serialized table structure and data\.
+
+#### Returns
+[DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')  
+A new [Table\(JsonObject\)](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Create.Table(System.Text.Json.Nodes.JsonObject) 'DiGi\.GIS\.WebAPI\.Create\.Table\(System\.Text\.Json\.Nodes\.JsonObject\)') instance, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') if the JSON object is null or cannot be deserialized\.
+
 <a name='DiGi.GIS.WebAPI.Create.UpdateItemsResult(thisDiGi.GIS.PostgreSQL.Classes.PostgreSQLUpdateResult,int)'></a>
 
 ## Create\.UpdateItemsResult\(this PostgreSQLUpdateResult, int\) Method
@@ -445,6 +466,100 @@ The identifiers of the county rows the buildings belong to\. Normally every poly
 Optional configuration options for the POST request\.
 
 <a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,byte[],System.Collections.Generic.IEnumerable_int_,DiGi.WebAPI.Classes.PostOptions,string).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The optional API authorization key used for authenticating requests to protected endpoints\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,int,DiGi.WebAPI.Classes.PostOptions,string)'></a>
+
+## Modify\.UpdateItemsAsync\(this GISWebAPIManager, Table, int, PostOptions, string\) Method
+
+Asynchronously updates building data items for one explicitly identified county row via the PostgreSQL Web API\.
+
+For a county stored as several polygon parts, pass every part to the [System\.Collections\.Generic\.IEnumerable&lt;&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1') overload instead - naming one part files the whole batch there whether or not the buildings belong to it.
+
+```csharp
+public static System.Threading.Tasks.Task<bool> UpdateItemsAsync(this DiGi.GIS.WebAPI.Classes.GISWebAPIManager? GISWebAPIManager, DiGi.Core.IO.Table.Classes.Table? table, int countyId, DiGi.WebAPI.Classes.PostOptions? postOptions=null, string? key=null);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,int,DiGi.WebAPI.Classes.PostOptions,string).GISWebAPIManager'></a>
+
+`GISWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
+
+The manager instance used to facilitate the web API communication\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,int,DiGi.WebAPI.Classes.PostOptions,string).table'></a>
+
+`table` [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')
+
+The [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table') containing the building data to be updated\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,int,DiGi.WebAPI.Classes.PostOptions,string).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The identifier of the county row the building data belongs to\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,int,DiGi.WebAPI.Classes.PostOptions,string).postOptions'></a>
+
+`postOptions` [DiGi\.WebAPI\.Classes\.PostOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.postoptions 'DiGi\.WebAPI\.Classes\.PostOptions')
+
+Optional configuration options for the POST request\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,int,DiGi.WebAPI.Classes.PostOptions,string).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The optional API authorization key used for authenticating requests to protected endpoints\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_int_,DiGi.WebAPI.Classes.PostOptions,string)'></a>
+
+## Modify\.UpdateItemsAsync\(this GISWebAPIManager, Table, IEnumerable\<int\>, PostOptions, string\) Method
+
+Asynchronously updates building data items for candidate county rows via the PostgreSQL Web API\.
+
+A multi-part county holds one `administrative_areal_2d` row per polygon part, so pass every part rather than picking one - the server files each item under the part it belongs to.
+
+```csharp
+public static System.Threading.Tasks.Task<bool> UpdateItemsAsync(this DiGi.GIS.WebAPI.Classes.GISWebAPIManager? GISWebAPIManager, DiGi.Core.IO.Table.Classes.Table? table, System.Collections.Generic.IEnumerable<int>? countyIds, DiGi.WebAPI.Classes.PostOptions? postOptions=null, string? key=null);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_int_,DiGi.WebAPI.Classes.PostOptions,string).GISWebAPIManager'></a>
+
+`GISWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
+
+The manager instance used to facilitate the web API communication\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_int_,DiGi.WebAPI.Classes.PostOptions,string).table'></a>
+
+`table` [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table')
+
+The [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table') containing the building data to be updated\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_int_,DiGi.WebAPI.Classes.PostOptions,string).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifiers of the county rows the building data belongs to\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_int_,DiGi.WebAPI.Classes.PostOptions,string).postOptions'></a>
+
+`postOptions` [DiGi\.WebAPI\.Classes\.PostOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.postoptions 'DiGi\.WebAPI\.Classes\.PostOptions')
+
+Optional configuration options for the POST request\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,DiGi.Core.IO.Table.Classes.Table,System.Collections.Generic.IEnumerable_int_,DiGi.WebAPI.Classes.PostOptions,string).key'></a>
 
 `key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 

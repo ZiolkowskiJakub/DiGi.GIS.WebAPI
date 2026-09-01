@@ -2797,26 +2797,32 @@ public class BuildingDataController : DiGi.WebAPI.Classes.WebAPIController
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [Microsoft\.AspNetCore\.Mvc\.ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase 'Microsoft\.AspNetCore\.Mvc\.ControllerBase') → [DiGi\.WebAPI\.Classes\.WebAPIController](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.webapicontroller 'DiGi\.WebAPI\.Classes\.WebAPIController') → BuildingDataController
 ### Constructors
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter)'></a>
 
-## BuildingDataController\(BuildingDataPostgreSQLConverter, Building2DPostgreSQLConverter\) Constructor
+## BuildingDataController\(GISWebAPIConfigurationFileWatcher, BuildingDataPostgreSQLConverter, Building2DPostgreSQLConverter\) Constructor
 
 Initializes a new instance of the BuildingDataController class\.
 
-Both converters are taken on the one constructor rather than the building data one alone, because the coverage read compares two tables that sit in different databases. A second constructor is not an option: a controller with more than one public constructor fails activation and answers 500 on every one of its endpoints.
+Both converters and the configuration watcher are taken on the one constructor, because the coverage read compares two tables that sit in different databases and write operations require authorization. A second constructor is not an option: a controller with more than one public constructor fails activation and answers 500 on every one of its endpoints.
 
 ```csharp
-public BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter);
+public BuildingDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter).buildingDataPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter).GISWebAPIConfigurationFileWatcher'></a>
+
+`GISWebAPIConfigurationFileWatcher` [GISWebAPIConfigurationFileWatcher](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher')
+
+The [GISWebAPIConfigurationFileWatcher](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher') used to verify authorization and permissions for write operations\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter).buildingDataPostgreSQLConverter'></a>
 
 `buildingDataPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.buildingdatapostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter')
 
 The [DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.buildingdatapostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter') used to handle building data operations and database conversions\.
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter).building2DPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.BuildingDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter).building2DPostgreSQLConverter'></a>
 
 `building2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
 
@@ -3520,6 +3526,53 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the operation, typically a list of unique values or a not found status\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonObject,int[],int,string,System.Threading.CancellationToken)'></a>
+
+## BuildingDataController\.UpdateItemsByCountyIdsAsync\(JsonObject, int\[\], int, string, CancellationToken\) Method
+
+Asynchronously updates building data for the specified county identifiers\.
+
+A single identifier files every datum under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonObject? jsonObject, int[]? countyIds, int commandTimeout=600, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonObject,int[],int,string,System.Threading.CancellationToken).jsonObject'></a>
+
+`jsonObject` [System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')
+
+The JSON object containing the table structure and data to be updated\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonObject,int[],int,string,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The identifiers of the county rows the building data belongs to\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonObject,int[],int,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the database command\. Defaults to 600\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonObject,int[],int,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonObject,int[],int,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation with an [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing an [UpdateItemsResult](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.UpdateItemsResult 'DiGi\.GIS\.WebAPI\.Classes\.UpdateItemsResult')\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingModelController'></a>
 
@@ -4453,6 +4506,19 @@ Gets a value indicating whether updates to 2D buildings are permitted based on t
 
 ```csharp
 public bool AllowUpdateBuilding2D { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData'></a>
+
+## GISWebAPIConfigurationFileWatcher\.AllowUpdateBuildingData Property
+
+Gets a value indicating whether updates to building data are permitted based on the configuration file settings\.
+
+```csharp
+public bool AllowUpdateBuildingData { get; }
 ```
 
 #### Property Value

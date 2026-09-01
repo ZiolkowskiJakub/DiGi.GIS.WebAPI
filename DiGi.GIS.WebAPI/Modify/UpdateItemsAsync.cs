@@ -1,6 +1,7 @@
 using DiGi.Analytical.Building.Classes;
 using DiGi.CityGML.Classes;
 using DiGi.Core.Classes;
+using DiGi.Core.IO.Table.Classes;
 using DiGi.EPW.Classes;
 using DiGi.GIS.Classes;
 using DiGi.GIS.WebAPI.Classes;
@@ -904,6 +905,59 @@ namespace DiGi.GIS.WebAPI
             string? key_Resolved = key ?? (postOptions as SerializableObjectsPostOptions)?.Key ?? GISWebAPIManager.Key;
 
             return await UpdateItemsAsync(httpClient, urlBuilder, Core.Convert.ToSystem_String(building2D), postOptions, key_Resolved);
+        }
+
+        /// <summary>
+        /// Asynchronously updates building data items for candidate county rows via the PostgreSQL Web API.
+        /// <para>A multi-part county holds one <c>administrative_areal_2d</c> row per polygon part, so pass every part rather than picking one - the server files each item under the part it belongs to.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The manager instance used to facilitate the web API communication.</param>
+        /// <param name="table">The <see cref="Table"/> containing the building data to be updated.</param>
+        /// <param name="countyIds">The identifiers of the county rows the building data belongs to. Normally every polygon part of one county.</param>
+        /// <param name="postOptions">Optional configuration options for the POST request.</param>
+        /// <param name="key">The optional API authorization key used for authenticating requests to protected endpoints.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, Table? table, IEnumerable<int>? countyIds, PostOptions? postOptions = null, string? key = null)
+        {
+            if (GISWebAPIManager is null || table is null)
+            {
+                return false;
+            }
+
+            HttpClient? httpClient = GISWebAPIManager.CreateHttpClient<BuildingDataController>(nameof(BuildingDataController.UpdateItemsByCountyIdsAsync), out string? path);
+            if (httpClient is null || string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            UrlBuilder urlBuilder = new(path);
+            urlBuilder.AddParameter("countyids", countyIds);
+
+            string? key_Resolved = key ?? (postOptions as SerializableObjectsPostOptions)?.Key ?? GISWebAPIManager.Key;
+
+            string? json = Core.IO.Table.Convert.ToSystem_String<Table, Column, Row>(table);
+
+            return await UpdateItemsAsync(httpClient, urlBuilder, json, postOptions, key_Resolved);
+        }
+
+        /// <summary>
+        /// Asynchronously updates building data items for one explicitly identified county row via the PostgreSQL Web API.
+        /// <para>For a county stored as several polygon parts, pass every part to the <see cref="IEnumerable{T}"/> overload instead - naming one part files the whole batch there whether or not the buildings belong to it.</para>
+        /// </summary>
+        /// <param name="GISWebAPIManager">The manager instance used to facilitate the web API communication.</param>
+        /// <param name="table">The <see cref="Table"/> containing the building data to be updated.</param>
+        /// <param name="countyId">The identifier of the county row the building data belongs to.</param>
+        /// <param name="postOptions">Optional configuration options for the POST request.</param>
+        /// <param name="key">The optional API authorization key used for authenticating requests to protected endpoints.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public static async Task<bool> UpdateItemsAsync(this GISWebAPIManager? GISWebAPIManager, Table? table, int countyId, PostOptions? postOptions = null, string? key = null)
+        {
+            if (GISWebAPIManager is null || table is null)
+            {
+                return false;
+            }
+
+            return await UpdateItemsAsync(GISWebAPIManager, table, [countyId], postOptions, key);
         }
     }
 }
