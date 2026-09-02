@@ -17,6 +17,8 @@ namespace DiGi.GIS.WebAPI.Classes
     [Route("gis/[controller]")]
     public class YearBuiltDataController : DiGi.WebAPI.Classes.WebAPIController
     {
+        private const int referenceCount_Maximum = 10000;
+
         private readonly AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
         private readonly Building2DPostgreSQLConverter building2DPostgreSQLConverter; //States which polygon part of a multi-part county a datum belongs to, from the 2D building already stored under it.
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
@@ -289,6 +291,207 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             if (yearBuiltDatas is null || yearBuiltDatas.Count == 0)
+            {
+                return NoContent();
+            }
+
+            return Content(Core.Convert.ToSystem_String(yearBuiltDatas) ?? string.Empty, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the building references that carry stored year built data for a specified county identifier.
+        /// </summary>
+        /// <param name="countyId">The unique identifier of the county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 30 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>An <see cref="IActionResult"/> containing a list of reference strings if found, or 404 if none are found.</returns>
+        [HttpGet("referencesbycountyid", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetReferencesByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetReferencesByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(YearBuiltDataController), nameof(GetReferencesByCountyIdAsync), countyId);
+
+            if (countyId <= 0 || commandTimeout < 0)
+            {
+                return BadRequest();
+            }
+
+            if (yearBuiltDataPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            HashSet<string>? references;
+            try
+            {
+                references = await yearBuiltDataPostgreSQLConverter.GetReferencesAsync(countyId, commandTimeout, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(GetReferencesByCountyIdAsync));
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            if (references is null || references.Count == 0)
+            {
+                return NotFound();
+            }
+
+            JsonArray jsonArray = [.. references];
+            string? json = jsonArray.ToJsonString();
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the number of year built data items stored for a specified county identifier.
+        /// </summary>
+        /// <param name="countyId">The unique identifier of the county.</param>
+        /// <param name="estimated">A boolean value indicating whether to return an estimated count from table statistics rather than an exact count.</param>
+        /// <param name="analyze">A boolean value indicating whether to perform an ANALYZE operation before reading the estimate.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the count, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county has no partition.</returns>
+        [HttpGet("countbycountyid", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetCountByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetCountByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(YearBuiltDataController), nameof(GetCountByCountyIdAsync), countyId);
+
+            if (countyId <= 0 || commandTimeout < 0)
+            {
+                return BadRequest();
+            }
+
+            if (yearBuiltDataPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            long? count;
+            try
+            {
+                count = estimated
+                    ? await yearBuiltDataPostgreSQLConverter.GetEstimatedCountAsync(countyId, analyze, commandTimeout, cancellationToken)
+                    : await yearBuiltDataPostgreSQLConverter.GetCountAsync(countyId, commandTimeout, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            if (count is null || (!estimated && count < 0))
+            {
+                Serilog.Modify.Log("County {CountyId} has no year built data partition", countyId);
+                return NotFound();
+            }
+
+            if (estimated && count < 0)
+            {
+                Serilog.Modify.Log("County {CountyId} year built data partition exists but has not been analysed", countyId);
+                return NoContent();
+            }
+
+            return Content(count.Value.ToString(), "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves year built data items for each of the provided references and an optional county identifier.
+        /// </summary>
+        /// <param name="references">The collection of unique reference strings used to identify the year built data items.</param>
+        /// <param name="countyId">An optional integer representing the county identifier used to filter the search.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 30 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation, returning a list of year built data items or no content if none were found.</returns>
+        [HttpPost("itemsbyreferences", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetItemsByReferencesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<GIS.Classes.YearBuiltData>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetItemsByReferencesAsync([FromBody] IEnumerable<string>? references, [FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(GetItemsByReferencesAsync));
+            Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
+
+            if (references is null || (countyId is not null && countyId <= 0) || commandTimeout < 0)
+            {
+                return BadRequest();
+            }
+
+            string[] references_Array = [.. references];
+            if (references_Array.Length == 0)
+            {
+                return NoContent();
+            }
+
+            if (references_Array.Length > referenceCount_Maximum)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "At most {Maximum} references can be asked for in one request", referenceCount_Maximum);
+                return BadRequest($"At most {referenceCount_Maximum} references can be asked for in one request.");
+            }
+
+            if (yearBuiltDataPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<YearBuiltData>? yearBuiltDatas_PostgreSQL;
+            try
+            {
+                yearBuiltDatas_PostgreSQL = await yearBuiltDataPostgreSQLConverter.GetItemsByReferencesAsync(references_Array, countyId, null, fallbackByReference, commandTimeout, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "YearBuiltDatas could not be read from {TableName} for CountyId {CountyId}", yearBuiltDataPostgreSQLConverter.TableName, countyId?.ToString() ?? string.Empty);
+                return StatusCode(500, "Database read failed.");
+            }
+
+            if (yearBuiltDatas_PostgreSQL is null || yearBuiltDatas_PostgreSQL.Count == 0)
+            {
+                return NoContent();
+            }
+
+            List<GIS.Interfaces.IYearBuiltData> yearBuiltDatas = [];
+            foreach (YearBuiltData yearBuilt_PostgreSQL in yearBuiltDatas_PostgreSQL)
+            {
+                GIS.Interfaces.IYearBuiltData? yearBuiltData_GIS = yearBuilt_PostgreSQL.ToDiGi();
+                if (yearBuiltData_GIS is null)
+                {
+                    continue;
+                }
+
+                yearBuiltDatas.Add(yearBuiltData_GIS);
+            }
+
+            if (yearBuiltDatas.Count == 0)
             {
                 return NoContent();
             }
