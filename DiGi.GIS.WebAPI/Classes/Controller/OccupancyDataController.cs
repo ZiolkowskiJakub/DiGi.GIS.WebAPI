@@ -63,7 +63,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return Unauthorized();
             }
 
-            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateOccupancyData)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OccupancyData update not allowed");
                 return BadRequest();
@@ -161,7 +161,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return Unauthorized();
             }
 
-            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateOccupancyData)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OccupancyData update not allowed");
                 return BadRequest();
@@ -227,7 +227,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return Unauthorized();
             }
 
-            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateOccupancyData)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OccupancyData update not allowed");
                 return BadRequest();

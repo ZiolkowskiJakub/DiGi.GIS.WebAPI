@@ -4550,6 +4550,19 @@ public bool AllowUpdateEPWFile { get; }
 #### Property Value
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
 
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateOccupancyData'></a>
+
+## GISWebAPIConfigurationFileWatcher\.AllowUpdateOccupancyData Property
+
+Gets a value indicating whether updates to occupancy data are permitted according to the configuration file\.
+
+```csharp
+public bool AllowUpdateOccupancyData { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
 <a name='DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateOrtoDatas'></a>
 
 ## GISWebAPIConfigurationFileWatcher\.AllowUpdateOrtoDatas Property

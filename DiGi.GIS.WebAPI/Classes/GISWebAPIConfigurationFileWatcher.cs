@@ -101,6 +101,17 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
+        /// Gets a value indicating whether updates to occupancy data are permitted according to the configuration file.
+        /// </summary>
+        public bool AllowUpdateOccupancyData
+        {
+            get
+            {
+                return ConfigurationFile.GetValue<bool>(nameof(AllowUpdateOccupancyData));
+            }
+        }
+
+        /// <summary>
         /// Gets a value indicating whether updates to orthophoto data are permitted according to the configuration file.
         /// </summary>
         public bool AllowUpdateOrtoDatas
