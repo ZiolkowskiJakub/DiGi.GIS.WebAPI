@@ -262,7 +262,7 @@ namespace DiGi.GIS.WebAPI.Classes
             Dictionary<string, int>? countyIds_ByReference = null;
             if (countyId_Single is null)
             {
-                countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(occupancyDatas_GIS.ConvertAll(x => x?.Reference), countyIds_Candidate);
+                countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, occupancyDatas_GIS.ConvertAll(x => x?.Reference), countyIds_Candidate);
             }
 
             List<string> references_Unresolved = [];

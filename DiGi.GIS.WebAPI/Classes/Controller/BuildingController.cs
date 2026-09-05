@@ -191,7 +191,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 if (countyId_Single is null)
                 {
-                    Dictionary<string, int> countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(buildings.ConvertAll(x => x.Reference), countyIds_Candidate);
+                    Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, buildings.ConvertAll(x => x.Reference), countyIds_Candidate);
 
                     List<string> references_Unresolved = [];
                     foreach (Building building in buildings)

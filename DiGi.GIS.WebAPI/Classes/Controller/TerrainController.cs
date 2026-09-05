@@ -562,22 +562,15 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <returns>The identifiers of the counties the area meets, or <see langword="null"/> when it meets none.</returns>
         private async Task<HashSet<int>?> CountyIdsAsync(BoundingBox2D boundingBox2D, double tolerance, CancellationToken cancellationToken)
         {
-            List<AdministrativeAreal2D>? administrativeAreal2Ds = await administrativeAreal2DPostgreSQLConverter.GetAdministrativeAreal2DsByBoundingBox2DAsync(boundingBox2D, [AdministrativeArealType.County], tolerance, cancellationToken: cancellationToken);
-            if (administrativeAreal2Ds is null || administrativeAreal2Ds.Count == 0)
-            {
-                return null;
-            }
+            // Every part of every county reaching the box, not only the parts the box overlaps. A county
+            // with disconnected territory is stored as one row per part and each part is a partition of
+            // its own, so a point can be filed under a part whose polygon is nowhere near it; pruning to
+            // the overlapping parts alone then answers nothing and reads as "nothing sampled here". This
+            // is the same resolution the building reads use - see
+            // https://github.com/ZiolkowskiJakub/DiGi.GIS.PostgreSQL/issues/64.
+            HashSet<int>? countyIds = await administrativeAreal2DPostgreSQLConverter.GetCountyIdsByBoundingBox2DAsync(boundingBox2D, tolerance, cancellationToken: cancellationToken);
 
-            // A county row's own county_id is null - its identity is its id - so there is no second
-            // candidate to fall back on here. A county with disconnected territory is stored as one row
-            // per part, and every part is a partition of its own, so they all belong in the result.
-            HashSet<int> countyIds = [];
-            foreach (AdministrativeAreal2D administrativeAreal2D in administrativeAreal2Ds)
-            {
-                countyIds.Add(administrativeAreal2D.Id);
-            }
-
-            return countyIds;
+            return countyIds is null || countyIds.Count == 0 ? null : countyIds;
         }
 
         /// <summary>

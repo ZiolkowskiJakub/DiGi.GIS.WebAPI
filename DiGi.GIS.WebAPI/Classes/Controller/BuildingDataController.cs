@@ -1272,7 +1272,7 @@ namespace DiGi.GIS.WebAPI.Classes
                         }
                     }
 
-                    countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(references_ToResolve, countyIds_Candidate);
+                    countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, references_ToResolve, countyIds_Candidate);
                 }
 
                 List<UpdateItemsResult.Rejection> rejections = [];

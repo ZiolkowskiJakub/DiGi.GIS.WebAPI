@@ -1505,7 +1505,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             if (countyId_Single is null)
             {
-                Dictionary<string, int> countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(ortoDatas_PostgreSQL.ConvertAll(x => x.Reference), countyIds_Candidate);
+                Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, ortoDatas_PostgreSQL.ConvertAll(x => x.Reference), countyIds_Candidate);
 
                 List<string> references_Unresolved = [];
                 foreach (PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL_Temp in ortoDatas_PostgreSQL)

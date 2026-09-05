@@ -394,7 +394,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 buildingModels_Reference.Add(buildingModel);
             }
 
-            Dictionary<string, int> countyIds_ByReference = await building2DPostgreSQLConverter.CountyIdsByReferencesAsync(buildingModels_ByReference.Keys, countyIds_Candidate);
+            Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, buildingModels_ByReference.Keys, countyIds_Candidate);
 
             Dictionary<int, List<BuildingModel>> buildingModels_ByCountyId = [];
             List<string> references_Unresolved = [];
