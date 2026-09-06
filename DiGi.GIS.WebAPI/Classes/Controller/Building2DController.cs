@@ -73,6 +73,50 @@ namespace DiGi.GIS.WebAPI.Classes
             return Ok(count);
         }
 
+        /// <summary>
+        /// Asynchronously counts, for every polygon part of every multi-part county, the buildings it holds whose bounding box lies outside that part.
+        /// <para>A county code names one <c>administrative_areal_2d</c> row per polygon part, and a building filed under the wrong one is unreachable through every read that filters on <c>county_id</c>. A building whose stored box does not intersect the box of the part holding it cannot be inside that part, so what this counts is certainly misfiled - and it costs no geometry.</para>
+        /// <para>The count is a lower bound, not a total: a building inside the box of its part but outside the polygon needs the polygon to settle and is not counted. Read it as the number of rows known to be wrong, before and after a repair.</para>
+        /// </summary>
+        /// <param name="code">An optional county code to restrict the measurement to. When omitted every multi-part code is measured.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task representing the asynchronous operation, returning one entry per county part holding buildings.</returns>
+        [HttpGet("countypartmismatches", Name = $"{nameof(Building2DController)}_{nameof(GetCountyPartMismatchesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DCountyPartMismatchResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetCountyPartMismatchesAsync([FromQuery(Name = "code")] string? code = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetCountyPartMismatchesAsync));
+            Serilog.Modify.Log("Code provided: {Code}, CommandTimeout provided: {CommandTimeout}", code ?? string.Empty, commandTimeout);
+
+            if (commandTimeout < 0)
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.Building2DCountyPartMismatchResult>? building2DCountyPartMismatchResults = await building2DPostgreSQLConverter.GetCountyPartMismatchesAsync(code, commandTimeout, cancellationToken);
+            if (building2DCountyPartMismatchResults is null)
+            {
+                return NotFound();
+            }
+
+            string? json = Core.Convert.ToSystem_String(building2DCountyPartMismatchResults);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return NotFound();
+            }
+
+            return Content(json, "application/json");
+        }
+
         /// <summary> Asynchronously retrieves a building 2D reference by its unique identifier and an optional county identifier. </summary>
         /// <param name="id">The unique identifier of the building.</param>
         /// <param name="countyId">An optional integer representing the county identifier used to filter the search.</param>
@@ -1018,7 +1062,11 @@ namespace DiGi.GIS.WebAPI.Classes
                         Serilog.Modify.Log("County code '{Code}' matches {Count} rows ({CountyIds}) because the county has that many polygon parts. Each building is being filed under the part it belongs to", code, countyIds_Resolved.Length, string.Join(", ", countyIds_Resolved));
                     }
 
-                    return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved, key, cancellationToken);
+                    // The code goes on as well as the parts. Dropping it here left a multi-part county with
+                    // neither a part nor a code on each building, so every one of them was resolved against
+                    // every county whose extent reached it - one query per building, each returning whole
+                    // county polygons.
+                    return await UpdateItemsByCountyIdsAsync(jsonArray, countyIds_Resolved, code, key, cancellationToken);
                 }
             }
 
@@ -1097,9 +1145,12 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Updates multiple building 2D items in the database for the given county rows.
+        /// <para>Naming several parts leaves the part of each building to geometry, which is the only thing that can decide it. Passing <paramref name="code"/> as well does not change that answer - it narrows the candidates to the parts of that county before the geometry runs, and it is what the row stores in its own <c>code</c> column.</para>
+        /// <para>Without it a building of a multi-part county is resolved against every county whose extent reaches it, which costs one query returning whole county polygons <b>per building</b> rather than one set of polygons per county. That is the difference between minutes and hours over a county of tens of thousands of buildings, so an importer that knows the code should send it.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building 2D items to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the buildings belong to. Normally every polygon part of one county.</param>
+        /// <param name="code">The optional county code the buildings came from. It narrows the geometric decision and is stored on the row; the parts named in <paramref name="countyIds"/> still decide.</param>
         /// <param name="key">The secret access key supplied in the request header.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -1109,10 +1160,11 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromQuery(Name = "code")] string? code = null, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(UpdateItemsByCountyIdsAsync));
             Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+            Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
 
             if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
             {
@@ -1161,7 +1213,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 List<PostgreSQL.Classes.Building2D> building2Ds_PostgreSQL = [];
                 foreach (Building2D building2D in building2Ds)
                 {
-                    PostgreSQL.Classes.Building2D? building2D_PostgreSQL = building2D.ToPostgreSQL();
+                    PostgreSQL.Classes.Building2D? building2D_PostgreSQL = building2D.ToPostgreSQL(code);
                     if (building2D_PostgreSQL is null)
                     {
                         continue;

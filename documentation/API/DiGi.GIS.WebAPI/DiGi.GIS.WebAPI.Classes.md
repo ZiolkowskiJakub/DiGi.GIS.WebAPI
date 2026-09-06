@@ -1244,6 +1244,43 @@ The cancellation token to observe\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a list of building 2D references\.
 
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken)'></a>
+
+## Building2DController\.GetCountyPartMismatchesAsync\(string, int, CancellationToken\) Method
+
+Asynchronously counts, for every polygon part of every multi\-part county, the buildings it holds whose bounding box lies outside that part\.
+
+A county code names one `administrative_areal_2d` row per polygon part, and a building filed under the wrong one is unreachable through every read that filters on `county_id`. A building whose stored box does not intersect the box of the part holding it cannot be inside that part, so what this counts is certainly misfiled - and it costs no geometry.
+
+The count is a lower bound, not a total: a building inside the box of its part but outside the polygon needs the polygon to settle and is not counted. Read it as the number of rows known to be wrong, before and after a repair.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCountyPartMismatchesAsync(string? code=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+An optional county code to restrict the measurement to\. When omitted every multi\-part code is measured\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task representing the asynchronous operation, returning one entry per county part holding buildings\.
+
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetItemByIdAsync(long,System.Nullable_int_,System.Threading.CancellationToken)'></a>
 
 ## Building2DController\.GetItemByIdAsync\(long, Nullable\<int\>, CancellationToken\) Method
@@ -1748,36 +1785,46 @@ The cancellation token to observe\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,string,System.Threading.CancellationToken)'></a>
 
-## Building2DController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, CancellationToken\) Method
+## Building2DController\.UpdateItemsByCountyIdsAsync\(JsonArray, int\[\], string, string, CancellationToken\) Method
 
 Updates multiple building 2D items in the database for the given county rows\.
 
+Naming several parts leaves the part of each building to geometry, which is the only thing that can decide it. Passing [code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,string,System.Threading.CancellationToken).code 'DiGi\.GIS\.WebAPI\.Classes\.Building2DController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\], string, string, System\.Threading\.CancellationToken\)\.code') as well does not change that answer - it narrows the candidates to the parts of that county before the geometry runs, and it is what the row stores in its own `code` column.
+
+Without it a building of a multi-part county is resolved against every county whose extent reaches it, which costs one query returning whole county polygons <b>per building</b> rather than one set of polygons per county. That is the difference between minutes and hours over a county of tens of thousands of buildings, so an importer that knows the code should send it.
+
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? code=null, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).jsonArray'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,string,System.Threading.CancellationToken).jsonArray'></a>
 
 `jsonArray` [System\.Text\.Json\.Nodes\.JsonArray](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray 'System\.Text\.Json\.Nodes\.JsonArray')
 
 The JSON array containing the building 2D items to be updated\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).countyIds'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,string,System.Threading.CancellationToken).countyIds'></a>
 
 `countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
 
 The identifiers of the county rows the buildings belong to\. Normally every polygon part of one county\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).key'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,string,System.Threading.CancellationToken).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The optional county code the buildings came from\. It narrows the geometric decision and is stored on the row; the parts named in [countyIds](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,string,System.Threading.CancellationToken).countyIds 'DiGi\.GIS\.WebAPI\.Classes\.Building2DController\.UpdateItemsByCountyIdsAsync\(System\.Text\.Json\.Nodes\.JsonArray, int\[\], string, string, System\.Threading\.CancellationToken\)\.countyIds') still decide\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,string,System.Threading.CancellationToken).key'></a>
 
 `key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 The secret access key supplied in the request header\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray,int[],string,string,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
