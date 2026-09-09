@@ -850,6 +850,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves references of the building2Ds filtered by county Id. </summary>
         /// <param name="countyId">The unique identifier of the county used to filter the building 2D references.</param>
         /// <param name="subdivisionId">The optional unique identifier of the subdivision used to further filter the building 2D references.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("referencesbycountyid", Name = $"{nameof(Building2DController)}_{nameof(GetReferencesByCountyIdAsync)}")]
@@ -857,13 +858,14 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetReferencesByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "subdivisionid")] int? subdivisionId = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetReferencesByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "subdivisionid")] int? subdivisionId = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferencesByCountyIdAsync));
             Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
             Serilog.Modify.Log("SubdivisionId provided: {SubdivisionId}", subdivisionId?.ToString() ?? string.Empty);
+            Serilog.Modify.Log("CommandTimeout provided: {CommandTimeout}", commandTimeout);
 
-            if (countyId <= 0 || (subdivisionId is not null && subdivisionId <= 0))
+            if (countyId <= 0 || (subdivisionId is not null && subdivisionId <= 0) || commandTimeout < 0)
             {
                 return BadRequest();
             }
@@ -873,7 +875,7 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, subdivisionId, excludedReferences: null, commandTimeout: 30, cancellationToken: cancellationToken);
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, subdivisionId, excludedReferences: null, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             if (building2DReferences is null || building2DReferences.Count == 0)
             {
                 return NotFound();

@@ -1641,30 +1641,36 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a list of duplicate building references\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
-## Building2DController\.GetReferencesByCountyIdAsync\(int, Nullable\<int\>, CancellationToken\) Method
+## Building2DController\.GetReferencesByCountyIdAsync\(int, Nullable\<int\>, int, CancellationToken\) Method
 
 Retrieves references of the building2Ds filtered by county Id\.
 
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetReferencesByCountyIdAsync(int countyId, System.Nullable<int> subdivisionId=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetReferencesByCountyIdAsync(int countyId, System.Nullable<int> subdivisionId=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,System.Threading.CancellationToken).countyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,int,System.Threading.CancellationToken).countyId'></a>
 
 `countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The unique identifier of the county used to filter the building 2D references\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,System.Threading.CancellationToken).subdivisionId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,int,System.Threading.CancellationToken).subdivisionId'></a>
 
 `subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
 The optional unique identifier of the subdivision used to further filter the building 2D references\.
 
-<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
