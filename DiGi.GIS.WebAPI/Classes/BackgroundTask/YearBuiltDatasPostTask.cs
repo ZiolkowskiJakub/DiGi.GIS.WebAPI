@@ -24,14 +24,14 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Gets or sets the code associated with the year built data post task.
-        /// <para>A code does not identify a single county row - a multi-part county holds one row per polygon part - so set <see cref="CountyId"/> instead wherever the identifier is already known. <see cref="CountyId"/> takes precedence when both are set.</para>
+        /// <para>A code does not identify a single county row - a multi-part county holds one row per polygon part - so set <see cref="CountyIds"/> instead wherever the identifiers are already known. <see cref="CountyIds"/> takes precedence when both are set.</para>
         /// </summary>
         public string? Code { get; set; }
 
         /// <summary>
-        /// Gets or sets the identifier of the county row the year built data belong to. When set it is used in preference to <see cref="Code"/>, which leaves the server to choose between the rows of a multi-part county.
+        /// Gets or sets the identifiers of the county rows the year built data belong to - normally every polygon part of one county, since a single id is not evidence the code has one part. When set it is used in preference to <see cref="Code"/>, which lets the server resolve the code to every part.
         /// </summary>
-        public int? CountyId { get; set; }
+        public HashSet<int>? CountyIds { get; set; }
 
         protected async Task<bool> ExecuteAsync(IEnumerable<YearBuiltData>? values, string? code, LongProgressWrapper? longProgressWrapper, CancellationToken cancellationToken)
         {
@@ -61,7 +61,7 @@ namespace DiGi.GIS.WebAPI.Classes
             return result;
         }
 
-        protected async Task<bool> ExecuteAsync(IEnumerable<YearBuiltData>? values, int countyId, LongProgressWrapper? longProgressWrapper, CancellationToken cancellationToken)
+        protected async Task<bool> ExecuteAsync(IEnumerable<YearBuiltData>? values, IEnumerable<int>? countyIds, LongProgressWrapper? longProgressWrapper, CancellationToken cancellationToken)
         {
             if (values is null || !values.Any())
             {
@@ -79,7 +79,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 longProgressWrapper?.Increment(yearBuiltDatas.Count);
 
-                result = await GISWebAPIManager.UpdateItemsAsync(yearBuiltDatas, countyId, SerializableObjectsPostOptions);
+                result = await GISWebAPIManager.UpdateItemsAsync(yearBuiltDatas, countyIds, SerializableObjectsPostOptions);
                 if (!result)
                 {
                     break;
@@ -93,11 +93,11 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             LongProgressWrapper? longProgressWrapper = Core.Create.LongProgressWrapper(progress);
 
-            // An identifier names the county row outright; a code only narrows it to the rows of a
-            // multi-part county and lets the server pick one, so it is the fallback.
-            if (CountyId is int countyId)
+            // A set of identifiers names the county rows outright; a code only narrows it to the rows of a
+            // multi-part county and lets the server pick them, so it is the fallback.
+            if (CountyIds is { Count: > 0 } countyIds)
             {
-                return await ExecuteAsync(Values, countyId, longProgressWrapper, cancellationToken);
+                return await ExecuteAsync(Values, countyIds, longProgressWrapper, cancellationToken);
             }
 
             return await ExecuteAsync(Values, Code, longProgressWrapper, cancellationToken);

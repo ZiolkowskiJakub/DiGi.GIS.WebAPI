@@ -112,7 +112,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Updates multiple year built data items in the database for the given county rows.
         /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.</para>
-        /// <para>A single identifier is taken as stated and every datum is filed under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
+        /// <para>The identifiers are the parts of one county in play, and each datum is filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
         /// <para>A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the data items to be updated.</param>
@@ -166,34 +166,21 @@ namespace DiGi.GIS.WebAPI.Classes
 
             List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
 
-            // Left unset while there is more than one candidate, so the part is decided per item below.
-            int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
-
-            Dictionary<string, int>? countyIds_ByReference = null;
-            if (countyId_Single is null)
-            {
-                countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, yearBuiltDatas_GIS.ConvertAll(x => x?.Reference), countyIds_Candidate);
-            }
+            // A datum carries no geometry, so the 2D building its reference names is the only thing that can say
+            // which part it belongs to. Every item is resolved through building_2d regardless of how many ids the
+            // caller sent - naming one id is not evidence the code has one part - and one no part holds is left
+            // unwritten rather than filed under a guessed part.
+            Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, yearBuiltDatas_GIS.ConvertAll(x => x?.Reference), countyIds_Candidate);
 
             List<string> references_Unresolved = [];
 
             List<YearBuiltData> yearBuiltDatas_PostgreSQL = [];
             foreach (GIS.Classes.YearBuiltData yearBuiltData_GIS in yearBuiltDatas_GIS)
             {
-                int? countyId = countyId_Single;
-
-                if (countyId is null)
+                if (yearBuiltData_GIS?.Reference is null || !countyIds_ByReference.TryGetValue(yearBuiltData_GIS.Reference, out int countyId))
                 {
-                    // A datum carries no geometry, so the 2D building its reference names is the only thing
-                    // that can say which part it belongs to. One that names none is left unwritten rather
-                    // than filed under a guessed part.
-                    if (yearBuiltData_GIS?.Reference is null || countyIds_ByReference is null || !countyIds_ByReference.TryGetValue(yearBuiltData_GIS.Reference, out int countyId_Reference))
-                    {
-                        references_Unresolved.Add(yearBuiltData_GIS?.Reference ?? string.Empty);
-                        continue;
-                    }
-
-                    countyId = countyId_Reference;
+                    references_Unresolved.Add(yearBuiltData_GIS?.Reference ?? string.Empty);
+                    continue;
                 }
 
                 if (PostgreSQL.Convert.ToPostgreSQL(yearBuiltData_GIS, countyId) is YearBuiltData yearBuiltData_PostgreSQL)

@@ -23,14 +23,14 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Gets or sets the administrative area code the building models belong to. It is resolved server-side to a county identifier.
-        /// <para>A code does not identify a single county row - a multi-part county holds one row per polygon part - so set <see cref="CountyId"/> instead wherever the identifier is already known. <see cref="CountyId"/> takes precedence when both are set.</para>
+        /// <para>A code does not identify a single county row - a multi-part county holds one row per polygon part - so set <see cref="CountyIds"/> instead wherever the identifiers are already known. <see cref="CountyIds"/> takes precedence when both are set.</para>
         /// </summary>
         public string? Code { get; set; }
 
         /// <summary>
-        /// Gets or sets the identifier of the county row the building models belong to. When set it is used in preference to <see cref="Code"/>, which leaves the server to choose between the rows of a multi-part county.
+        /// Gets or sets the identifiers of the county rows the building models belong to - normally every polygon part of one county, since a single id is not evidence the code has one part. When set it is used in preference to <see cref="Code"/>, which lets the server resolve the code to every part.
         /// </summary>
-        public int? CountyId { get; set; }
+        public HashSet<int>? CountyIds { get; set; }
 
         /// <summary>
         /// Asynchronously executes the task of posting building models to the database in memory-size-split batches.
@@ -72,11 +72,11 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously executes the task of posting building models to the database in memory-size-split batches, keyed by county identifier.
         /// </summary>
         /// <param name="buildingModels">The collection of <see cref="DiGi.Analytical.Building.Classes.BuildingModel"/> instances to post.</param>
-        /// <param name="countyId">The identifier of the county row the building models belong to.</param>
+        /// <param name="countyIds">The identifiers of the county rows the building models belong to - normally every polygon part of one county.</param>
         /// <param name="longProgressWrapper">A <see cref="LongProgressWrapper"/> tracking the progress of the operation.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result is true if all batches were posted successfully; otherwise, false.</returns>
-        protected async Task<bool> ExecuteAsync(IEnumerable<DiGi.Analytical.Building.Classes.BuildingModel>? buildingModels, int countyId, LongProgressWrapper? longProgressWrapper, CancellationToken cancellationToken = default)
+        protected async Task<bool> ExecuteAsync(IEnumerable<DiGi.Analytical.Building.Classes.BuildingModel>? buildingModels, IEnumerable<int>? countyIds, LongProgressWrapper? longProgressWrapper, CancellationToken cancellationToken = default)
         {
             if (buildingModels is null || !buildingModels.Any())
             {
@@ -94,7 +94,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 longProgressWrapper?.Increment(buildingModels_Batch.Count);
 
-                result = await GISWebAPIManager.UpdateItemsAsync(buildingModels_Batch, countyId, SerializableObjectsPostOptions);
+                result = await GISWebAPIManager.UpdateItemsAsync(buildingModels_Batch, countyIds, SerializableObjectsPostOptions);
                 if (!result)
                 {
                     break;
@@ -109,11 +109,11 @@ namespace DiGi.GIS.WebAPI.Classes
         {
             LongProgressWrapper? longProgressWrapper = Core.Create.LongProgressWrapper(progress);
 
-            // An identifier names the county row outright; a code only narrows it to the rows of a
-            // multi-part county and lets the server pick one, so it is the fallback.
-            if (CountyId is int countyId)
+            // A set of identifiers names the county rows outright; a code only narrows it to the rows of a
+            // multi-part county and lets the server pick them, so it is the fallback.
+            if (CountyIds is { Count: > 0 } countyIds)
             {
-                return await ExecuteAsync(Values, countyId, longProgressWrapper, cancellationToken);
+                return await ExecuteAsync(Values, countyIds, longProgressWrapper, cancellationToken);
             }
 
             return await ExecuteAsync(Values, Code, longProgressWrapper, cancellationToken);

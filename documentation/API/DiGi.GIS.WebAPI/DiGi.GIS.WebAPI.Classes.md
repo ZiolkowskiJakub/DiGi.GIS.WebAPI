@@ -3586,7 +3586,7 @@ An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us
 
 Asynchronously updates building data for the specified county identifiers\.
 
-A single identifier files every datum under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
+The identifiers are the parts of one county in play, and each row is filed under the part already holding the `building_2d` row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonObject? jsonObject, int[]? countyIds, int commandTimeout=600, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -3848,7 +3848,7 @@ Updates multiple building model items in the database for the given county rows\
 
 The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string, string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string, string, System\.Threading\.CancellationToken\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
 
-A single identifier is taken as stated and every model is filed under it. Several identifiers are the polygon parts of one multi-part county, and each model is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
+The identifiers are the parts of one county in play, and each model is filed under the part already holding the `building_2d` row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
 
 A model whose reference no part holds is not written: nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
@@ -3922,7 +3922,7 @@ The [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWeb
 
 Gets or sets the administrative area code the building models belong to\. It is resolved server\-side to a county identifier\.
 
-A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelsPostTask\.CountyId') instead wherever the identifier is already known. [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelsPostTask\.CountyId') takes precedence when both are set.
+A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyIds](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.CountyIds 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelsPostTask\.CountyIds') instead wherever the identifiers are already known. [CountyIds](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.CountyIds 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelsPostTask\.CountyIds') takes precedence when both are set.
 
 ```csharp
 public string? Code { get; set; }
@@ -3931,58 +3931,19 @@ public string? Code { get; set; }
 #### Property Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.CountyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.CountyIds'></a>
 
-## BuildingModelsPostTask\.CountyId Property
+## BuildingModelsPostTask\.CountyIds Property
 
-Gets or sets the identifier of the county row the building models belong to\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelsPostTask\.Code'), which leaves the server to choose between the rows of a multi\-part county\.
+Gets or sets the identifiers of the county rows the building models belong to \- normally every polygon part of one county, since a single id is not evidence the code has one part\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.BuildingModelsPostTask\.Code'), which lets the server resolve the code to every part\.
 
 ```csharp
-public System.Nullable<int> CountyId { get; set; }
+public System.Collections.Generic.HashSet<int>? CountyIds { get; set; }
 ```
 
 #### Property Value
-[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
 ### Methods
-
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken)'></a>
-
-## BuildingModelsPostTask\.ExecuteAsync\(IEnumerable\<BuildingModel\>, int, LongProgressWrapper, CancellationToken\) Method
-
-Asynchronously executes the task of posting building models to the database in memory\-size\-split batches, keyed by county identifier\.
-
-```csharp
-protected System.Threading.Tasks.Task<bool> ExecuteAsync(System.Collections.Generic.IEnumerable<DiGi.Analytical.Building.Classes.BuildingModel>? buildingModels, int countyId, DiGi.Core.Classes.LongProgressWrapper? longProgressWrapper, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
-```
-#### Parameters
-
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).buildingModels'></a>
-
-`buildingModels` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
-
-The collection of [DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel') instances to post\.
-
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).countyId'></a>
-
-`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
-
-The identifier of the county row the building models belong to\.
-
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).longProgressWrapper'></a>
-
-`longProgressWrapper` [DiGi\.Core\.Classes\.LongProgressWrapper](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.longprogresswrapper 'DiGi\.Core\.Classes\.LongProgressWrapper')
-
-A [DiGi\.Core\.Classes\.LongProgressWrapper](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.longprogresswrapper 'DiGi\.Core\.Classes\.LongProgressWrapper') tracking the progress of the operation\.
-
-<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,int,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).cancellationToken'></a>
-
-`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
-
-The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
-
-#### Returns
-[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. The task result is true if all batches were posted successfully; otherwise, false\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,string,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken)'></a>
 
@@ -4014,6 +3975,45 @@ The administrative area code the building models belong to\.
 A [DiGi\.Core\.Classes\.LongProgressWrapper](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.longprogresswrapper 'DiGi\.Core\.Classes\.LongProgressWrapper') tracking the progress of the operation\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,string,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. The task result is true if all batches were posted successfully; otherwise, false\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken)'></a>
+
+## BuildingModelsPostTask\.ExecuteAsync\(IEnumerable\<BuildingModel\>, IEnumerable\<int\>, LongProgressWrapper, CancellationToken\) Method
+
+Asynchronously executes the task of posting building models to the database in memory\-size\-split batches, keyed by county identifier\.
+
+```csharp
+protected System.Threading.Tasks.Task<bool> ExecuteAsync(System.Collections.Generic.IEnumerable<DiGi.Analytical.Building.Classes.BuildingModel>? buildingModels, System.Collections.Generic.IEnumerable<int>? countyIds, DiGi.Core.Classes.LongProgressWrapper? longProgressWrapper, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).buildingModels'></a>
+
+`buildingModels` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The collection of [DiGi\.Analytical\.Building\.Classes\.BuildingModel](https://learn.microsoft.com/en-us/dotnet/api/digi.analytical.building.classes.buildingmodel 'DiGi\.Analytical\.Building\.Classes\.BuildingModel') instances to post\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifiers of the county rows the building models belong to \- normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).longProgressWrapper'></a>
+
+`longProgressWrapper` [DiGi\.Core\.Classes\.LongProgressWrapper](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.longprogresswrapper 'DiGi\.Core\.Classes\.LongProgressWrapper')
+
+A [DiGi\.Core\.Classes\.LongProgressWrapper](https://learn.microsoft.com/en-us/dotnet/api/digi.core.classes.longprogresswrapper 'DiGi\.Core\.Classes\.LongProgressWrapper') tracking the progress of the operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingModelsPostTask.ExecuteAsync(System.Collections.Generic.IEnumerable_DiGi.Analytical.Building.Classes.BuildingModel_,System.Collections.Generic.IEnumerable_int_,DiGi.Core.Classes.LongProgressWrapper,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -5244,7 +5244,7 @@ Asynchronously updates building 2D occupancy items in the database for the given
 
 The unambiguous counterpart of [Building2DUpdateItemsAsync\(JsonArray, string, string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDataController.Building2DUpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDataController\.Building2DUpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string, string, System\.Threading\.CancellationToken\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
 
-A single identifier is taken as stated and every datum is filed under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
+The identifiers are the parts of one county in play, and each datum is filed under the part already holding the `building_2d` row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
 
 A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
@@ -5450,7 +5450,7 @@ The manager used to handle GIS PostgreSQL Web API operations\.
 
 Gets or sets the code associated with the occupancy data post task\.
 
-A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.CountyId') instead wherever the identifier is already known. [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.CountyId') takes precedence when both are set.
+A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyIds](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.CountyIds 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.CountyIds') instead wherever the identifiers are already known. [CountyIds](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.CountyIds 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.CountyIds') takes precedence when both are set.
 
 ```csharp
 public string? Code { get; set; }
@@ -5459,18 +5459,18 @@ public string? Code { get; set; }
 #### Property Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
-<a name='DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.CountyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.CountyIds'></a>
 
-## OccupancyDatasPostTask\.CountyId Property
+## OccupancyDatasPostTask\.CountyIds Property
 
-Gets or sets the identifier of the county row the building 2D occupancy data belong to\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.Code'), which leaves the server to choose between the rows of a multi\-part county\. It does not affect [Values\_AdministrativeAreal2D](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.Values_AdministrativeAreal2D 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.Values\_AdministrativeAreal2D'), which is not county\-keyed\.
+Gets or sets the identifiers of the county rows the building 2D occupancy data belong to \- normally every polygon part of one county, since a single id is not evidence the code has one part\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.Code'), which lets the server resolve the code to every part\. It does not affect [Values\_AdministrativeAreal2D](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.Values_AdministrativeAreal2D 'DiGi\.GIS\.WebAPI\.Classes\.OccupancyDatasPostTask\.Values\_AdministrativeAreal2D'), which is not county\-keyed\.
 
 ```csharp
-public System.Nullable<int> CountyId { get; set; }
+public System.Collections.Generic.HashSet<int>? CountyIds { get; set; }
 ```
 
 #### Property Value
-[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
 
 <a name='DiGi.GIS.WebAPI.Classes.OccupancyDatasPostTask.Values_AdministrativeAreal2D'></a>
 
@@ -7984,7 +7984,7 @@ Updates multiple year built data items in the database for the given county rows
 
 The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string, string, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.UpdateItemsAsync\(System\.Text\.Json\.Nodes\.JsonArray, string, string, System\.Threading\.CancellationToken\)'): it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.
 
-A single identifier is taken as stated and every datum is filed under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the `building_2d` row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
+The identifiers are the parts of one county in play, and each datum is filed under the part already holding the `building_2d` row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
 
 A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
@@ -8058,7 +8058,7 @@ The GIS PostgreSQL Web API manager used to handle data persistence\.
 
 Gets or sets the code associated with the year built data post task\.
 
-A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDatasPostTask\.CountyId') instead wherever the identifier is already known. [CountyId](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.CountyId 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDatasPostTask\.CountyId') takes precedence when both are set.
+A code does not identify a single county row - a multi-part county holds one row per polygon part - so set [CountyIds](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.CountyIds 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDatasPostTask\.CountyIds') instead wherever the identifiers are already known. [CountyIds](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.CountyIds 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDatasPostTask\.CountyIds') takes precedence when both are set.
 
 ```csharp
 public string? Code { get; set; }
@@ -8067,15 +8067,15 @@ public string? Code { get; set; }
 #### Property Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.CountyId'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.CountyIds'></a>
 
-## YearBuiltDatasPostTask\.CountyId Property
+## YearBuiltDatasPostTask\.CountyIds Property
 
-Gets or sets the identifier of the county row the year built data belong to\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDatasPostTask\.Code'), which leaves the server to choose between the rows of a multi\-part county\.
+Gets or sets the identifiers of the county rows the year built data belong to \- normally every polygon part of one county, since a single id is not evidence the code has one part\. When set it is used in preference to [Code](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDatasPostTask.Code 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDatasPostTask\.Code'), which lets the server resolve the code to every part\.
 
 ```csharp
-public System.Nullable<int> CountyId { get; set; }
+public System.Collections.Generic.HashSet<int>? CountyIds { get; set; }
 ```
 
 #### Property Value
-[System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')

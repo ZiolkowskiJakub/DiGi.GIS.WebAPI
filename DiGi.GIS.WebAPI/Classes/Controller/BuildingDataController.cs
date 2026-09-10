@@ -1175,7 +1175,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Asynchronously updates building data for the specified county identifiers.
-        /// <para>A single identifier files every datum under it. Several identifiers are the polygon parts of one multi-part county, and each datum is then filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
+        /// <para>The identifiers are the parts of one county in play, and each row is filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
         /// </summary>
         /// <param name="jsonObject">The JSON object containing the table structure and data to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the building data belongs to. Normally every polygon part of one county.</param>
@@ -1258,22 +1258,21 @@ namespace DiGi.GIS.WebAPI.Classes
                 }
 
                 List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
-                int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
 
-                Dictionary<string, int>? countyIds_ByReference = null;
-                if (countyId_Single is null)
+                // A datum carries no geometry, so the 2D building its reference names is the only thing that can say
+                // which part it belongs to. Every row is resolved through building_2d regardless of how many ids the
+                // caller sent - naming one id is not evidence the code has one part - and one no part holds is
+                // rejected rather than filed under a guessed part.
+                List<string> references_ToResolve = [];
+                foreach (Row row in table.Rows)
                 {
-                    List<string> references_ToResolve = [];
-                    foreach (Row row in table.Rows)
+                    if (row.TryGetValue(column_Reference.Index, out string? reference) && !string.IsNullOrWhiteSpace(reference))
                     {
-                        if (row.TryGetValue(column_Reference.Index, out string? reference) && !string.IsNullOrWhiteSpace(reference))
-                        {
-                            references_ToResolve.Add(reference);
-                        }
+                        references_ToResolve.Add(reference);
                     }
-
-                    countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, references_ToResolve, countyIds_Candidate);
                 }
+
+                Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, references_ToResolve, countyIds_Candidate);
 
                 List<UpdateItemsResult.Rejection> rejections = [];
                 Table table_Resolved = new(table.Columns);
@@ -1290,26 +1289,20 @@ namespace DiGi.GIS.WebAPI.Classes
                         continue;
                     }
 
-                    int? countyId = countyId_Single;
-                    if (countyId is null)
+                    if (!countyIds_ByReference.TryGetValue(reference, out int countyId))
                     {
-                        if (countyIds_ByReference is null || !countyIds_ByReference.TryGetValue(reference, out int countyId_Resolved))
+                        rejections.Add(new UpdateItemsResult.Rejection
                         {
-                            rejections.Add(new UpdateItemsResult.Rejection
-                            {
-                                Reference = reference,
-                                Reason = PostgreSQL.Enums.UpdateRejectionReason.CountyUnresolved
-                            });
-                            continue;
-                        }
-
-                        countyId = countyId_Resolved;
+                            Reference = reference,
+                            Reason = PostgreSQL.Enums.UpdateRejectionReason.CountyUnresolved
+                        });
+                        continue;
                     }
 
-                    IO.Modify.SetValue(row, column_CountyId, countyId.Value);
+                    IO.Modify.SetValue(row, column_CountyId, countyId);
                     if (row[column_CountyId.Index] is null)
                     {
-                        row[column_CountyId.Index] = countyId.Value;
+                        row[column_CountyId.Index] = countyId;
                     }
 
                     table_Resolved.AddRow(row);

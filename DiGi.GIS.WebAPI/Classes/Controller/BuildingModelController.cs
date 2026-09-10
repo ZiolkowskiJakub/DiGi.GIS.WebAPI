@@ -320,7 +320,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Updates multiple building model items in the database for the given county rows.
         /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.</para>
-        /// <para>A single identifier is taken as stated and every model is filed under it. Several identifiers are the polygon parts of one multi-part county, and each model is then filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
+        /// <para>The identifiers are the parts of one county in play, and each model is filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
         /// <para>A model whose reference no part holds is not written: nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building models to be updated. This value can be null.</param>
@@ -372,16 +372,18 @@ namespace DiGi.GIS.WebAPI.Classes
 
             List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
 
-            if (countyIds_Candidate.Count == 1)
-            {
-                return await UpdateAsync(buildingModels, countyIds_Candidate[0]);
-            }
-
+            // Every model is resolved through building_2d regardless of how many ids the caller sent - naming one id
+            // is not evidence the code has one part - so the single-id early return is gone and the group, resolve
+            // and bucket path below handles the one-candidate case too.
+            int buildingModels_WithoutReference = 0;
             Dictionary<string, List<BuildingModel>> buildingModels_ByReference = [];
             foreach (BuildingModel buildingModel in buildingModels)
             {
                 if (!buildingModel.TryGetValue(BuildingModelParameter.Reference, out string? reference) || string.IsNullOrWhiteSpace(reference))
                 {
+                    // Nothing names the building this model belongs to, so no part can be decided for it. The
+                    // skip is logged below so a batch of reference-less models is not mistaken for a no-op.
+                    buildingModels_WithoutReference++;
                     continue;
                 }
 
@@ -414,6 +416,11 @@ namespace DiGi.GIS.WebAPI.Classes
                 }
 
                 buildingModels_County.AddRange(keyValuePair.Value);
+            }
+
+            if (buildingModels_WithoutReference != 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModels not written because they carry no reference: {Count}/{Total}", buildingModels_WithoutReference, buildingModels.Count);
             }
 
             if (references_Unresolved.Count != 0)
