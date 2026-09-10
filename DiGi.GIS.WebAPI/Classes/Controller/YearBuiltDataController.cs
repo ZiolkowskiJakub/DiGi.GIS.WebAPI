@@ -196,8 +196,8 @@ namespace DiGi.GIS.WebAPI.Classes
 
             if (yearBuiltDatas_PostgreSQL is null || yearBuiltDatas_PostgreSQL.Count == 0)
             {
-                Serilog.Modify.Log("No YearBuiltDatas PostgreSQL to update");
-                return NoContent();
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "YearBuiltData not written because no reference resolved to a county part (database unreachable or no matching reference)");
+                return StatusCode(500, "No YearBuiltData could be written; none of the references resolved to a county part.");
             }
 
             Serilog.Modify.Log("YearBuiltDatas conversion to PostgreSQL ended. YearBuiltDatas converted: {After}/{Before}", yearBuiltDatas_PostgreSQL.Count, yearBuiltDatas_GIS.Count);

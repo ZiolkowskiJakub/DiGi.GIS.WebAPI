@@ -286,8 +286,8 @@ namespace DiGi.GIS.WebAPI.Classes
 
             if (building2DOccupancyDatas_PostgreSQL is null || building2DOccupancyDatas_PostgreSQL.Count == 0)
             {
-                Serilog.Modify.Log("No Building2DOccupancyDatas PostgreSQL to update");
-                return NoContent();
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OccupancyData not written because no reference resolved to a county part (database unreachable or no matching reference)");
+                return StatusCode(500, "No OccupancyData could be written; none of the references resolved to a county part.");
             }
 
             Serilog.Modify.Log("OccupancyDatas conversion to PostgreSQL ended. OccupancyDatas converted: {After}/{Before}", building2DOccupancyDatas_PostgreSQL.Count, occupancyDatas_GIS.Count);
