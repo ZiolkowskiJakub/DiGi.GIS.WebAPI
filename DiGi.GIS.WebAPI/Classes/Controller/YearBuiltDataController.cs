@@ -507,5 +507,127 @@ namespace DiGi.GIS.WebAPI.Classes
 
             return Content(Core.Convert.ToSystem_String(yearBuiltDatas) ?? string.Empty, "application/json");
         }
+
+        /// <summary>
+        /// Asynchronously retrieves the building references that hold more than one year built data record, optionally filtered by county identifier, ordered by count descending.
+        /// </summary>
+        /// <param name="countyId">The optional integer identifier of the county to filter by; if null, searches across all counties.</param>
+        /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
+        /// <returns>An <see cref="IActionResult"/> containing the list of duplicate references, or 404 if none are found.</returns>
+        [HttpGet("referenceduplicates", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetReferenceDuplicatesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<Building2DReferenceDuplicate>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetReferenceDuplicatesAsync([FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "limit")] int limit = 100, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(GetReferenceDuplicatesAsync));
+            Serilog.Modify.Log("CountyId provided: {CountyId}, Limit provided: {Limit}", countyId?.ToString() ?? string.Empty, limit);
+
+            if (limit <= 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Limit has to be greater than zero");
+                return BadRequest();
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
+
+            if (yearBuiltDataPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "YearBuiltDataPostgreSQLConverter is null");
+                return BadRequest();
+            }
+
+            try
+            {
+                List<Building2DReferenceDuplicate>? building2DReferenceDuplicates = await yearBuiltDataPostgreSQLConverter.GetBuilding2DReferenceDuplicatesAsync(countyId, limit, commandTimeout, cancellationToken);
+                if (building2DReferenceDuplicates is null || building2DReferenceDuplicates.Count == 0)
+                {
+                    return NotFound();
+                }
+
+                string? json = Core.Convert.ToSystem_String(building2DReferenceDuplicates);
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    return NotFound();
+                }
+
+                return Content(json, "application/json");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(GetReferenceDuplicatesAsync));
+                return StatusCode(500, "Internal server error during database query");
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously reports, for every polygon part of a multi-part county, the year built data rows it holds whose reference <c>building_2d</c> does not hold under the same part.
+        /// <para>A county code names one <c>administrative_areal_2d</c> row per polygon part, and a row here is filed under one of them. A row mismatches when <c>building_2d</c> holds its reference under a different part, or under none at all. The mismatches split into <see cref="Building2DReferencedObjectCountyPartMismatchResult.CountHeldElsewhere"/> - a reference <c>building_2d</c> holds under another part, so the repair has somewhere to put the row - and <see cref="Building2DReferencedObjectCountyPartMismatchResult.CountOrphan"/> - a reference <c>building_2d</c> holds under no part, so there is no destination and the gap is a missing building row.</para>
+        /// <para>Only parts holding at least one mismatched row are returned, so a clean measurement is an empty list, and single-part codes are left out entirely because with one part there is nothing to be filed under by mistake.</para>
+        /// </summary>
+        /// <param name="code">An optional county code to restrict the measurement to. When omitted every multi-part code is measured.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying one entry per part holding a mismatched row, or 404 when no measured part holds one.</returns>
+        [HttpGet("countypartmismatches", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetCountyPartMismatchesAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<Building2DReferencedObjectCountyPartMismatchResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetCountyPartMismatchesAsync([FromQuery(Name = "code")] string? code = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(GetCountyPartMismatchesAsync));
+            Serilog.Modify.Log("Code provided: {Code}, CommandTimeout provided: {CommandTimeout}", code ?? string.Empty, commandTimeout);
+
+            if (commandTimeout < 0)
+            {
+                return BadRequest();
+            }
+
+            if (yearBuiltDataPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                List<Building2DReferencedObjectCountyPartMismatchResult>? building2DReferencedObjectCountyPartMismatchResults = await yearBuiltDataPostgreSQLConverter.GetCountyPartMismatchesAsync(code, commandTimeout, cancellationToken);
+                if (building2DReferencedObjectCountyPartMismatchResults is null || building2DReferencedObjectCountyPartMismatchResults.Count == 0)
+                {
+                    Serilog.Modify.Log("No year built data part mismatch found for {Code}", code ?? string.Empty);
+                    return NotFound();
+                }
+
+                string? json = Core.Convert.ToSystem_String(building2DReferencedObjectCountyPartMismatchResults);
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    return NotFound();
+                }
+
+                return Content(json, "application/json");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(GetCountyPartMismatchesAsync));
+                return StatusCode(500, "Internal server error during database query");
+            }
+        }
     }
 }
