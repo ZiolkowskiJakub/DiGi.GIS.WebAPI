@@ -7824,6 +7824,43 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the count, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county has no partition\.
 
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.GetCountyPartMismatchesAsync\(string, int, CancellationToken\) Method
+
+Asynchronously reports, for every polygon part of a multi\-part county, the year built data rows it holds whose reference `building_2d` does not hold under the same part\.
+
+A county code names one `administrative_areal_2d` row per polygon part, and a row here is filed under one of them. A row mismatches when `building_2d` holds its reference under a different part, or under none at all. The mismatches split into [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.CountHeldElsewhere](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dreferencedobjectcountypartmismatchresult.countheldelsewhere 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.CountHeldElsewhere') - a reference `building_2d` holds under another part, so the repair has somewhere to put the row - and [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.CountOrphan](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dreferencedobjectcountypartmismatchresult.countorphan 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReferencedObjectCountyPartMismatchResult\.CountOrphan') - a reference `building_2d` holds under no part, so there is no destination and the gap is a missing building row.
+
+Only parts holding at least one mismatched row are returned, so a clean measurement is an empty list, and single-part codes are left out entirely because with one part there is nothing to be filed under by mistake.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCountyPartMismatchesAsync(string? code=null, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).code'></a>
+
+`code` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+An optional county code to restrict the measurement to\. When omitted every multi\-part code is measured\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token used to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying one entry per part holding a mismatched row, or 404 when no measured part holds one\.
+
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetItemsByReferenceAsync(string,System.Nullable_int_,System.Threading.CancellationToken)'></a>
 
 ## YearBuiltDataController\.GetItemsByReferenceAsync\(string, Nullable\<int\>, CancellationToken\) Method
@@ -7901,6 +7938,45 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a list of year built data items or no content if none were found\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferenceDuplicatesAsync(System.Nullable_int_,int,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.GetReferenceDuplicatesAsync\(Nullable\<int\>, int, int, CancellationToken\) Method
+
+Asynchronously retrieves the building references that hold more than one year built data record, optionally filtered by county identifier, ordered by count descending\.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetReferenceDuplicatesAsync(System.Nullable<int> countyId=null, int limit=100, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferenceDuplicatesAsync(System.Nullable_int_,int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The optional integer identifier of the county to filter by; if null, searches across all counties\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferenceDuplicatesAsync(System.Nullable_int_,int,int,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The maximum number of duplicate references to return\. Defaults to 100\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferenceDuplicatesAsync(System.Nullable_int_,int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferenceDuplicatesAsync(System.Nullable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token used to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing the list of duplicate references, or 404 if none are found\.
 
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferencesByCountyIdAsync(int,int,System.Threading.CancellationToken)'></a>
 
