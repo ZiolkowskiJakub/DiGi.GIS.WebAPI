@@ -526,10 +526,10 @@ namespace DiGi.GIS.WebAPI.Classes
 
             Serilog.Modify.Log("Updating to database starting");
 
-            HashSet<long>? ids;
+            PostgreSQL.Classes.PostgreSQLUpdateResult? updateResult;
             try
             {
-                ids = await buildingModelPostgreSQLConverter.UpdateAsync(buildingModels_PostgreSQL, commandTimeout: 600);
+                updateResult = await buildingModelPostgreSQLConverter.UpdateAsync(buildingModels_PostgreSQL, commandTimeout: 600);
             }
             catch (Exception exception)
             {
@@ -537,17 +537,39 @@ namespace DiGi.GIS.WebAPI.Classes
                 return StatusCode(500, "Database update failed.");
             }
 
-            // Answering Ok here is what let a whole county regeneration report success while writing nothing:
-            // the storage database was unreachable, every batch came back empty, and the client treats 200 as
-            // done. Models were converted and reached this point, so nothing updated is a failure, not a
-            // quiet no-op. BuildingController already answers this case the same way.
-            if (ids is null || ids.Count == 0)
+            if (updateResult is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no BuildingModels have been updated");
                 return StatusCode(500, "Database update returned no modified building model IDs.");
             }
 
-            Serilog.Modify.Log("Updating to database ended. Updated BuildingModels: {After}/{Before}", ids.Count, buildingModels_PostgreSQL.Count);
+            // Logged before the empty-ids check because it is the explanation for it: when every row is
+            // rejected the identifier set is empty, and without this the 500 above carries no reason.
+            if (updateResult.Rejections.Count != 0)
+            {
+                string references_Sample = string.Join(", ",
+                    updateResult.Rejections
+                        .Where(rejection => !string.IsNullOrWhiteSpace(rejection.Reference))
+                        .Select(rejection => rejection.Reference!)
+                        .Take(20));
+
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning,
+                    "BuildingModels not written because no county part was stated: {Count}/{Total}. References: {References}",
+                    updateResult.Rejections.Count, buildingModels_PostgreSQL.Count, references_Sample);
+            }
+
+            // Answering Ok here is what let a whole county regeneration report success while writing nothing:
+            // the storage database was unreachable, every batch came back empty, and the client treats 200 as
+            // done. Models were converted and reached this point, so nothing updated is a failure, not a
+            // quiet no-op. BuildingController already answers this case the same way.
+            if (updateResult.Ids.Count == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no BuildingModels have been updated");
+                return StatusCode(500, "Database update returned no modified building model IDs.");
+            }
+
+            Serilog.Modify.Log("Updating to database ended. Updated BuildingModels: {After}/{Before}, Rejected: {Rejected}",
+                updateResult.Ids.Count, buildingModels_PostgreSQL.Count, updateResult.Rejections.Count);
 
             // A model posted under an identifier that was already stored replaced its own row rather than
             // adding one, so that identifier names a row that has just been written and must not be deleted.
