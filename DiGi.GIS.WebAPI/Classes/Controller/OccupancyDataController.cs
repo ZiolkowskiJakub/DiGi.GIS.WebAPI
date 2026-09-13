@@ -1,6 +1,7 @@
 using DiGi.GIS.PostgreSQL.Classes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -463,6 +464,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<Building2DReferenceDuplicate>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetBuilding2DDuplicateReferencesAsync([FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "limit")] int limit = 100, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
@@ -506,6 +508,12 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 throw;
             }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(OccupancyDataController), nameof(GetBuilding2DDuplicateReferencesAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
             catch (Exception exception)
             {
                 Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(OccupancyDataController), nameof(GetBuilding2DDuplicateReferencesAsync));
@@ -525,6 +533,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetBuilding2DDuplicatesCountAsync([FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
@@ -555,6 +564,12 @@ namespace DiGi.GIS.WebAPI.Classes
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(OccupancyDataController), nameof(GetBuilding2DDuplicatesCountAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
             }
             catch (Exception exception)
             {

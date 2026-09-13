@@ -3,6 +3,7 @@ using DiGi.GIS.PostgreSQL.Classes;
 using DiGi.WebAPI.Classes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
@@ -121,6 +122,8 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(EPWFile), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetEPWFileAsync([FromQuery(Name = "x")] double x, [FromQuery(Name = "y")] double y, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(EPWFileController), nameof(GetEPWFileAsync));
@@ -148,6 +151,16 @@ namespace DiGi.GIS.WebAPI.Classes
                 }
 
                 return Content(json, "application/json");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(EPWFileController), nameof(GetEPWFileAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
             }
             catch (Exception exception)
             {
