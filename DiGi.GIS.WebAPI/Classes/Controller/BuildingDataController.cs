@@ -188,9 +188,6 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
-                // TODO [BuildingDataCatalogTimeout]: commandTimeout and cancellationToken are dropped by DiGi.PostgreSQL.Table.TablePostgreSQLConverter
-                // (its GetColumns chain calls OpenAsync()/ExecuteReaderAsync() with neither), so these arguments have no effect here.
-                // Remove this marker once that converter forwards both (https://github.com/ZiolkowskiJakub/DiGi.GIS.WebAPI/issues/33).
                 List<Column>? columns = await buildingDataPostgreSQLConverter.GetColumnsByCategoriesAsync(commandTimeout: commandTimeout, cancellationToken: cancellationToken);
                 if (columns is null || columns.Count == 0)
                 {
@@ -250,9 +247,6 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
-                // TODO [BuildingDataCatalogTimeout]: commandTimeout and cancellationToken are dropped by DiGi.PostgreSQL.Table.TablePostgreSQLConverter
-                // (its GetColumns chain calls OpenAsync()/ExecuteReaderAsync() with neither), so these arguments have no effect here.
-                // Remove this marker once that converter forwards both (https://github.com/ZiolkowskiJakub/DiGi.GIS.WebAPI/issues/33).
                 List<Column>? columns = await buildingDataPostgreSQLConverter.GetColumnsByCategoriesAsync(categories, commandTimeout, cancellationToken);
                 if (columns is null || columns.Count == 0)
                 {
@@ -312,9 +306,6 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
-                // TODO [BuildingDataCatalogTimeout]: commandTimeout and cancellationToken are dropped by DiGi.PostgreSQL.Table.TablePostgreSQLConverter
-                // (its GetColumns chain calls OpenAsync()/ExecuteReaderAsync() with neither), so these arguments have no effect here.
-                // Remove this marker once that converter forwards both (https://github.com/ZiolkowskiJakub/DiGi.GIS.WebAPI/issues/33).
                 List<Column>? columns = await buildingDataPostgreSQLConverter.GetColumnsByCategoriesAsync(columnsByCategoriesParameter.Categories, commandTimeout, cancellationToken);
                 if (columns is null || columns.Count == 0)
                 {
@@ -1071,9 +1062,6 @@ namespace DiGi.GIS.WebAPI.Classes
                     strings_ColumnUniqueIds = null;
                 }
 
-                // TODO [BuildingDataCatalogTimeout]: commandTimeout and cancellationToken are dropped by DiGi.PostgreSQL.Table.TablePostgreSQLConverter
-                // (its GetColumns chain calls OpenAsync()/ExecuteReaderAsync() with neither), so these arguments have no effect here.
-                // Remove this marker once that converter forwards both (https://github.com/ZiolkowskiJakub/DiGi.GIS.WebAPI/issues/33).
                 List<Column>? columns = await buildingDataPostgreSQLConverter.GetColumnsByUniqueIdsAsync(strings_ColumnUniqueIds, commandTimeout, cancellationToken);
                 if (columns is null || columns.Count == 0)
                 {
