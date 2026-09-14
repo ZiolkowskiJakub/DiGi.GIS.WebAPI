@@ -1575,6 +1575,43 @@ The cancellation token to observe\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a list of building 2D items\.
 
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetPoint2DsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DController\.GetPoint2DsByAdministrativeAreal2DIdAsync\(int, int, CancellationToken\) Method
+
+Retrieves the bounding\-box centres of every building of the given administrative area, keyed by reference and county partition, for fast 2D dot rendering\.
+
+Area resolution goes through <b>Subdivision children</b>, not geometry (parity with `building2Dreferencesbyadministrativeareal2Did`): an area with no subdivisions answers 200 with an empty array. That is not the same as "the area holds no buildings" - it means the resolution found no subdivision to filter by. A [Microsoft\.AspNetCore\.Http\.StatusCodes\.Status404NotFound](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.statuscodes.status404notfound 'Microsoft\.AspNetCore\.Http\.StatusCodes\.Status404NotFound') means the area lookup itself failed, not that the area is empty. Rows whose bounding box is NULL are skipped. The JSONB geometry column is never read on this path.
+
+A cold partition can exceed the default timeout (precedent: issue #27) - retry once with a higher `commandtimeout` before treating a timeout as a defect.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetPoint2DsByAdministrativeAreal2DIdAsync(int administrativeAreal2DId, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetPoint2DsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken).administrativeAreal2DId'></a>
+
+`administrativeAreal2DId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The unique identifier of the administrative area 2D used to filter the building centroids\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetPoint2DsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetPoint2DsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetPoint2DsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_int_,System.Threading.CancellationToken)'></a>
 
 ## Building2DController\.GetPoint2DsByReferencesAsync\(IEnumerable\<string\>, Nullable\<int\>, CancellationToken\) Method
