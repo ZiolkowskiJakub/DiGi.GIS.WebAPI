@@ -373,6 +373,76 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
+        /// Asynchronously retrieves the year built label of every reference stored under the specified county identifier, as a map of reference to year.
+        /// <para>The label is the year of the record&apos;s user entry where one exists, otherwise the year of its first non-prediction entry - the selection the training-table assembler makes on the same object, whose entries form a dictionary keyed by source, so of a source the last entry in stored order is what it answers. A record whose entries are all predictions therefore contributes nothing rather than a defaulted year. A reference holding several rows answers with the year of the oldest labelled row, in <c>(created_at, id)</c> order, which is the row the incumbent full read keeps.</para>
+        /// <para>The read is projected on the server: the answer carries the finished labels only, and the full year history of a record - the user entry, the incumbent model&apos;s prediction entries, every other source - never leaves the database. That is the whole point of the endpoint, where reading the objects to reach one <c>short</c> per building ships the history of every building instead.</para>
+        /// <para>The map is keyed by reference alone. A reference is unique per county, not nationally, so two county rows can legitimately carry the same one under different years; the caller reads the parts it wants and lines the labels up against the features of the same part.</para>
+        /// <para>The response is 200 with an empty object when the county holds no label at all, so a county without labels is a result the caller can act on rather than a failure to special-case; a 404 from this route therefore means the route is not on the build serving it.</para>
+        /// </summary>
+        /// <param name="countyId">The unique identifier of the county row to read. A county identifier, never a four character county code.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 30 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>An <see cref="IActionResult"/> containing the reference-to-year map of the labels held, 400 when the county identifier is missing, 503 on a transient database failure, or 500 when the read failed.</returns>
+        [HttpGet("useryearbuiltbycountyid", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetUserYearBuiltsByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(Dictionary<string, short>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetUserYearBuiltsByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(YearBuiltDataController), nameof(GetUserYearBuiltsByCountyIdAsync), countyId);
+
+            // countyId binds to 0 when absent, and 0 is not a county, so the reject below is the guard for the
+            // omitted case as well: an absent filter must not be readable as a valid one.
+            if (countyId <= 0 || commandTimeout < 0)
+            {
+                return BadRequest();
+            }
+
+            if (yearBuiltDataPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            Dictionary<string, short>? years_ByReference;
+            try
+            {
+                years_ByReference = await yearBuiltDataPostgreSQLConverter.GetUserYearBuiltsByCountyIdAsync(countyId, commandTimeout, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(YearBuiltDataController), nameof(GetUserYearBuiltsByCountyIdAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(GetUserYearBuiltsByCountyIdAsync));
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            if (years_ByReference is null)
+            {
+                return StatusCode(500, "The year built labels could not be read");
+            }
+
+            // The keys are references and the values years: an object rather than an array, so the answer is
+            // the label dictionary itself and a reference that appears twice is impossible by construction.
+            JsonObject jsonObject = [];
+            foreach (KeyValuePair<string, short> keyValuePair in years_ByReference)
+            {
+                jsonObject[keyValuePair.Key] = keyValuePair.Value;
+            }
+
+            return Content(jsonObject.ToJsonString(), "application/json");
+        }
+
+        /// <summary>
         /// Asynchronously retrieves the number of year built data items stored for a specified county identifier.
         /// </summary>
         /// <param name="countyId">The unique identifier of the county.</param>

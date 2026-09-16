@@ -8050,6 +8050,47 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing a list of reference strings if found, or 404 if none are found\.
 
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetUserYearBuiltsByCountyIdAsync(int,int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.GetUserYearBuiltsByCountyIdAsync\(int, int, CancellationToken\) Method
+
+Asynchronously retrieves the year built label of every reference stored under the specified county identifier, as a map of reference to year\.
+
+The label is the year of the record's user entry where one exists, otherwise the year of its first non-prediction entry - the selection the training-table assembler makes on the same object, whose entries form a dictionary keyed by source, so of a source the last entry in stored order is what it answers. A record whose entries are all predictions therefore contributes nothing rather than a defaulted year. A reference holding several rows answers with the year of the oldest labelled row, in `(created_at, id)` order, which is the row the incumbent full read keeps.
+
+The read is projected on the server: the answer carries the finished labels only, and the full year history of a record - the user entry, the incumbent model's prediction entries, every other source - never leaves the database. That is the whole point of the endpoint, where reading the objects to reach one `short` per building ships the history of every building instead.
+
+The map is keyed by reference alone. A reference is unique per county, not nationally, so two county rows can legitimately carry the same one under different years; the caller reads the parts it wants and lines the labels up against the features of the same part.
+
+The response is 200 with an empty object when the county holds no label at all, so a county without labels is a result the caller can act on rather than a failure to special-case; a 404 from this route therefore means the route is not on the build serving it.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetUserYearBuiltsByCountyIdAsync(int countyId, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetUserYearBuiltsByCountyIdAsync(int,int,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The unique identifier of the county row to read\. A county identifier, never a four character county code\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetUserYearBuiltsByCountyIdAsync(int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 30 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetUserYearBuiltsByCountyIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing the reference\-to\-year map of the labels held, 400 when the county identifier is missing, 503 on a transient database failure, or 500 when the read failed\.
+
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken)'></a>
 
 ## YearBuiltDataController\.UpdateItemsAsync\(JsonArray, string, string, CancellationToken\) Method
