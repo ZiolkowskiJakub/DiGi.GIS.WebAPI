@@ -199,7 +199,10 @@ namespace DiGi.GIS.WebAPI.Classes
             return Content(json, "application/json");
         }
 
-        /// <summary> Retrieves building 2D references filtered by administrative area 2D identifier. Can be used for relatively small number of buildings</summary>
+        /// <summary>
+        /// Retrieves building 2D references filtered by administrative area 2D identifier. Can be used for relatively small number of buildings.
+        /// <para>An area above the subdivision level resolves through its <b>Subdivision children</b> (<c>building_2d.subdivision_id</c> membership); a <b>Subdivision</b> resolves through its <b>polygon</b> - the buildings whose bounding-box centre it contains - because the subdivision layer nests (a city, its districts and their neighbourhoods are all subdivisions of one municipality) and <c>subdivision_id</c> files each building under a single container, so membership cannot name a district's buildings (DiGi.GIS.PostgreSQL#75). Parity with <c>point2dsbyadministrativeareal2Did</c>.</para>
+        /// </summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D used to filter the building references.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -235,7 +238,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Retrieves the bounding-box centres of every building of the given administrative area, keyed by reference and county partition, for fast 2D dot rendering.
-        /// <para>Area resolution goes through <b>Subdivision children</b>, not geometry (parity with <c>building2Dreferencesbyadministrativeareal2Did</c>): an area with no subdivisions answers 200 with an empty array. That is not the same as "the area holds no buildings" - it means the resolution found no subdivision to filter by. A <see cref="StatusCodes.Status404NotFound"/> means the area lookup itself failed, not that the area is empty. Rows whose bounding box is NULL are skipped. The JSONB geometry column is never read on this path.</para>
+        /// <para>Area resolution (parity with <c>building2Dreferencesbyadministrativeareal2Did</c>): an area above the subdivision level goes through its <b>Subdivision children</b>, not geometry - one with no subdivisions answers 200 with an empty array, which is not the same as "the area holds no buildings"; it means the resolution found no subdivision to filter by. A <b>Subdivision</b> goes through its <b>polygon</b> instead - the buildings whose bounding-box centre it contains - because the subdivision layer nests and <c>subdivision_id</c> membership cannot name a district's buildings (DiGi.GIS.PostgreSQL#75); for it, an empty array does mean the polygon holds no building centre. A <see cref="StatusCodes.Status404NotFound"/> means the area lookup itself failed, not that the area is empty. Rows whose bounding box is NULL are skipped. The JSONB geometry column is never read on either path.</para>
         /// <para>A cold partition can exceed the default timeout (precedent: issue #27) - retry once with a higher <c>commandtimeout</c> before treating a timeout as a defect.</para>
         /// </summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D used to filter the building centroids.</param>

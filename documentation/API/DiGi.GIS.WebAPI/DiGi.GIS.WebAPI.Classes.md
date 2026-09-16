@@ -1194,7 +1194,9 @@ A task that represents the asynchronous operation\.
 
 ## Building2DController\.GetBuilding2DReferencesByAdministrativeAreal2DIdAsync\(int, CancellationToken\) Method
 
-Retrieves building 2D references filtered by administrative area 2D identifier\. Can be used for relatively small number of buildings
+Retrieves building 2D references filtered by administrative area 2D identifier\. Can be used for relatively small number of buildings\.
+
+An area above the subdivision level resolves through its <b>Subdivision children</b> (`building_2d.subdivision_id` membership); a <b>Subdivision</b> resolves through its <b>polygon</b> - the buildings whose bounding-box centre it contains - because the subdivision layer nests (a city, its districts and their neighbourhoods are all subdivisions of one municipality) and `subdivision_id` files each building under a single container, so membership cannot name a district's buildings (DiGi.GIS.PostgreSQL#75). Parity with `point2dsbyadministrativeareal2Did`.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetBuilding2DReferencesByAdministrativeAreal2DIdAsync(int administrativeAreal2DId, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -1581,7 +1583,7 @@ A task representing the asynchronous operation, returning a list of building 2D 
 
 Retrieves the bounding\-box centres of every building of the given administrative area, keyed by reference and county partition, for fast 2D dot rendering\.
 
-Area resolution goes through <b>Subdivision children</b>, not geometry (parity with `building2Dreferencesbyadministrativeareal2Did`): an area with no subdivisions answers 200 with an empty array. That is not the same as "the area holds no buildings" - it means the resolution found no subdivision to filter by. A [Microsoft\.AspNetCore\.Http\.StatusCodes\.Status404NotFound](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.statuscodes.status404notfound 'Microsoft\.AspNetCore\.Http\.StatusCodes\.Status404NotFound') means the area lookup itself failed, not that the area is empty. Rows whose bounding box is NULL are skipped. The JSONB geometry column is never read on this path.
+Area resolution (parity with `building2Dreferencesbyadministrativeareal2Did`): an area above the subdivision level goes through its <b>Subdivision children</b>, not geometry - one with no subdivisions answers 200 with an empty array, which is not the same as "the area holds no buildings"; it means the resolution found no subdivision to filter by. A <b>Subdivision</b> goes through its <b>polygon</b> instead - the buildings whose bounding-box centre it contains - because the subdivision layer nests and `subdivision_id` membership cannot name a district's buildings (DiGi.GIS.PostgreSQL#75); for it, an empty array does mean the polygon holds no building centre. A [Microsoft\.AspNetCore\.Http\.StatusCodes\.Status404NotFound](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.statuscodes.status404notfound 'Microsoft\.AspNetCore\.Http\.StatusCodes\.Status404NotFound') means the area lookup itself failed, not that the area is empty. Rows whose bounding box is NULL are skipped. The JSONB geometry column is never read on either path.
 
 A cold partition can exceed the default timeout (precedent: issue #27) - retry once with a higher `commandtimeout` before treating a timeout as a defect.
 
