@@ -5712,7 +5712,7 @@ An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us
 
 Retrieves the orthophoto coverage factor for a specified administrative area 2D identifier\.
 
-Below county level the figure is counted rather than estimated. A subdivision and a municipality have no partition of their own - both tables are partitioned by `county_id` - so the coverage is measured over that area's own buildings, by reading its county once per side and matching the references in memory. County and above keep the planner's row estimate, which is what makes a voivodeship or a country affordable at all, so an exact sub-county figure and its county's estimate can differ by a few percent and both be right.
+Below county level the figure is counted rather than estimated. A subdivision and a municipality have no partition of their own - both tables are partitioned by `county_id` - so the coverage is measured over the buildings whose centre lies inside the area's <b>polygon</b>, by reading its county once per side and matching the references in memory. Membership is geometric, not the stored `subdivision_id`: where the subdivision layer nests, a district holds nothing by that column while its polygon holds thousands, and a municipality is measured over its own polygon rather than as a sum of its subdivisions, which would count a nested city once per level (DiGi.GIS.PostgreSQL#77). County and above keep the planner's row estimate, which is what makes a voivodeship or a country affordable at all, so an exact sub-county figure and its county's estimate can differ by a few percent and both be right.
 
 Where building data is measured but no orthophoto partition has been created for a county, the county has zero orthophotos stored and yields a coverage factor of `0.0`. A coverage that cannot be measured (missing or unanalysed building data, or an unanalysed orthophoto partition) answers 204 NoContent; `countbycountyid?estimated=true` reads the state of one county, answering 200 when it is analysed, 204 when it is unanalysed and 404 when it has no partition.
 
@@ -5751,7 +5751,7 @@ Retrieves the orthophoto coverage factors for the specified administrative area 
 
 The values come back in the order the identifiers were given, one per identifier, so a caller can update one row per value without matching anything up. A value is `null` where the coverage could not be measured (missing or unanalysed building data, or unanalysed orthophoto partition). Where building data is measured but no orthophoto partition has been created for a county, its orthophoto count is 0, yielding a coverage factor of `0.0`.
 
-A county, a voivodeship and a country are answered from the two tables row estimates - every identifier is resolved to the counties it stands for and both estimates are read for the whole set in one query per table. A subdivision and a municipality have no partition of their own and are instead counted, over their own buildings, by reading their county once per side; every subdivision and municipality of one county is served from that single pass.
+A county, a voivodeship and a country are answered from the two tables row estimates - every identifier is resolved to the counties it stands for and both estimates are read for the whole set in one query per table. A subdivision and a municipality have no partition of their own and are instead counted, over the buildings whose centre lies inside their own polygon, by reading their county once per side; every subdivision and municipality of one county is served from that single pass. A municipality is one polygon, not a sum of its subdivisions - where the subdivision layer nests that sum counts a city once per level (DiGi.GIS.PostgreSQL#77).
 
 Because counting reads a whole county, at most [MaximumCoverageCountyCount](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.OrtoDatas.MaximumCoverageCountyCount 'DiGi\.GIS\.WebAPI\.Constants\.OrtoDatas\.MaximumCoverageCountyCount') distinct counties are counted per request, taken in the order the identifiers were given. Identifiers sitting in counties beyond that are answered `null` rather than given their county figure or failing the request.
 
@@ -6003,6 +6003,41 @@ The cancellation token to observe\.
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetPolygonalFace2DsByIdAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken)'></a>
+
+## OrtoDatasController\.GetPolygonalFace2DsByIdAsync\(IEnumerable\<int\>, int, CancellationToken\) Method
+
+Resolves administrative areas to their polygons, keyed by identifier \- the shape a coverage is measured over\.
+
+Any level is accepted, and each area is measured as one polygon: a municipality over its own outline rather than as the sum of its subdivisions, which double-counts wherever the subdivision layer nests (DiGi.GIS.PostgreSQL#77).
+
+```csharp
+private System.Threading.Tasks.Task<System.Collections.Generic.Dictionary<int,DiGi.Geometry.Planar.Classes.PolygonalFace2D>?> GetPolygonalFace2DsByIdAsync(System.Collections.Generic.IEnumerable<int> administrativeAreal2DIds, int commandTimeout, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetPolygonalFace2DsByIdAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).administrativeAreal2DIds'></a>
+
+`administrativeAreal2DIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The identifiers to resolve\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetPolygonalFace2DsByIdAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetPolygonalFace2DsByIdAsync(System.Collections.Generic.IEnumerable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+A cancellation token that can be used by the caller to cancel the asynchronous operation\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.Dictionary&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[,](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D](https://learn.microsoft.com/en-us/dotnet/api/digi.geometry.planar.classes.polygonalface2d 'DiGi\.Geometry\.Planar\.Classes\.PolygonalFace2D')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2 'System\.Collections\.Generic\.Dictionary\`2')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+The polygon of every identifier that has one, or null when the converter is missing or the rows could not be read\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetQueueSummariesByCountyIdsAsync(System.Collections.Generic.List_int_,int,System.Threading.CancellationToken)'></a>
 
