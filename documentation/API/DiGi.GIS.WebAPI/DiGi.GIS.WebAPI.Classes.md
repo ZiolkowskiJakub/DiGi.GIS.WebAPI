@@ -1701,7 +1701,7 @@ The unique identifier of the county used to filter the building 2D references\.
 
 `subdivisionId` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
-The optional unique identifier of the subdivision used to further filter the building 2D references\.
+The optional unique identifier of the subdivision used to further filter the building 2D references\. When set, the buildings are read by the subdivision's polygon \(every container that holds a building answers\), not by the stored `subdivision_id` \- the subdivision layer is nested, so a building filed under its neighbourhood is still returned for its district and city\.
 
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,int,System.Threading.CancellationToken).commandTimeout'></a>
 
