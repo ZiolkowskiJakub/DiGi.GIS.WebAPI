@@ -664,8 +664,9 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary>
         /// Generates a value range distribution histogram for a specific building data column inside a county partition, applying optional dynamic filters.
+        /// <para>Each row of the answer is one bucket - <c>{bucket, rangeStart, rangeEnd, count}</c>, the actual minimum and maximum of the values the bucket holds and their count. The buckets are of equal value width unless the body asks for <see cref="DiGi.PostgreSQL.Table.Enums.HistogramBucketing.EqualCount"/> (<c>HistogramBucketing: 1</c>), which gives every bucket the same number of rows and keeps a skewed column's resolution where its rows are (ZiolkowskiJakub/DiGi.GIS.WebAPI#35).</para>
         /// </summary>
-        /// <param name="histogramRequestParameter">The parameter containing the target column, county identifier, desired bucket count, and optional dynamic filters.</param>
+        /// <param name="histogramRequestParameter">The parameter containing the target column, county identifier, desired bucket count, bucketing rule, and optional dynamic filters.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation, returning the histogram bucket list as a JSON array.</returns>
@@ -688,7 +689,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
-                JsonArray? histogramArray = await buildingDataPostgreSQLConverter.GetHistogramSummaryAsync(histogramRequestParameter.ColumnUniqueId, histogramRequestParameter.BucketCount, histogramRequestParameter.CountyId, histogramRequestParameter.FilterGroup, commandTimeout, cancellationToken);
+                JsonArray? histogramArray = await buildingDataPostgreSQLConverter.GetHistogramSummaryAsync(histogramRequestParameter.ColumnUniqueId, histogramRequestParameter.BucketCount, histogramRequestParameter.CountyId, histogramRequestParameter.FilterGroup, histogramRequestParameter.HistogramBucketing, commandTimeout, cancellationToken);
 
                 if (histogramArray is null)
                 {

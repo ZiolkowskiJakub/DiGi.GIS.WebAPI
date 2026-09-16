@@ -1,4 +1,5 @@
 using DiGi.PostgreSQL.Table.Classes;
+using DiGi.PostgreSQL.Table.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Nodes;
 
@@ -45,6 +46,13 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <example>20</example>
         [Range(1, 1000)]
         public int BucketCount { get; set; } = 10;
+
+        /// <summary>
+        /// Gets or sets the bucketing rule. Defaults to <see cref="HistogramBucketing.EqualWidth"/> (<c>width_bucket</c> over the scope's [min, max], the maximum in the overflow bucket <see cref="BucketCount"/> + 1); <see cref="HistogramBucketing.EqualCount"/> (<c>ntile</c>) gives every bucket the same number of rows, so a skewed column keeps its resolution where its rows are - what a consumer placing quantiles needs (ZiolkowskiJakub/DiGi.PostgreSQL#7).
+        /// <para>Sent as the integer value; an omitted property keeps equal width, so clients written against the earlier contract are unaffected.</para>
+        /// </summary>
+        /// <example>1</example>
+        public HistogramBucketing HistogramBucketing { get; set; } = HistogramBucketing.EqualWidth;
 
         /// <summary>
         /// Gets or sets the optional dynamic hierarchical filters to apply prior to generating the histogram.

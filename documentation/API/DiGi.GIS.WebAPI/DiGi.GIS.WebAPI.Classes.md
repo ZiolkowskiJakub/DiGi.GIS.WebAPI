@@ -3283,6 +3283,8 @@ An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us
 
 Generates a value range distribution histogram for a specific building data column inside a county partition, applying optional dynamic filters\.
 
+Each row of the answer is one bucket - `{bucket, rangeStart, rangeEnd, count}`, the actual minimum and maximum of the values the bucket holds and their count. The buckets are of equal value width unless the body asks for [DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing\.EqualCount](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.enums.histogrambucketing.equalcount 'DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing\.EqualCount') (`HistogramBucketing: 1`), which gives every bucket the same number of rows and keeps a skewed column's resolution where its rows are (ZiolkowskiJakub/DiGi.GIS.WebAPI#35).
+
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter histogramRequestParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -3292,7 +3294,7 @@ public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetHi
 
 `histogramRequestParameter` [HistogramRequestParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.HistogramRequestParameter 'DiGi\.GIS\.WebAPI\.Classes\.HistogramRequestParameter')
 
-The parameter containing the target column, county identifier, desired bucket count, and optional dynamic filters\.
+The parameter containing the target column, county identifier, desired bucket count, bucketing rule, and optional dynamic filters\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
 
@@ -5027,6 +5029,24 @@ public DiGi.PostgreSQL.Table.Classes.FilterGroup? FilterGroup { get; set; }
 
 #### Property Value
 [DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.classes.filtergroup 'DiGi\.PostgreSQL\.Table\.Classes\.FilterGroup')
+
+<a name='DiGi.GIS.WebAPI.Classes.HistogramRequestParameter.HistogramBucketing'></a>
+
+## HistogramRequestParameter\.HistogramBucketing Property
+
+Gets or sets the bucketing rule\. Defaults to [DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing\.EqualWidth](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.enums.histogrambucketing.equalwidth 'DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing\.EqualWidth') \(`width_bucket` over the scope's \[min, max\], the maximum in the overflow bucket [BucketCount](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.HistogramRequestParameter.BucketCount 'DiGi\.GIS\.WebAPI\.Classes\.HistogramRequestParameter\.BucketCount') \+ 1\); [DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing\.EqualCount](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.enums.histogrambucketing.equalcount 'DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing\.EqualCount') \(`ntile`\) gives every bucket the same number of rows, so a skewed column keeps its resolution where its rows are \- what a consumer placing quantiles needs \(ZiolkowskiJakub/DiGi\.PostgreSQL\#7\)\.
+
+Sent as the integer value; an omitted property keeps equal width, so clients written against the earlier contract are unaffected.
+
+```csharp
+public DiGi.PostgreSQL.Table.Enums.HistogramBucketing HistogramBucketing { get; set; }
+```
+
+#### Property Value
+[DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.enums.histogrambucketing 'DiGi\.PostgreSQL\.Table\.Enums\.HistogramBucketing')
+
+### Example
+1
 
 <a name='DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter'></a>
 
