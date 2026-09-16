@@ -896,7 +896,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves references of the building2Ds filtered by county Id. </summary>
         /// <param name="countyId">The unique identifier of the county used to filter the building 2D references.</param>
-        /// <param name="subdivisionId">The optional unique identifier of the subdivision used to further filter the building 2D references.</param>
+        /// <param name="subdivisionId">The optional unique identifier of the subdivision used to further filter the building 2D references. When set, the buildings are read by the subdivision's polygon (every container that holds a building answers), not by the stored <c>subdivision_id</c> - the subdivision layer is nested, so a building filed under its neighbourhood is still returned for its district and city.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -922,7 +922,10 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
-            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, subdivisionId, excludedReferences: null, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+            // A subdivision is a nested layer - a building filed under its neighbourhood must still answer for its district and city, so the read goes by the subdivision's polygon, not by the stored subdivision_id column.
+            List<PostgreSQL.Classes.Building2DReference>? building2DReferences = subdivisionId is int subdivisionId_Value
+                ? await building2DPostgreSQLConverter.GetBuilding2DReferencesBySubdivisionIdAsync(subdivisionId_Value, commandTimeout: commandTimeout, cancellationToken: cancellationToken)
+                : await building2DPostgreSQLConverter.GetBuilding2DReferencesByCountyIdAsync(countyId, null, excludedReferences: null, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             if (building2DReferences is null || building2DReferences.Count == 0)
             {
                 return NotFound();
