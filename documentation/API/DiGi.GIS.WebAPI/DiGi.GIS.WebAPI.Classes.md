@@ -6096,26 +6096,34 @@ A cancellation token that can be used by the caller to cancel the asynchronous o
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying the queue depths as JSON, or an error status\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetRandomBuilding2DReferenceAsync(int,System.Threading.CancellationToken)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetRandomBuilding2DReferenceAsync(int[],int,System.Threading.CancellationToken)'></a>
 
-## OrtoDatasController\.GetRandomBuilding2DReferenceAsync\(int, CancellationToken\) Method
+## OrtoDatasController\.GetRandomBuilding2DReferenceAsync\(int\[\], int, CancellationToken\) Method
 
 Draws one building that has orthophoto coverage and no user\-provided year built yet \- the next candidate for a reviewer\.
 
 The drawn [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dreference 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DReference') carries the `building_2d` part it is filed under; that part is what the caller must send back on the write and on every read, since a county code can name several parts.
 
+An optional repeated `countyids` confines the draw to those `building_2d` parts (`?countyids=73482&countyids=73485`, one per polygon part - never a county code); omitted or empty draws from every covered part.
+
 ```csharp
-public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetRandomBuilding2DReferenceAsync(int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetRandomBuilding2DReferenceAsync(int[]? countyIds=null, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetRandomBuilding2DReferenceAsync(int,System.Threading.CancellationToken).commandTimeout'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetRandomBuilding2DReferenceAsync(int[],int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+Optional `building_2d` part ids that confine the draw; omitted or empty draws from every covered part\.
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetRandomBuilding2DReferenceAsync(int[],int,System.Threading.CancellationToken).commandTimeout'></a>
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
 The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 30 seconds\.
 
-<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetRandomBuilding2DReferenceAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetRandomBuilding2DReferenceAsync(int[],int,System.Threading.CancellationToken).cancellationToken'></a>
 
 `cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
 
@@ -6123,7 +6131,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. 200 with the drawn building, 404 when no unverified covered building remains, 401 without a valid user token, or 400 for an invalid timeout\.
+A task that represents the asynchronous operation\. 200 with the drawn building, 404 when no unverified covered building remains \(in the requested parts, when given\), 401 without a valid user token, or 400 for an invalid timeout\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetSubdivisionLinksByCountyIdAsync(int,int,int,System.Threading.CancellationToken)'></a>
 

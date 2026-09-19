@@ -119,10 +119,12 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Draws one building that has orthophoto coverage and no user-provided year built yet - the next candidate for a reviewer.
         /// <para>The drawn <see cref="PostgreSQL.Classes.Building2DReference"/> carries the <c>building_2d</c> part it is filed under; that part is what the caller must send back on the write and on every read, since a county code can name several parts.</para>
+        /// <para>An optional repeated <c>countyids</c> confines the draw to those <c>building_2d</c> parts (<c>?countyids=73482&amp;countyids=73485</c>, one per polygon part - never a county code); omitted or empty draws from every covered part.</para>
         /// </summary>
+        /// <param name="countyIds">Optional <c>building_2d</c> part ids that confine the draw; omitted or empty draws from every covered part.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 30 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. 200 with the drawn building, 404 when no unverified covered building remains, 401 without a valid user token, or 400 for an invalid timeout.</returns>
+        /// <returns>A task that represents the asynchronous operation. 200 with the drawn building, 404 when no unverified covered building remains (in the requested parts, when given), 401 without a valid user token, or 400 for an invalid timeout.</returns>
         [HttpGet("randombuilding2dreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetRandomBuilding2DReferenceAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(PostgreSQL.Classes.Building2DReference), StatusCodes.Status200OK)]
@@ -131,7 +133,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetRandomBuilding2DReferenceAsync([FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRandomBuilding2DReferenceAsync([FromQuery(Name = "countyids")] int[]? countyIds = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetRandomBuilding2DReferenceAsync));
 
@@ -148,10 +150,15 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
+            if (countyIds is { Length: > 0 })
+            {
+                Serilog.Modify.Log("{Type}:{Name} restricted to county parts {CountyIds}", nameof(OrtoDatasController), nameof(GetRandomBuilding2DReferenceAsync), string.Join(",", countyIds));
+            }
+
             PostgreSQL.Classes.Building2DReference? building2DReference;
             try
             {
-                building2DReference = await ortoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(commandTimeout, cancellationToken: cancellationToken);
+                building2DReference = await ortoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(countyIds, commandTimeout, cancellationToken: cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
