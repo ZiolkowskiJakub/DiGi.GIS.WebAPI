@@ -1842,6 +1842,43 @@ public static class Query
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Query
 ### Methods
 
+<a name='DiGi.GIS.WebAPI.Query.GetUserEmail(DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore,string)'></a>
+
+## Query\.GetUserEmail\(SecurityKeyManager, TokenRevocationStore, string\) Method
+
+Validates a bearer token issued by the user extension and returns the identity it carries\.
+
+Denies by default: a missing [DiGi\.WebAPI\.Classes\.SecurityKeyManager](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.securitykeymanager 'DiGi\.WebAPI\.Classes\.SecurityKeyManager') or [DiGi\.WebAPI\.Classes\.TokenRevocationStore](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.tokenrevocationstore 'DiGi\.WebAPI\.Classes\.TokenRevocationStore') (a GIS-only host), a missing or malformed `Authorization` header, a failed signature or lifetime check, or a revoked `jti` all answer `null`. Callers map `null` to HTTP 401.
+
+Validation mirrors the user extension's `TokenValidationParameters` - issuer and audience unchecked, the signature checked against every key the manager holds, the lifetime checked - so both extensions agree on which tokens are valid.
+
+```csharp
+public static string? GetUserEmail(DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager, DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore, string? authorizationHeader);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Query.GetUserEmail(DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore,string).securityKeyManager'></a>
+
+`securityKeyManager` [DiGi\.WebAPI\.Classes\.SecurityKeyManager](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.securitykeymanager 'DiGi\.WebAPI\.Classes\.SecurityKeyManager')
+
+The user extension's security key manager; `null` on a GIS\-only host\.
+
+<a name='DiGi.GIS.WebAPI.Query.GetUserEmail(DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore,string).tokenRevocationStore'></a>
+
+`tokenRevocationStore` [DiGi\.WebAPI\.Classes\.TokenRevocationStore](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.tokenrevocationstore 'DiGi\.WebAPI\.Classes\.TokenRevocationStore')
+
+The user extension's token revocation store; `null` on a GIS\-only host\.
+
+<a name='DiGi.GIS.WebAPI.Query.GetUserEmail(DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore,string).authorizationHeader'></a>
+
+`authorizationHeader` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The value of the request's `Authorization` header, or `null`\.
+
+#### Returns
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')  
+The [System\.Security\.Claims\.ClaimTypes\.Email](https://learn.microsoft.com/en-us/dotnet/api/system.security.claims.claimtypes.email 'System\.Security\.Claims\.ClaimTypes\.Email') the token carries, or `null` on every denial path\.
+
 <a name='DiGi.GIS.WebAPI.Query.IsAuthorized(thisDiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,string)'></a>
 
 ## Query\.IsAuthorized\(this GISWebAPIConfigurationFileWatcher, string\) Method

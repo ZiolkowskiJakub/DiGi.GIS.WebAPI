@@ -24,6 +24,8 @@ namespace DiGi.GIS.WebAPI.Classes
         private readonly Building2DPostgreSQLConverter building2DPostgreSQLConverter; //States which polygon part of a multi-part county a datum belongs to, from the 2D building already stored under it.
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
         private readonly YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter;
+        private readonly DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager;
+        private readonly DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore;
 
         /// <summary>
         /// Initializes a new instance of the YearBuiltDataController class.
@@ -32,12 +34,16 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="yearBuiltDataPostgreSQLConverter">The converter for YearBuiltData objects when interacting with a PostgreSQL database.</param>
         /// <param name="building2DPostgreSQLConverter">The converter for Building2D objects, used to read which county row a reference is already filed under.</param>
         /// <param name="administrativeAreal2DPostgreSQLConverter">The converter for administrative areal 2D data when interacting with a PostgreSQL database.</param>
-        public YearBuiltDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
+        /// <param name="securityKeyManager">The user extension&apos;s security key manager; <c>null</c> when the user extension is not loaded, in which case every user-token check denies.</param>
+        /// <param name="tokenRevocationStore">The user extension&apos;s token revocation store; <c>null</c> when the user extension is not loaded, in which case every user-token check denies.</param>
+        public YearBuiltDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter, DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager = null, DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore = null)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.yearBuiltDataPostgreSQLConverter = yearBuiltDataPostgreSQLConverter;
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
+            this.securityKeyManager = securityKeyManager;
+            this.tokenRevocationStore = tokenRevocationStore;
         }
 
         /// <summary>
@@ -250,6 +256,112 @@ namespace DiGi.GIS.WebAPI.Classes
             Serilog.Modify.Log("Updating to database ended. Updated YearBuiltDatas: {After}/{Before}, Rejected: {Rejected}",
                 updateResult.Ids.Count, yearBuiltDatas_PostgreSQL.Count, updateResult.Rejections.Count);
 
+            return Ok();
+        }
+
+        /// <summary>
+        /// Records a single user-supplied year built entry for one building, on behalf of the signed-in visitor.
+        /// <para>The bearer token replaces the machine <c>key</c> header: the identity is a user, and the entry is stored under that user&apos;s email with the time it was recorded. The write is gated by the same <see cref="GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData"/> flag as the machine update endpoints, and each check is logged distinctly so the cause of a 4xx is recoverable even where the status is shared.</para>
+        /// </summary>
+        /// <param name="parameter">The user year built entry to record.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. 200 on a committed write, 404 when no building holds the reference under the given part, 401 without a valid user token, 400 for a disabled flag or an invalid body, or 500 when the write failed.</returns>
+        [HttpPost("setuseryearbuilt", Name = $"{nameof(YearBuiltDataController)}_{nameof(SetUserYearBuiltAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> SetUserYearBuiltAsync([FromBody] Parameter.UserYearBuiltParameter? parameter, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(SetUserYearBuiltAsync));
+
+            string? email = Query.GetUserEmail(securityKeyManager, tokenRevocationStore, HttpContext.Request.Headers.Authorization);
+            if (email is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "SetUserYearBuilt rejected: no valid user token");
+                return Unauthorized();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "SetUserYearBuilt rejected: AllowUpdateYearBuiltData is disabled");
+                return BadRequest();
+            }
+
+            if (parameter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "SetUserYearBuilt rejected: body is missing");
+                return BadRequest();
+            }
+
+            if (parameter.CountyId is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "SetUserYearBuilt rejected: CountyId is missing");
+                return BadRequest();
+            }
+
+            if (string.IsNullOrWhiteSpace(parameter.Reference))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "SetUserYearBuilt rejected: Reference is missing");
+                return BadRequest();
+            }
+
+            if (parameter.Year is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "SetUserYearBuilt rejected: Year is missing");
+                return BadRequest();
+            }
+
+            int relation = parameter.Relation ?? 0;
+            if (!System.Enum.IsDefined(typeof(GIS.Enums.YearBuiltRelation), relation))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "SetUserYearBuilt rejected: Relation {Relation} is not a YearBuiltRelation member", relation);
+                return BadRequest();
+            }
+
+            int countyId = parameter.CountyId.Value;
+            string reference = parameter.Reference!;
+            short year = parameter.Year.Value;
+
+            GIS.Classes.UserYearBuilt userYearBuilt = new(year, (GIS.Enums.YearBuiltRelation)relation, DateTimeOffset.UtcNow, email);
+
+            bool? result;
+            try
+            {
+                result = await yearBuiltDataPostgreSQLConverter.UpdateUserYearBuiltAsync(countyId, reference, userYearBuilt, commandTimeout: 30, cancellationToken: cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(YearBuiltDataController), nameof(SetUserYearBuiltAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(SetUserYearBuiltAsync));
+                return StatusCode(500, "Internal server error during user year built write");
+            }
+
+            if (result is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "SetUserYearBuilt: no building under part {CountyId} carries reference {Reference}", countyId, reference);
+                return NotFound();
+            }
+
+            if (result is false)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "SetUserYearBuilt: write for reference {Reference} of part {CountyId} failed and rolled back", reference, countyId);
+                return StatusCode(500, "User year built write failed.");
+            }
+
+            Serilog.Modify.Log("SetUserYearBuilt recorded year {Year} for reference {Reference} of part {CountyId} as {User}", year, reference, countyId, email);
             return Ok();
         }
 

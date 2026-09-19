@@ -25,6 +25,8 @@ namespace DiGi.GIS.WebAPI.Classes
         private readonly PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter;
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
         private readonly PostgreSQL.Classes.OrtoDatasPostgreSQLConverter ortoDatasPostgreSQLConverter;
+        private readonly DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager;
+        private readonly DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore;
 
         /// <summary>
         /// Initializes a new instance of the OrtoDatasController class.
@@ -33,12 +35,146 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="ortoDatasPostgreSQLConverter">The converter used for handling OrtoDatas data operations within the PostgreSQL database.</param>
         /// <param name="building2DPostgreSQLConverter">The converter used for handling Building 2D data operations within the PostgreSQL database.</param>
         /// <param name="administrativeAreal2DPostgreSQLConverter">The converter used for handling Administrative Areal 2D data operations within the PostgreSQL database.</param>
-        public OrtoDatasController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, PostgreSQL.Classes.OrtoDatasPostgreSQLConverter ortoDatasPostgreSQLConverter, PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
+        /// <param name="securityKeyManager">The user extension&apos;s security key manager; <c>null</c> when the user extension is not loaded, in which case every user-token check denies.</param>
+        /// <param name="tokenRevocationStore">The user extension&apos;s token revocation store; <c>null</c> when the user extension is not loaded, in which case every user-token check denies.</param>
+        public OrtoDatasController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, PostgreSQL.Classes.OrtoDatasPostgreSQLConverter ortoDatasPostgreSQLConverter, PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter, DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager = null, DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore = null)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.ortoDatasPostgreSQLConverter = ortoDatasPostgreSQLConverter;
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
+            this.securityKeyManager = securityKeyManager;
+            this.tokenRevocationStore = tokenRevocationStore;
+        }
+
+        /// <summary>
+        /// Lists the years that hold a photo for one building - only the years that have imagery, not every year of the <c>[min, max]</c> range.
+        /// <para>The read is projected on the server: it answers the years that have a card and never reads the photo bytes, so listing a building&apos;s years stays cheap no matter how much imagery it carries. A building with no orthophotos answers 204, so an empty answer is a result the caller can act on rather than a failure to special-case.</para>
+        /// </summary>
+        /// <param name="reference">The reference of the building to list the years of.</param>
+        /// <param name="countyId">The optional identifier of the county part the building is filed under.</param>
+        /// <param name="fallbackByReference">Re-run the read by reference alone when nothing is held under the named county.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. 200 with the sorted years that hold a photo, 204 when the building holds none, 401 without a valid user token, 400 when the reference is missing, or 500 when the read failed.</returns>
+        [HttpGet("yearsbyreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetYearsByReferenceAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<short>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetYearsByReferenceAsync([FromQuery(Name = "reference")]
+            string reference, [FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetYearsByReferenceAsync));
+
+            string? user = Query.GetUserEmail(securityKeyManager, tokenRevocationStore, HttpContext.Request.Headers.Authorization);
+            if (user is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "GetYearsByReference rejected: no valid user token");
+                return Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(reference))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "GetYearsByReference rejected: reference is missing");
+                return BadRequest();
+            }
+
+            List<short>? years;
+            try
+            {
+                years = await ortoDatasPostgreSQLConverter.GetYearsByReferenceAsync(reference, countyId, fallbackByReference, commandTimeout: 30, cancellationToken: cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(OrtoDatasController), nameof(GetYearsByReferenceAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(OrtoDatasController), nameof(GetYearsByReferenceAsync));
+                return StatusCode(500, "Internal server error during years read");
+            }
+
+            if (years is null)
+            {
+                return StatusCode(500, "Years could not be read");
+            }
+
+            if (years.Count == 0)
+            {
+                return NoContent();
+            }
+
+            return Ok(years);
+        }
+
+        /// <summary>
+        /// Draws one building that has orthophoto coverage and no user-provided year built yet - the next candidate for a reviewer.
+        /// <para>The drawn <see cref="PostgreSQL.Classes.Building2DReference"/> carries the <c>building_2d</c> part it is filed under; that part is what the caller must send back on the write and on every read, since a county code can name several parts.</para>
+        /// </summary>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 30 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. 200 with the drawn building, 404 when no unverified covered building remains, 401 without a valid user token, or 400 for an invalid timeout.</returns>
+        [HttpGet("randombuilding2dreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetRandomBuilding2DReferenceAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(PostgreSQL.Classes.Building2DReference), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetRandomBuilding2DReferenceAsync([FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetRandomBuilding2DReferenceAsync));
+
+            string? user = Query.GetUserEmail(securityKeyManager, tokenRevocationStore, HttpContext.Request.Headers.Authorization);
+            if (user is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "GetRandomBuilding2DReference rejected: no valid user token");
+                return Unauthorized();
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "GetRandomBuilding2DReference rejected: commandTimeout must be non-negative");
+                return BadRequest();
+            }
+
+            PostgreSQL.Classes.Building2DReference? building2DReference;
+            try
+            {
+                building2DReference = await ortoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(commandTimeout, cancellationToken: cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(OrtoDatasController), nameof(GetRandomBuilding2DReferenceAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(OrtoDatasController), nameof(GetRandomBuilding2DReferenceAsync));
+                return StatusCode(500, "Internal server error during random building draw");
+            }
+
+            if (building2DReference is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(building2DReference);
         }
 
         /// <summary>
@@ -1583,20 +1719,24 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Retrieves orthophoto image data based on the provided reference, year, and optional county identifier.
+        /// Retrieves the orthophoto image a building holds for one exact year.
+        /// <para>Exact-year: the answer is the photo taken in that year, or a 404 when the building holds none for it - a year without a photo is not served by the nearest earlier one, which is what the previous floor lookup did. Send a year from <c>yearsbyreference</c>, which lists only the years that have a card.</para>
         /// </summary>
         /// <param name="reference">The unique reference string of the orthophoto image.</param>
-        /// <param name="year">The production or capture year of the orthophoto image.</param>
+        /// <param name="year">The exact year the orthophoto is requested for.</param>
         /// <param name="countyId">The optional identifier of the county associated with the orthophoto data.</param>
+        /// <param name="fallbackByReference">A boolean value indicating whether to re-run the read by reference alone when nothing is held under the named county.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
-        /// <returns>A task that represents the asynchronous operation.</returns>
+        /// <returns>A task that represents the asynchronous operation. 200 with the photo bytes, 404 when the building holds no photo for that year, 400 when the reference is missing, or 500 when the read failed.</returns>
         [HttpGet("imagebyreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetImageByReferenceAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [Produces("image/jpeg")]
         [ProducesResponseType(typeof(FileContentResult), 200)]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> GetImageByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "year")] short year, [FromQuery(Name = "countyid")] int? countyId = null, CancellationToken cancellationToken = default)
+        [ProducesResponseType(503)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> GetImageByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "year")] short year, [FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetImageByReferenceAsync));
             Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
@@ -1609,13 +1749,28 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest("Reference cannot be null or whitespace.");
             }
 
-            PostgreSQL.Classes.OrtoDatas? ortoDatas = await ortoDatasPostgreSQLConverter.GetOrtoDatasByReferenceAsync(reference, countyId, cancellationToken: cancellationToken);
-            if (ortoDatas is null)
+            // Exact-year: a year without a photo is a 404, not the nearest earlier photo a floor lookup would serve.
+            byte[]? bytes;
+            try
             {
-                return NotFound();
+                bytes = await ortoDatasPostgreSQLConverter.GetBytesByReferenceAsync(reference, countyId, year, fallbackByReference, commandTimeout: 30, cancellationToken: cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(OrtoDatasController), nameof(GetImageByReferenceAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(OrtoDatasController), nameof(GetImageByReferenceAsync));
+                return StatusCode(500, "Internal server error during photo read");
             }
 
-            byte[]? bytes = ortoDatas.ToDiGi()?.GetBytes(new DateTime(year, 1, 1));
             if (bytes is null)
             {
                 return NotFound();

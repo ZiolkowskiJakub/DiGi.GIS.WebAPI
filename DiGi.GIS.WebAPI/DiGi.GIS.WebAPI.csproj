@@ -22,6 +22,10 @@
 		<PackageReference Include="Npgsql" Version="10.0.2" />
 		<PackageReference Include="ProjNET4GeoAPI" Version="1.4.1" />
 		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+		<!-- Validates the user extension's bearer tokens in-action. Declared at the EXACT version DiGi.User.WebAPI
+		     references (10.0.5): both extensions are one probing set, so a Microsoft.IdentityModel version drift between
+		     the two is invisible until a MissingMethodException at the first token. Not in the ASP.NET shared framework. -->
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
 	</ItemGroup>
 
 	<Target Name="CopyFiles" AfterTargets="Build">
