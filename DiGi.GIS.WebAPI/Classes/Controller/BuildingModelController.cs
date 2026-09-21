@@ -4,6 +4,7 @@ using DiGi.GIS.Analytical.Enums;
 using DiGi.GIS.PostgreSQL;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,6 +37,117 @@ namespace DiGi.GIS.WebAPI.Classes
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
             this.buildingModelPostgreSQLConverter = buildingModelPostgreSQLConverter;
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the number of building model rows stored for one county part.
+        /// <para>Compared against <c>gis/Building2D/referencesbycountyid</c> it tells whether a county's regeneration covered every building; the count is exact, so it walks the partition.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county part (the <c>building_2d.county_id</c> value, one per polygon part).</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the row count, or 404 when the county has no building model partition.</returns>
+        [HttpGet("countbycountyid", Name = $"{nameof(BuildingModelController)}_{nameof(GetCountByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetCountByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(BuildingModelController), nameof(GetCountByCountyIdAsync), countyId);
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
+
+            long count;
+            try
+            {
+                count = await buildingModelPostgreSQLConverter.GetCountAsync(countyId, commandTimeout, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(BuildingModelController), nameof(GetCountByCountyIdAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            if (count < 0)
+            {
+                Serilog.Modify.Log("County {CountyId} has no building model partition", countyId);
+                return NotFound();
+            }
+
+            return Content(count.ToString(), "application/json");
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the most recent creation stamp among the building model rows of one county part.
+        /// <para>The model JSON carries no timestamp, so this is the only way to tell through the API whether a county holds the rows of the latest regeneration run or still those of an earlier one.</para>
+        /// </summary>
+        /// <param name="countyId">The identifier of the county part (the <c>building_2d.county_id</c> value, one per polygon part).</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>An <see cref="IActionResult"/> carrying the stamp as an ISO 8601 UTC string, or 404 when the county has no building model partition or it holds no rows.</returns>
+        [HttpGet("latestcreatedatbycountyid", Name = $"{nameof(BuildingModelController)}_{nameof(GetLatestCreatedAtByCountyIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(DateTimeOffset), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetLatestCreatedAtByCountyIdAsync([FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(BuildingModelController), nameof(GetLatestCreatedAtByCountyIdAsync), countyId);
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
+
+            DateTimeOffset? dateTimeOffset;
+            try
+            {
+                dateTimeOffset = await buildingModelPostgreSQLConverter.GetLatestCreatedAtAsync(countyId, commandTimeout, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(BuildingModelController), nameof(GetLatestCreatedAtByCountyIdAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Database could not be queried");
+                return StatusCode(500, "Internal server error during database query");
+            }
+
+            if (dateTimeOffset is null)
+            {
+                Serilog.Modify.Log("County {CountyId} has no building model rows", countyId);
+                return NotFound();
+            }
+
+            // Rendered through System.Text.Json so the client reads the same ISO 8601 form every other DateTimeOffset on the wire uses.
+            return Content(System.Text.Json.JsonSerializer.Serialize(dateTimeOffset.Value), "application/json");
         }
 
         /// <summary> Retrieves the building models stored in the database for all buildings within a specified circle. </summary>
