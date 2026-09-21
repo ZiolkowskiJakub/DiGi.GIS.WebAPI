@@ -1737,8 +1737,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <returns>A task that represents the asynchronous operation. 200 with the photo bytes, 404 when the building holds no photo for that year, 400 when the reference is missing, or 500 when the read failed.</returns>
         [HttpGet("imagebyreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetImageByReferenceAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
-        [Produces("image/jpeg")]
-        [ProducesResponseType(typeof(FileContentResult), 200)]
+        // No action-level [Produces]: it restricts every ObjectResult of the action to image/jpeg, so the string-bodied
+        // 400/500/503 answers below had no formatter and left as 406 - which hid the decode fault of
+        // DiGi.GIS.PostgreSQL#90 behind a content-negotiation symptom (#38). The photo content type is documented on the 200.
+        [ProducesResponseType(typeof(FileContentResult), 200, "image/jpeg")]
         [ProducesResponseType(404)]
         [ProducesResponseType(400)]
         [ProducesResponseType(503)]
