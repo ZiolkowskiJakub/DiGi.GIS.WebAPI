@@ -27,6 +27,7 @@ namespace DiGi.GIS.WebAPI.Classes
         private readonly PostgreSQL.Classes.OrtoDatasPostgreSQLConverter ortoDatasPostgreSQLConverter;
         private readonly DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager;
         private readonly DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore;
+        private readonly PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter? yearBuiltDataPostgreSQLConverter;
 
         /// <summary>
         /// Initializes a new instance of the OrtoDatasController class.
@@ -37,7 +38,8 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="administrativeAreal2DPostgreSQLConverter">The converter used for handling Administrative Areal 2D data operations within the PostgreSQL database.</param>
         /// <param name="securityKeyManager">The user extension&apos;s security key manager; <c>null</c> when the user extension is not loaded, in which case every user-token check denies.</param>
         /// <param name="tokenRevocationStore">The user extension&apos;s token revocation store; <c>null</c> when the user extension is not loaded, in which case every user-token check denies.</param>
-        public OrtoDatasController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, PostgreSQL.Classes.OrtoDatasPostgreSQLConverter ortoDatasPostgreSQLConverter, PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter, DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager = null, DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore = null)
+        /// <param name="yearBuiltDataPostgreSQLConverter">The converter reading the buildings and their year-built rows in the main database - the other half of the random unverified-building draw, whose orthophoto half is the storage database; <c>null</c> when the main store is not configured, in which case the draw answers 503.</param>
+        public OrtoDatasController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, PostgreSQL.Classes.OrtoDatasPostgreSQLConverter ortoDatasPostgreSQLConverter, PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter, DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager = null, DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore = null, PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter? yearBuiltDataPostgreSQLConverter = null)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.ortoDatasPostgreSQLConverter = ortoDatasPostgreSQLConverter;
@@ -45,6 +47,7 @@ namespace DiGi.GIS.WebAPI.Classes
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
             this.securityKeyManager = securityKeyManager;
             this.tokenRevocationStore = tokenRevocationStore;
+            this.yearBuiltDataPostgreSQLConverter = yearBuiltDataPostgreSQLConverter;
         }
 
         /// <summary>
@@ -124,7 +127,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyIds">Optional <c>building_2d</c> part ids that confine the draw; omitted or empty draws from every covered part.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 30 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
-        /// <returns>A task that represents the asynchronous operation. 200 with the drawn building, 404 when no unverified covered building remains (in the requested parts, when given), 401 without a valid user token, or 400 for an invalid timeout.</returns>
+        /// <returns>A task that represents the asynchronous operation. 200 with the drawn building, 404 when no unverified covered building remains (in the requested parts, when given), 401 without a valid user token, 400 for an invalid timeout, or 503 when the main (year built) store is not configured.</returns>
         [HttpGet("randombuilding2dreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetRandomBuilding2DReferenceAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(PostgreSQL.Classes.Building2DReference), StatusCodes.Status200OK)]
@@ -155,10 +158,19 @@ namespace DiGi.GIS.WebAPI.Classes
                 Serilog.Modify.Log("{Type}:{Name} restricted to county parts {CountyIds}", nameof(OrtoDatasController), nameof(GetRandomBuilding2DReferenceAsync), string.Join(",", countyIds));
             }
 
+            // The draw spans two databases - orthophotos in the storage one, buildings and year-built rows in the
+            // main one - so it is the cross-converter Query, not a converter method (DiGi.GIS.PostgreSQL#91). A
+            // host without the main store cannot draw at all: that is an outage, not an empty pool.
+            if (yearBuiltDataPostgreSQLConverter is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "GetRandomBuilding2DReference unavailable: YearBuiltDataPostgreSQLConverter is not configured");
+                return StatusCode(503, "Year built store not configured");
+            }
+
             PostgreSQL.Classes.Building2DReference? building2DReference;
             try
             {
-                building2DReference = await ortoDatasPostgreSQLConverter.GetRandomBuilding2DReferenceWithoutUserYearBuiltAsync(countyIds, commandTimeout, cancellationToken: cancellationToken);
+                building2DReference = await ortoDatasPostgreSQLConverter.RandomBuilding2DReferenceWithoutUserYearBuiltAsync(administrativeAreal2DPostgreSQLConverter, yearBuiltDataPostgreSQLConverter, countyIds, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
