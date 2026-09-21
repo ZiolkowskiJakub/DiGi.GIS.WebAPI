@@ -113,25 +113,17 @@ namespace DiGi.GIS.WebAPI.Classes
                         {
                             List<GIS.Classes.Building2D>? building2Ds = null;
 
-                            using CancellationTokenSource cancellationTokenSource = new(postOptions.Delay);
-
-                            using (HttpContent? httpContent = await Create.HttpContent(building2DReferences_Claimed, cancellationTokenSource.Token).ConfigureAwait(false))
+                            // A factory rather than a single-use HttpContent - the body is rebuilt per attempt, so a dropped pooled
+                            // connection is retried instead of skipping the batch. A null body means the references failed to
+                            // serialize; the exception is the failure signal, handled by the catch below.
+                            PostResponse<List<GIS.Classes.Building2D>?> postResponse_Building2Ds = await DiGi.WebAPI.Modify.PostAsync<List<GIS.Classes.Building2D>>(httpClient_Building2D, requestUri_Building2D, async () => await Create.HttpContent(building2DReferences_Claimed, cancellationToken).ConfigureAwait(false) ?? throw new InvalidOperationException("HttpContent for Building2D references could not be created"), postOptions);
+                            if (postResponse_Building2Ds is null || !postResponse_Building2Ds.Succeeded)
                             {
-                                if (httpContent is null)
-                                {
-                                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "HttpContent for Building2D references could not be created");
-                                    return false;
-                                }
-
-                                PostResponse<List<GIS.Classes.Building2D>?> postResponse_Building2Ds = await DiGi.WebAPI.Modify.PostAsync<List<GIS.Classes.Building2D>>(httpClient_Building2D, requestUri_Building2D, httpContent, postOptions);
-                                if (postResponse_Building2Ds is null || !postResponse_Building2Ds.Succeeded)
-                                {
-                                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2Ds could not be fetched for {Count} references", building2DReferences_Claimed.Count);
-                                    continue;
-                                }
-
-                                building2Ds = postResponse_Building2Ds.Result;
+                                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2Ds could not be fetched for {Count} references", building2DReferences_Claimed.Count);
+                                continue;
                             }
+
+                            building2Ds = postResponse_Building2Ds.Result;
 
                             if (building2Ds is null || building2Ds.Count == 0)
                             {
