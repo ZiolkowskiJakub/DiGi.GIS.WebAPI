@@ -3,6 +3,42 @@
 ## DiGi\.GIS\.WebAPI Namespace
 ### Classes
 
+<a name='DiGi.GIS.WebAPI.Convert'></a>
+
+## Convert Class
+
+```csharp
+public static class Convert
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Convert
+### Methods
+
+<a name='DiGi.GIS.WebAPI.Convert.ToSystem_JsonObject(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DCentroid_)'></a>
+
+## Convert\.ToSystem\_JsonObject\(this IEnumerable\<Building2DCentroid\>\) Method
+
+Converts building centroids to the compact, columnar answer of `gis/Building2D/centroidsbyadministrativeareal2Did`: `{"References":[…],"CountyIds":[…],"X":[…],"Y":[…]}`, the i\-th entry of every array describing the same building\.
+
+The full [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dcentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid') answer of `point2dsbyadministrativeareal2Did` repeats a `_type` discriminator and four property names per building. For county 1465 (155 307 buildings) that relays as 15.9 MB and takes 2.1-2.6 s, and the client rebuilds every row through `Core.Convert.ToDiGi` only to keep four values (DiGi.GIS.WebAPI.UI#29). This shape carries the values alone.
+
+Coordinates are rounded to 0.01 m (away from zero on a midpoint), which also drops the binary noise of values such as `474823.57999999996`. A centroid without a reference or a county identifier cannot be joined by the client and is skipped, as the full answer's consumers skip it; the arrays therefore always share one length. The input order is kept.
+
+```csharp
+public static System.Text.Json.Nodes.JsonObject? ToSystem_JsonObject(this System.Collections.Generic.IEnumerable<DiGi.GIS.PostgreSQL.Classes.Building2DCentroid>? building2DCentroids);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Convert.ToSystem_JsonObject(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DCentroid_).building2DCentroids'></a>
+
+`building2DCentroids` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dcentroid 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The centroids to convert\. This value can be null\.
+
+#### Returns
+[System\.Text\.Json\.Nodes\.JsonObject](https://learn.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject 'System\.Text\.Json\.Nodes\.JsonObject')  
+The columnar object, with four empty arrays for an empty input, or [null](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/null 'https://docs\.microsoft\.com/en\-us/dotnet/csharp/language\-reference/keywords/null') when [building2DCentroids](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Convert.ToSystem_JsonObject(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DCentroid_).building2DCentroids 'DiGi\.GIS\.WebAPI\.Convert\.ToSystem\_JsonObject\(this System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid\>\)\.building2DCentroids') is null\.
+
 <a name='DiGi.GIS.WebAPI.Create'></a>
 
 ## Create Class

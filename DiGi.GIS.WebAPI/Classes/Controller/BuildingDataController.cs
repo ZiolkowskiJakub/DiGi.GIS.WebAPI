@@ -827,12 +827,15 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
-        /// Retrieves a building data table using keyset-based paginated cursor streaming.
+        /// Retrieves one page of a county part's building data, following a cursor from page to page.
+        /// <para><b>Reference order</b> (default, <see cref="BuildingDataByPagingParameter.PhysicalOrder"/> false): rows ordered by <c>reference</c>. The cursor is the previous page's last <c>reference</c>, and a page shorter than <c>PageSize</c> ends the part. Every row is one random heap read, which on a large part is slow: part 55417 (155 307 rows) took 368-654 s cold (DiGi.GIS.WebAPI.UI#29).</para>
+        /// <para><b>Physical order</b> (<see cref="BuildingDataByPagingParameter.PhysicalOrder"/> true): rows in heap order, read sequentially. The next cursor is returned in the <c>DiGi-Next-Cursor</c> response header (<see cref="Constants.Header.NextCursor"/>), and a response without the header ends the part. The page may still carry the part's last rows. Row order is unspecified. When the physical read is unavailable - a database older than PostgreSQL 14, or a <c>Cursor</c> that is not a physical position - the same request is answered by the reference-ordered page for that <c>Cursor</c>, without the header. A client that keeps asking for physical order and follows the last row's <c>reference</c> whenever the header is absent from a full page therefore pages correctly either way.</para>
+        /// <para><b>Concurrent writes.</b> Each request reads its own snapshot. In physical order a row rewritten during a walk moves: it is repeated when its new version lands ahead of the walk and missed when it lands behind. Clients dedup on <c>(reference, county_id)</c>, which covers the repeats. The misses are the price of the sequential read and matter only while the part is being rewritten.</para>
         /// </summary>
-        /// <param name="buildingDataByPagingParameter">The parameter containing paging options, including column projections, county identifier, cursor, and page size.</param>
+        /// <param name="buildingDataByPagingParameter">The parameter containing paging options, including column projections, county identifier, cursor, page size and order.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A task representing the asynchronous operation, returning the populated table.</returns>
+        /// <returns>A task representing the asynchronous operation, returning the populated table. In physical order the next cursor, if any, is in the <c>DiGi-Next-Cursor</c> header.</returns>
         [HttpPost("tablebybuildingdatabypagingparameter", Name = $"{nameof(BuildingDataController)}_{nameof(GetTableByBuildingDataByPagingParameterAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(DiGi.PostgreSQL.Table.Classes.Table), StatusCodes.Status200OK)]
@@ -850,12 +853,48 @@ namespace DiGi.GIS.WebAPI.Classes
                 return BadRequest();
             }
 
+            if (buildingDataByPagingParameter is null)
+            {
+                return BadRequest();
+            }
+
             try
             {
                 IEnumerable<string>? columnUniqueIds = buildingDataByPagingParameter.ColumnUniqueIds;
                 if (columnUniqueIds is not null && !columnUniqueIds.Any())
                 {
                     columnUniqueIds = null;
+                }
+
+                if (buildingDataByPagingParameter.PhysicalOrder)
+                {
+                    (Table? Table, string? Position) page = await buildingDataPostgreSQLConverter.PullByPhysicalOrderAsync(
+                        buildingDataByPagingParameter.CountyId,
+                        columnUniqueIds,
+                        buildingDataByPagingParameter.Cursor,
+                        buildingDataByPagingParameter.PageSize,
+                        commandTimeout,
+                        cancellationToken);
+
+                    if (page.Table is not null && page.Position is not null)
+                    {
+                        string? json_Physical = Core.IO.Table.Convert.ToSystem_String<Table, Column, Row>(page.Table);
+                        if (string.IsNullOrWhiteSpace(json_Physical))
+                        {
+                            return NotFound();
+                        }
+
+                        if (page.Position.Length != 0)
+                        {
+                            HttpContext.Response.Headers[Constants.Header.NextCursor] = page.Position;
+                        }
+
+                        return Content(json_Physical, "application/json");
+                    }
+
+                    // Declined (PostgreSQL older than 14, or a cursor that is not a physical position) or failed: answer
+                    // the reference-ordered page for the same cursor, without the header, so the client pages on by reference.
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "{Type}:{Name} physical order unavailable for county {CountyId}; answering in reference order", nameof(BuildingDataController), nameof(GetTableByBuildingDataByPagingParameterAsync), buildingDataByPagingParameter.CountyId);
                 }
 
                 Table? table = await buildingDataPostgreSQLConverter.PullAsync(

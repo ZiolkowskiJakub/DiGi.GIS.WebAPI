@@ -281,6 +281,51 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
+        /// Retrieves the bounding-box centres of every building of the given administrative area as one compact, columnar document: <c>{"References":[…],"CountyIds":[…],"X":[…],"Y":[…]}</c>, the i-th entry of every array describing the same building, coordinates rounded to 0.01 m.
+        /// <para>The same buildings, area resolution and status codes as <c>point2dsbyadministrativeareal2Did</c> (see its remarks), without a <c>_type</c> and four property names per building. That answer relays as 15.9 MB for county 1465 (155 307 buildings), and its client only ever keeps these four values (DiGi.GIS.WebAPI.UI#29). The full endpoint stays for callers that deserialize <c>Building2DCentroid</c> objects.</para>
+        /// <para>An area with no buildings answers 200 with four empty arrays; a failed area lookup answers 404. Rows without a reference or a county identifier are left out (<see cref="Convert.ToSystem_JsonObject(IEnumerable{PostgreSQL.Classes.Building2DCentroid}?)"/>).</para>
+        /// </summary>
+        /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D whose buildings are returned.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="cancellationToken">The cancellation token to observe.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        [HttpGet("centroidsbyadministrativeareal2Did", Name = $"{nameof(Building2DController)}_{nameof(GetCentroidsByAdministrativeAreal2DIdAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetCentroidsByAdministrativeAreal2DIdAsync([FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetCentroidsByAdministrativeAreal2DIdAsync));
+            Serilog.Modify.Log("AdministrativeAreal2DId provided: {AdministrativeAreal2DId}, CommandTimeout provided: {CommandTimeout}", administrativeAreal2DId, commandTimeout);
+
+            if (administrativeAreal2DId <= 0)
+            {
+                return BadRequest();
+            }
+
+            if (commandTimeout < 0)
+            {
+                return BadRequest();
+            }
+
+            if (building2DPostgreSQLConverter is null)
+            {
+                return BadRequest();
+            }
+
+            List<PostgreSQL.Classes.Building2DCentroid>? building2DCentroids = await building2DPostgreSQLConverter.GetBuilding2DCentroidsByAdministrativeAreal2DIdsAsync([administrativeAreal2DId], commandTimeout, cancellationToken: cancellationToken);
+
+            System.Text.Json.Nodes.JsonObject? jsonObject = Convert.ToSystem_JsonObject(building2DCentroids);
+            if (jsonObject is null)
+            {
+                return NotFound();
+            }
+
+            return Content(jsonObject.ToJsonString(), "application/json");
+        }
+
+        /// <summary>
         /// Retrieves a paginated list of building 2D references.
         /// </summary>
         /// <param name="building2DReferencesByPagingParameter">The parameter containing paging options, including county identifier, cursor, and page size.</param>

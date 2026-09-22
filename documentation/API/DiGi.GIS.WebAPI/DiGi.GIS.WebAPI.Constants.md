@@ -57,6 +57,32 @@ public const string GISWebAPIConfigurationFile = "GIS_WebAPI.conf";
 #### Field Value
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
+<a name='DiGi.GIS.WebAPI.Constants.Header'></a>
+
+## Header Class
+
+Provides the names of the HTTP headers the GIS Web API sets on its responses\.
+
+```csharp
+public static class Header
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → Header
+### Fields
+
+<a name='DiGi.GIS.WebAPI.Constants.Header.NextCursor'></a>
+
+## Header\.NextCursor Field
+
+The response header carrying the cursor of the next page of a physical\-order building data read\. Absent when the county part is exhausted, and absent when the endpoint answered in reference order instead\.
+
+```csharp
+public const string NextCursor = "DiGi-Next-Cursor";
+```
+
+#### Field Value
+[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
 <a name='DiGi.GIS.WebAPI.Constants.Name'></a>
 
 ## Name Class

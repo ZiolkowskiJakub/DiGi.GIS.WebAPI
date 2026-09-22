@@ -1246,6 +1246,43 @@ The cancellation token to observe\.
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a list of building 2D references\.
 
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCentroidsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken)'></a>
+
+## Building2DController\.GetCentroidsByAdministrativeAreal2DIdAsync\(int, int, CancellationToken\) Method
+
+Retrieves the bounding\-box centres of every building of the given administrative area as one compact, columnar document: `{"References":[…],"CountyIds":[…],"X":[…],"Y":[…]}`, the i\-th entry of every array describing the same building, coordinates rounded to 0\.01 m\.
+
+The same buildings, area resolution and status codes as `point2dsbyadministrativeareal2Did` (see its remarks), without a `_type` and four property names per building. That answer relays as 15.9 MB for county 1465 (155 307 buildings), and its client only ever keeps these four values (DiGi.GIS.WebAPI.UI#29). The full endpoint stays for callers that deserialize `Building2DCentroid` objects.
+
+An area with no buildings answers 200 with four empty arrays; a failed area lookup answers 404. Rows without a reference or a county identifier are left out ([ToSystem\_JsonObject\(this IEnumerable&lt;Building2DCentroid&gt;\)](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Convert.ToSystem_JsonObject(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.PostgreSQL.Classes.Building2DCentroid_) 'DiGi\.GIS\.WebAPI\.Convert\.ToSystem\_JsonObject\(this System\.Collections\.Generic\.IEnumerable\<DiGi\.GIS\.PostgreSQL\.Classes\.Building2DCentroid\>\)')).
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCentroidsByAdministrativeAreal2DIdAsync(int administrativeAreal2DId, int commandTimeout=30, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCentroidsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken).administrativeAreal2DId'></a>
+
+`administrativeAreal2DId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The unique identifier of the administrative area 2D whose buildings are returned\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCentroidsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+
+<a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCentroidsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The cancellation token to observe\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\.
+
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken)'></a>
 
 ## Building2DController\.GetCountyPartMismatchesAsync\(string, int, CancellationToken\) Method
@@ -2589,7 +2626,7 @@ public DiGi.PostgreSQL.Table.Classes.FilterGroup FilterGroup { get; set; }
 
 ## BuildingDataByPagingParameter Class
 
-Parameter class containing options for keyset\-paginated building queries\.
+Parameter class containing options for paged building data queries, in reference \(keyset\) or physical order\.
 
 ```csharp
 public class BuildingDataByPagingParameter : DiGi.WebAPI.Classes.Parameter
@@ -2662,7 +2699,9 @@ public int CountyId { get; set; }
 
 ## BuildingDataByPagingParameter\.Cursor Property
 
-Gets or sets the pagination cursor tracking the last processed building reference\.
+Gets or sets where the page continues from; null or omitted starts at the beginning of the county part\.
+
+In reference order it is the previous page's last `reference`, verbatim. In physical order it is the value of the previous response's `DiGi-Next-Cursor` header - an opaque heap position such as `(412,7)` - or, after a response that came back in reference order without the header, the last row's `reference`.
 
 ```csharp
 public string? Cursor { get; set; }
@@ -2672,7 +2711,7 @@ public string? Cursor { get; set; }
 [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
 
 ### Example
-eyJpZCI6MTIzfQ==
+30FA023C\-190B\-87D7\-E053\-CA2BA8C08B17
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter.PageSize'></a>
 
@@ -2691,6 +2730,24 @@ public int PageSize { get; set; }
 
 ### Example
 100
+
+<a name='DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter.PhysicalOrder'></a>
+
+## BuildingDataByPagingParameter\.PhysicalOrder Property
+
+Gets or sets a value indicating whether the part is read in physical \(heap\) order rather than by `reference`\. Defaults to false, the reference order this endpoint has always answered\.
+
+Physical order reads the part sequentially instead of one random heap read per row. Measured on production: 368-654 s for a cold 155 307-row part in reference order, against about 15 s per 100 000 rows read sequentially (DiGi.GIS.WebAPI.UI#29). Use it to read a whole part when row order does not matter. The next cursor then arrives in the `DiGi-Next-Cursor` response header, and the endpoint falls back to reference order where physical order is unavailable (see the action's remarks).
+
+```csharp
+public bool PhysicalOrder { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+### Example
+true
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter'></a>
 
@@ -3388,7 +3445,13 @@ A task representing the asynchronous operation, returning the aggregate result a
 
 ## BuildingDataController\.GetTableByBuildingDataByPagingParameterAsync\(BuildingDataByPagingParameter, int, CancellationToken\) Method
 
-Retrieves a building data table using keyset\-based paginated cursor streaming\.
+Retrieves one page of a county part's building data, following a cursor from page to page\.
+
+<b>Reference order</b> (default, [PhysicalOrder](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter.PhysicalOrder 'DiGi\.GIS\.WebAPI\.Classes\.BuildingDataByPagingParameter\.PhysicalOrder') false): rows ordered by `reference`. The cursor is the previous page's last `reference`, and a page shorter than `PageSize` ends the part. Every row is one random heap read, which on a large part is slow: part 55417 (155 307 rows) took 368-654 s cold (DiGi.GIS.WebAPI.UI#29).
+
+<b>Physical order</b> ([PhysicalOrder](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter.PhysicalOrder 'DiGi\.GIS\.WebAPI\.Classes\.BuildingDataByPagingParameter\.PhysicalOrder') true): rows in heap order, read sequentially. The next cursor is returned in the `DiGi-Next-Cursor` response header ([NextCursor](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.Header.NextCursor 'DiGi\.GIS\.WebAPI\.Constants\.Header\.NextCursor')), and a response without the header ends the part. The page may still carry the part's last rows. Row order is unspecified. When the physical read is unavailable - a database older than PostgreSQL 14, or a `Cursor` that is not a physical position - the same request is answered by the reference-ordered page for that `Cursor`, without the header. A client that keeps asking for physical order and follows the last row's `reference` whenever the header is absent from a full page therefore pages correctly either way.
+
+<b>Concurrent writes.</b> Each request reads its own snapshot. In physical order a row rewritten during a walk moves: it is repeated when its new version lands ahead of the walk and missed when it lands behind. Clients dedup on `(reference, county_id)`, which covers the repeats. The misses are the price of the sequential read and matter only while the part is being rewritten.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter buildingDataByPagingParameter, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -3399,7 +3462,7 @@ public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetTa
 
 `buildingDataByPagingParameter` [BuildingDataByPagingParameter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter 'DiGi\.GIS\.WebAPI\.Classes\.BuildingDataByPagingParameter')
 
-The parameter containing paging options, including column projections, county identifier, cursor, and page size\.
+The parameter containing paging options, including column projections, county identifier, cursor, page size and order\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter,int,System.Threading.CancellationToken).commandTimeout'></a>
 
@@ -3415,7 +3478,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task representing the asynchronous operation, returning the populated table\.
+A task representing the asynchronous operation, returning the populated table\. In physical order the next cursor, if any, is in the `DiGi-Next-Cursor` header\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter,int,System.Threading.CancellationToken)'></a>
 
