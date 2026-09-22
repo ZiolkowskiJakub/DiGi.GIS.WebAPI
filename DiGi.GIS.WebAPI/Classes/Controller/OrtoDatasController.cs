@@ -193,7 +193,17 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NotFound();
             }
 
-            return Ok(building2DReference);
+            // The DiGi wire shape (_type, declared property names), as building2Dreferencebyreference answers it and
+            // as every DiGi reader expects. Ok(object) hands the object to the host's default serializer, which
+            // writes camelCase and a fullTypeName member instead - the UI's ToDiGi read that as no building at all.
+            string? json = Core.Convert.ToSystem_String(building2DReference);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "GetRandomBuilding2DReference: the drawn reference could not be serialized");
+                return StatusCode(500, "Internal server error during random building draw");
+            }
+
+            return Content(json, "application/json");
         }
 
         /// <summary>

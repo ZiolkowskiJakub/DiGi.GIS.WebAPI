@@ -6207,7 +6207,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-A task that represents the asynchronous operation\. 200 with the drawn building, 404 when no unverified covered building remains \(in the requested parts, when given\), 401 without a valid user token, or 400 for an invalid timeout\.
+A task that represents the asynchronous operation\. 200 with the drawn building, 404 when no unverified covered building remains \(in the requested parts, when given\), 401 without a valid user token, 400 for an invalid timeout, or 503 when the main \(year built\) store is not configured\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetSubdivisionLinksByCountyIdAsync(int,int,int,System.Threading.CancellationToken)'></a>
 
