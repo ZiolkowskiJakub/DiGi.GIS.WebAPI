@@ -34,6 +34,8 @@ namespace DiGi.GIS.WebAPI.Classes
 
         private readonly Building2DPostgreSQLConverter building2DPostgreSQLConverter;
 
+        private readonly AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
+
         /// <summary>
         /// Initializes a new instance of the BuildingDataController class.
         /// <para>Both converters and the configuration watcher are taken on the one constructor, because the coverage read compares two tables that sit in different databases and write operations require authorization. A second constructor is not an option: a controller with more than one public constructor fails activation and answers 500 on every one of its endpoints.</para>
@@ -41,11 +43,13 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="GISWebAPIConfigurationFileWatcher">The <see cref="Classes.GISWebAPIConfigurationFileWatcher" /> used to verify authorization and permissions for write operations.</param>
         /// <param name="buildingDataPostgreSQLConverter">The <see cref="BuildingDataPostgreSQLConverter" /> used to handle building data operations and database conversions.</param>
         /// <param name="building2DPostgreSQLConverter">The <see cref="Building2DPostgreSQLConverter" /> used to read the buildings a county holds, which is the other half of the coverage comparison.</param>
-        public BuildingDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter)
+        /// <param name="administrativeAreal2DPostgreSQLConverter">The <see cref="AdministrativeAreal2DPostgreSQLConverter" /> used to widen a row no named part holds to every part of the named county.</param>
+        public BuildingDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.buildingDataPostgreSQLConverter = buildingDataPostgreSQLConverter;
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
+            this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
         }
 
         /// <summary>
@@ -1318,6 +1322,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Asynchronously updates building data for the specified county identifiers.
         /// <para>The identifiers are the parts of one county in play, and each row is filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
+        /// <para>A row no named part holds is widened to every part of the county its parts name, and only a row no part of the county holds is left unwritten - nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
         /// </summary>
         /// <param name="jsonObject">The JSON object containing the table structure and data to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the building data belongs to. Normally every polygon part of one county.</param>
@@ -1402,10 +1407,10 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
 
-                // A datum carries no geometry, so the 2D building its reference names is the only thing that can say
+                // A row carries no geometry, so the 2D building its reference names is the only thing that can say
                 // which part it belongs to. Every row is resolved through building_2d regardless of how many ids the
-                // caller sent - naming one id is not evidence the code has one part - and one no part holds is
-                // rejected rather than filed under a guessed part.
+                // caller sent - naming one id is not evidence the code has one part - and a row no named part holds
+                // is widened to every part of the named county before it is rejected, never filed under a guessed part.
                 List<string> references_ToResolve = [];
                 foreach (Row row in table.Rows)
                 {
@@ -1415,7 +1420,7 @@ namespace DiGi.GIS.WebAPI.Classes
                     }
                 }
 
-                Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, references_ToResolve, countyIds_Candidate);
+                Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(building2DPostgreSQLConverter, administrativeAreal2DPostgreSQLConverter, references_ToResolve, countyIds_Candidate, cancellationToken: cancellationToken);
 
                 List<UpdateItemsResult.Rejection> rejections = [];
                 Table table_Resolved = new(table.Columns);

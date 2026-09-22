@@ -433,7 +433,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Updates multiple building model items in the database for the given county rows.
         /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.</para>
         /// <para>The identifiers are the parts of one county in play, and each model is filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
-        /// <para>A model whose reference no part holds is not written: nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
+        /// <para>A model no named part holds is widened to every part of the county its parts name, and only a model no part of the county holds is left unwritten - nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building models to be updated. This value can be null.</param>
         /// <param name="countyIds">The identifiers of the county rows the building models belong to. Normally every polygon part of one county.</param>
@@ -508,7 +508,10 @@ namespace DiGi.GIS.WebAPI.Classes
                 buildingModels_Reference.Add(buildingModel);
             }
 
-            Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, buildingModels_ByReference.Keys, countyIds_Candidate);
+            // A model carries no geometry, so the 2D building its reference names is the only thing that can say
+            // which part it belongs to. A model no named part holds is widened to every part of the named county
+            // before it is left unwritten, never filed under a guessed part.
+            Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(building2DPostgreSQLConverter, administrativeAreal2DPostgreSQLConverter, buildingModels_ByReference.Keys, countyIds_Candidate, cancellationToken: cancellationToken);
 
             Dictionary<int, List<BuildingModel>> buildingModels_ByCountyId = [];
             List<string> references_Unresolved = [];

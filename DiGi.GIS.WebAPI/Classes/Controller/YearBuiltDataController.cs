@@ -120,7 +120,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Updates multiple year built data items in the database for the given county rows.
         /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.</para>
         /// <para>The identifiers are the parts of one county in play, and each datum is filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
-        /// <para>A datum whose reference no part holds is not written: it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
+        /// <para>A datum no named part holds is widened to every part of the county its parts name, and only a datum no part of the county holds is left unwritten - it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the data items to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the year built data belong to. Normally every polygon part of one county.</param>
@@ -175,9 +175,9 @@ namespace DiGi.GIS.WebAPI.Classes
 
             // A datum carries no geometry, so the 2D building its reference names is the only thing that can say
             // which part it belongs to. Every item is resolved through building_2d regardless of how many ids the
-            // caller sent - naming one id is not evidence the code has one part - and one no part holds is left
-            // unwritten rather than filed under a guessed part.
-            Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, yearBuiltDatas_GIS.ConvertAll(x => x?.Reference), countyIds_Candidate);
+            // caller sent - naming one id is not evidence the code has one part. A datum no named part holds is
+            // widened to every part of the named county before it is left unwritten, never filed under a guessed part.
+            Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(building2DPostgreSQLConverter, administrativeAreal2DPostgreSQLConverter, yearBuiltDatas_GIS.ConvertAll(x => x?.Reference), countyIds_Candidate, cancellationToken: cancellationToken);
 
             List<string> references_Unresolved = [];
 
