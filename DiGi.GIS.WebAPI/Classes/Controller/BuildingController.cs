@@ -116,6 +116,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>A single identifier is taken as stated and every building is filed under it. Several identifiers are the polygon parts of one multi-part county, and each building is then filed under the part it belongs to, decided in two steps:</para>
         /// <para>1. the part already holding the building's <c>building_2d</c> row, probed lowest part first. That row was filed by geometry when it was imported, and reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair - a building filed under a part its footprint is not stored in reads back as missing.</para>
         /// <para>2. geometry, for a building no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops a building it cannot place rather than filing it under a guess - such a building is reported as a rejection, not silently omitted.</para>
+        /// <para>The county-part lookup (step 1) not running is answered as a distinct 500 naming it, before any geometry fallback runs, and a transient database failure as 503 with <c>Retry-After</c> - an unreachable database must not look like a decision by geometry.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building items to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the buildings belong to. Normally every polygon part of one county.</param>
@@ -127,6 +128,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
@@ -192,7 +194,16 @@ namespace DiGi.GIS.WebAPI.Classes
 
                 if (countyId_Single is null)
                 {
-                    Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, buildings.ConvertAll(x => x.Reference), countyIds_Candidate);
+                    Dictionary<string, int>? countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, buildings.ConvertAll(x => x.Reference), countyIds_Candidate, cancellationToken: cancellationToken);
+
+                    if (countyIds_ByReference is null)
+                    {
+                        // The lookup could not run at all. Letting the batch fall through to the geometry
+                        // fallback here is what filed rows under parts building_2d disagrees with, with no
+                        // signal to anyone - so the failure is answered instead of worked around.
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "County parts could not be resolved: the building_2d lookup could not run (check the Main database configuration)");
+                        return StatusCode(500, "County parts could not be resolved: the building_2d lookup could not run.");
+                    }
 
                     List<string> references_Unresolved = [];
                     foreach (Building building in buildings)
@@ -247,6 +258,16 @@ namespace DiGi.GIS.WebAPI.Classes
                 // Updated < Sent on its own proves nothing. Rejected is the exact figure.
                 Serilog.Modify.Log("Updating to database ended. Updated Buildings: {After}/{Before}, rejected: {Rejected}", updateItemsResult.Updated, updateItemsResult.Sent, updateItemsResult.Rejected.Count);
                 return Ok(updateItemsResult);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(BuildingController), nameof(UpdateItemsByCountyIdsAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
             }
             catch (Exception exception)
             {

@@ -2522,6 +2522,8 @@ A single identifier is taken as stated and every building is filed under it. Sev
 
 2. geometry, for a building no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops a building it cannot place rather than filing it under a guess - such a building is reported as a rejection, not silently omitted.
 
+The county-part lookup (step 1) not running is answered as a distinct 500 naming it, before any geometry fallback runs, and a transient database failure as 503 with `Retry-After` - an unreachable database must not look like a decision by geometry.
+
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -4034,6 +4036,8 @@ The identifiers are the parts of one county in play, and each model is filed und
 
 A model no named part holds is widened to every part of the county its parts name, and only a model no part of the county holds is left unwritten - nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
+Nothing filed is answered as a failure, not a quiet no-op: the county-part lookup not running answers a distinct 500 naming it, a transient database failure answers 503 with `Retry-After`, and a non-empty batch in which no model could be filed under any county answers 500. This is the endpoint behind a regeneration that once posted 33 687 models into an unreachable database and reported success.
+
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -5448,6 +5452,8 @@ The identifiers are the parts of one county in play, and each datum is filed und
 
 A datum no named part holds is widened to every part of the county its parts name, and only a datum no part of the county holds is left unwritten - it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.
 
+The county-part lookup not running is answered as a distinct 500 naming it, and a transient database failure as 503 with `Retry-After`, so an unreachable database is never mistaken for a quiet no-op.
+
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Building2DUpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
 ```
@@ -6498,6 +6504,8 @@ A single identifier is taken as stated and every entry is filed under it. Severa
 1. the part already holding the entry's `building_2d` row, probed lowest part first. That row was filed by geometry when it was imported, and reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair - orthodata filed under a part its building is not stored in reads back as missing.
 
 2. geometry, for an entry no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops an entry it cannot place rather than filing it under a guess.
+
+The county-part lookup (step 1) not running is answered as a distinct 500 naming it, before any geometry fallback runs, and a transient database failure as 503 with `Retry-After` - an unreachable database must not look like a decision by geometry.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
@@ -8443,6 +8451,8 @@ The unambiguous counterpart of [UpdateItemsAsync\(JsonArray, string, string, Can
 The identifiers are the parts of one county in play, and each datum is filed under the part already holding the `building_2d` row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same `(county_id, reference)` pair.
 
 A datum no named part holds is widened to every part of the county its parts name, and only a datum no part of the county holds is left unwritten - it carries no geometry of its own, so nothing states where it belongs, and storing it under a guessed part is the state this replaced.
+
+The county-part lookup not running is answered as a distinct 500 naming it, and a transient database failure as 503 with `Retry-After`, so an unreachable database is never mistaken for a quiet no-op.
 
 ```csharp
 public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonArray? jsonArray, int[]? countyIds, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));

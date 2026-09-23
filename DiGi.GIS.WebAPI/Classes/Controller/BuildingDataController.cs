@@ -1459,7 +1459,16 @@ namespace DiGi.GIS.WebAPI.Classes
                     }
                 }
 
-                Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(building2DPostgreSQLConverter, administrativeAreal2DPostgreSQLConverter, references_ToResolve, countyIds_Candidate, cancellationToken: cancellationToken);
+                Dictionary<string, int>? countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(building2DPostgreSQLConverter, administrativeAreal2DPostgreSQLConverter, references_ToResolve, countyIds_Candidate, cancellationToken: cancellationToken);
+
+                if (countyIds_ByReference is null)
+                {
+                    // The lookup could not run at all, which is a different failure from running and
+                    // resolving nothing: classifying every row as CountyUnresolved below would report a
+                    // broken connection as a batch-wide data problem.
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "County parts could not be resolved: the building_2d lookup could not run (check the Main database configuration)");
+                    return StatusCode(500, "County parts could not be resolved: the building_2d lookup could not run.");
+                }
 
                 List<UpdateItemsResult.Rejection> rejections = [];
                 Table table_Resolved = new(table.Columns);

@@ -1597,6 +1597,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>A single identifier is taken as stated and every entry is filed under it. Several identifiers are the polygon parts of one multi-part county, and each entry is then filed under the part it belongs to, decided in two steps:</para>
         /// <para>1. the part already holding the entry's <c>building_2d</c> row, probed lowest part first. That row was filed by geometry when it was imported, and reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair - orthodata filed under a part its building is not stored in reads back as missing.</para>
         /// <para>2. geometry, for an entry no part holds a 2D row for: the part containing its bounding box, else the nearest part, else the part it overlaps most. Done by the converter, which drops an entry it cannot place rather than filing it under a guess.</para>
+        /// <para>The county-part lookup (step 1) not running is answered as a distinct 500 naming it, before any geometry fallback runs, and a transient database failure as 503 with <c>Retry-After</c> - an unreachable database must not look like a decision by geometry.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the orthodata items to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the entries belong to. Normally every polygon part of one county.</param>
@@ -1609,6 +1610,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
@@ -1639,112 +1641,130 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            List<OrtoDatas>? ortoDatas = Core.Create.SerializableObjects<OrtoDatas>(jsonArray);
-            if (ortoDatas is null)
+            try
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatas could not be converted from json");
-                return BadRequest();
-            }
-
-            Serilog.Modify.Log("OrtoDatas conversion to PostgreSQL started. OrtoDatas count: {Count}", ortoDatas.Count);
-
-            List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
-
-            // Left unset while there is more than one candidate, so the county is decided below rather than
-            // baked in here.
-            int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
-
-            List<PostgreSQL.Classes.OrtoDatas> ortoDatas_PostgreSQL = [];
-            foreach (OrtoDatas ortoDatas_Temp in ortoDatas)
-            {
-                PostgreSQL.Classes.OrtoDatas? ortoDatas_PostgreSQL_Temp = ortoDatas_Temp.ToPostgreSQL(countyId_Single);
-                if (ortoDatas_PostgreSQL_Temp is null)
+                List<OrtoDatas>? ortoDatas = Core.Create.SerializableObjects<OrtoDatas>(jsonArray);
+                if (ortoDatas is null)
                 {
-                    continue;
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatas could not be converted from json");
+                    return BadRequest();
                 }
 
-                ortoDatas_PostgreSQL.Add(ortoDatas_PostgreSQL_Temp);
-            }
+                Serilog.Modify.Log("OrtoDatas conversion to PostgreSQL started. OrtoDatas count: {Count}", ortoDatas.Count);
 
-            if (ortoDatas_PostgreSQL is null || ortoDatas_PostgreSQL.Count == 0)
-            {
-                Serilog.Modify.Log("No OrtoDatas PostgreSQL to update");
-                return NoContent();
-            }
+                List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
 
-            if (countyId_Single is null)
-            {
-                Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, ortoDatas_PostgreSQL.ConvertAll(x => x.Reference), countyIds_Candidate);
+                // Left unset while there is more than one candidate, so the county is decided below rather than
+                // baked in here.
+                int? countyId_Single = countyIds_Candidate.Count == 1 ? countyIds_Candidate[0] : null;
 
-                List<string> references_Unresolved = [];
-                foreach (PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL_Temp in ortoDatas_PostgreSQL)
+                List<PostgreSQL.Classes.OrtoDatas> ortoDatas_PostgreSQL = [];
+                foreach (OrtoDatas ortoDatas_Temp in ortoDatas)
                 {
-                    if (ortoDatas_PostgreSQL_Temp.Reference is not null && countyIds_ByReference.TryGetValue(ortoDatas_PostgreSQL_Temp.Reference, out int countyId))
+                    PostgreSQL.Classes.OrtoDatas? ortoDatas_PostgreSQL_Temp = ortoDatas_Temp.ToPostgreSQL(countyId_Single);
+                    if (ortoDatas_PostgreSQL_Temp is null)
                     {
-                        ortoDatas_PostgreSQL_Temp.CountyId = countyId;
                         continue;
                     }
 
-                    references_Unresolved.Add(ortoDatas_PostgreSQL_Temp.Reference ?? string.Empty);
+                    ortoDatas_PostgreSQL.Add(ortoDatas_PostgreSQL_Temp);
                 }
 
-                if (references_Unresolved.Count != 0)
+                if (ortoDatas_PostgreSQL is null || ortoDatas_PostgreSQL.Count == 0)
                 {
-                    // Not a failure: these fall through to the converter, which decides them by geometry and
-                    // rejects only what it cannot place at all.
-                    Serilog.Modify.Log("OrtoDatas with no Building2D under the given parts, left to be decided by geometry: {Count}/{Total}. References: {References}", references_Unresolved.Count, ortoDatas_PostgreSQL.Count, string.Join(", ", references_Unresolved.Take(20)));
+                    Serilog.Modify.Log("No OrtoDatas PostgreSQL to update");
+                    return NoContent();
                 }
+
+                if (countyId_Single is null)
+                {
+                    Dictionary<string, int>? countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesAsync(building2DPostgreSQLConverter, ortoDatas_PostgreSQL.ConvertAll(x => x.Reference), countyIds_Candidate, cancellationToken: cancellationToken);
+
+                    if (countyIds_ByReference is null)
+                    {
+                        // The lookup could not run at all. Letting the batch fall through to the geometry
+                        // fallback here is what filed rows under parts building_2d disagrees with, with no
+                        // signal to anyone - so the failure is answered instead of worked around.
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "County parts could not be resolved: the building_2d lookup could not run (check the Main database configuration)");
+                        return StatusCode(500, "County parts could not be resolved: the building_2d lookup could not run.");
+                    }
+
+                    List<string> references_Unresolved = [];
+                    foreach (PostgreSQL.Classes.OrtoDatas ortoDatas_PostgreSQL_Temp in ortoDatas_PostgreSQL)
+                    {
+                        if (ortoDatas_PostgreSQL_Temp.Reference is not null && countyIds_ByReference.TryGetValue(ortoDatas_PostgreSQL_Temp.Reference, out int countyId))
+                        {
+                            ortoDatas_PostgreSQL_Temp.CountyId = countyId;
+                            continue;
+                        }
+
+                        references_Unresolved.Add(ortoDatas_PostgreSQL_Temp.Reference ?? string.Empty);
+                    }
+
+                    if (references_Unresolved.Count != 0)
+                    {
+                        // Not a failure: these fall through to the converter, which decides them by geometry and
+                        // rejects only what it cannot place at all.
+                        Serilog.Modify.Log("OrtoDatas with no Building2D under the given parts, left to be decided by geometry: {Count}/{Total}. References: {References}", references_Unresolved.Count, ortoDatas_PostgreSQL.Count, string.Join(", ", references_Unresolved.Take(20)));
+                    }
+                }
+
+                Serilog.Modify.Log("OrtoDatas conversion to PostgreSQL ended. OrtoDatas converted: {After}/{Before}", ortoDatas_PostgreSQL.Count, ortoDatas.Count);
+
+                Serilog.Modify.Log("Updating to database starting");
+
+                PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatas_PostgreSQL, countyIds_Candidate);
+
+                UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(ortoDatas_PostgreSQL.Count);
+                if (updateItemsResult is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database could not be attempted");
+                    return StatusCode(500, "Database update failed.");
+                }
+
+                // A drop means the row carried no geometry, no part could be decided for it, or a partition
+                // could not be created. It is still a partial write, and it used to leave no trace.
+                if (updateItemsResult.Rejected.Count != 0)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
+                }
+
+                // Answering Ok here is what let a whole county regeneration report success while writing
+                // nothing: the storage database was unreachable, every batch came back empty, and the client
+                // treats 200 as done. OrtoDatas were converted and reached this point, so nothing updated is a
+                // failure, not a quiet no-op. BuildingController already answers this case the same way.
+                if (updateItemsResult.Updated == 0)
+                {
+                    if (updateItemsResult.Rejected.Count == updateItemsResult.Sent)
+                    {
+                        return StatusCode(500, $"All {updateItemsResult.Sent} OrtoDatas were rejected before the database; none could be filed under a county.");
+                    }
+
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no OrtoDatas have been updated");
+                    return StatusCode(500, "Database update returned no modified OrtoDatas IDs.");
+                }
+
+                // Updated counts distinct identifiers, and rows colliding on (reference, county_id) share one,
+                // so Updated < Sent on its own proves nothing. Rejected is the exact figure.
+                Serilog.Modify.Log("Updating to database ended. Updated OrtoDatas: {After}/{Before}, rejected: {Rejected}", updateItemsResult.Updated, updateItemsResult.Sent, updateItemsResult.Rejected.Count);
+
+                return Ok(updateItemsResult);
             }
-
-            Serilog.Modify.Log("OrtoDatas conversion to PostgreSQL ended. OrtoDatas converted: {After}/{Before}", ortoDatas_PostgreSQL.Count, ortoDatas.Count);
-
-            Serilog.Modify.Log("Updating to database starting");
-
-            PostgreSQL.Classes.PostgreSQLUpdateResult? postgreSQLUpdateResult = null;
-            try
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                postgreSQLUpdateResult = await ortoDatasPostgreSQLConverter.UpdateAsync(ortoDatas_PostgreSQL, countyIds_Candidate);
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(OrtoDatasController), nameof(UpdateItemsByCountyIdsAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
             }
             catch (Exception exception)
             {
-                Serilog.Modify.Log(exception, "Database could not be updated");
-                return StatusCode(500, "Database update failed.");
+                Serilog.Modify.Log(exception, "Unhandled error during OrtoDatasController.UpdateItemsByCountyIdsAsync");
+                return StatusCode(500, exception.Message);
             }
-
-            UpdateItemsResult? updateItemsResult = postgreSQLUpdateResult.UpdateItemsResult(ortoDatas_PostgreSQL.Count);
-            if (updateItemsResult is null)
-            {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database could not be attempted");
-                return StatusCode(500, "Database update failed.");
-            }
-
-            // A drop means the row carried no geometry, no part could be decided for it, or a partition
-            // could not be created. It is still a partial write, and it used to leave no trace.
-            if (updateItemsResult.Rejected.Count != 0)
-            {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas rejected before the database: {Count}/{Total}. References: {References}", updateItemsResult.Rejected.Count, updateItemsResult.Sent, updateItemsResult.Rejected.RejectionSample());
-            }
-
-            // Answering Ok here is what let a whole county regeneration report success while writing
-            // nothing: the storage database was unreachable, every batch came back empty, and the client
-            // treats 200 as done. OrtoDatas were converted and reached this point, so nothing updated is a
-            // failure, not a quiet no-op. BuildingController already answers this case the same way.
-            if (updateItemsResult.Updated == 0)
-            {
-                if (updateItemsResult.Rejected.Count == updateItemsResult.Sent)
-                {
-                    return StatusCode(500, $"All {updateItemsResult.Sent} OrtoDatas were rejected before the database; none could be filed under a county.");
-                }
-
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Updating to database ended but no OrtoDatas have been updated");
-                return StatusCode(500, "Database update returned no modified OrtoDatas IDs.");
-            }
-
-            // Updated counts distinct identifiers, and rows colliding on (reference, county_id) share one,
-            // so Updated < Sent on its own proves nothing. Rejected is the exact figure.
-            Serilog.Modify.Log("Updating to database ended. Updated OrtoDatas: {After}/{Before}, rejected: {Rejected}", updateItemsResult.Updated, updateItemsResult.Sent, updateItemsResult.Rejected.Count);
-
-            return Ok(updateItemsResult);
         }
 
         /// <summary>

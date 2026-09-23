@@ -434,6 +434,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>The unambiguous counterpart of <see cref="UpdateItemsAsync"/>: it takes county identifiers rather than a code, so the caller states which rows are in play instead of leaving the server to derive them.</para>
         /// <para>The identifiers are the parts of one county in play, and each model is filed under the part already holding the <c>building_2d</c> row its reference names, probed lowest part first - whether one identifier arrived or several, since naming one part is not evidence the county has one. That row was filed by geometry when it was imported, so reusing its answer keeps both tables keyed by the same <c>(county_id, reference)</c> pair.</para>
         /// <para>A model no named part holds is widened to every part of the county its parts name, and only a model no part of the county holds is left unwritten - nothing states where it belongs, and storing it under a guessed part is the state this replaced.</para>
+        /// <para>Nothing filed is answered as a failure, not a quiet no-op: the county-part lookup not running answers a distinct 500 naming it, a transient database failure answers 503 with <c>Retry-After</c>, and a non-empty batch in which no model could be filed under any county answers 500. This is the endpoint behind a regeneration that once posted 33 687 models into an unreachable database and reported success.</para>
         /// </summary>
         /// <param name="jsonArray">The JSON array containing the building models to be updated. This value can be null.</param>
         /// <param name="countyIds">The identifiers of the county rows the building models belong to. Normally every polygon part of one county.</param>
@@ -445,6 +446,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
@@ -475,92 +477,121 @@ namespace DiGi.GIS.WebAPI.Classes
                 return NoContent();
             }
 
-            List<BuildingModel>? buildingModels = Core.Create.SerializableObjects<BuildingModel>(jsonArray);
-            if (buildingModels is null)
+            try
             {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "BuildingModels could not be converted from json");
-                return BadRequest();
-            }
-
-            List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
-
-            // Every model is resolved through building_2d regardless of how many ids the caller sent - naming one id
-            // is not evidence the code has one part - so the single-id early return is gone and the group, resolve
-            // and bucket path below handles the one-candidate case too.
-            int buildingModels_WithoutReference = 0;
-            Dictionary<string, List<BuildingModel>> buildingModels_ByReference = [];
-            foreach (BuildingModel buildingModel in buildingModels)
-            {
-                if (!buildingModel.TryGetValue(BuildingModelParameter.Reference, out string? reference) || string.IsNullOrWhiteSpace(reference))
+                List<BuildingModel>? buildingModels = Core.Create.SerializableObjects<BuildingModel>(jsonArray);
+                if (buildingModels is null)
                 {
-                    // Nothing names the building this model belongs to, so no part can be decided for it. The
-                    // skip is logged below so a batch of reference-less models is not mistaken for a no-op.
-                    buildingModels_WithoutReference++;
-                    continue;
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "BuildingModels could not be converted from json");
+                    return BadRequest();
                 }
 
-                if (!buildingModels_ByReference.TryGetValue(reference!, out List<BuildingModel>? buildingModels_Reference))
+                List<int> countyIds_Candidate = [.. new HashSet<int>(countyIds).OrderBy(x => x)];
+
+                // Every model is resolved through building_2d regardless of how many ids the caller sent - naming one id
+                // is not evidence the code has one part - so the single-id early return is gone and the group, resolve
+                // and bucket path below handles the one-candidate case too.
+                int buildingModels_WithoutReference = 0;
+                Dictionary<string, List<BuildingModel>> buildingModels_ByReference = [];
+                foreach (BuildingModel buildingModel in buildingModels)
                 {
-                    buildingModels_Reference = [];
-                    buildingModels_ByReference[reference!] = buildingModels_Reference;
+                    if (!buildingModel.TryGetValue(BuildingModelParameter.Reference, out string? reference) || string.IsNullOrWhiteSpace(reference))
+                    {
+                        // Nothing names the building this model belongs to, so no part can be decided for it. The
+                        // skip is logged below so a batch of reference-less models is not mistaken for a no-op.
+                        buildingModels_WithoutReference++;
+                        continue;
+                    }
+
+                    if (!buildingModels_ByReference.TryGetValue(reference!, out List<BuildingModel>? buildingModels_Reference))
+                    {
+                        buildingModels_Reference = [];
+                        buildingModels_ByReference[reference!] = buildingModels_Reference;
+                    }
+
+                    buildingModels_Reference.Add(buildingModel);
                 }
 
-                buildingModels_Reference.Add(buildingModel);
-            }
+                // A model carries no geometry, so the 2D building its reference names is the only thing that can say
+                // which part it belongs to. A model no named part holds is widened to every part of the named county
+                // before it is left unwritten, never filed under a guessed part.
+                Dictionary<string, int>? countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(building2DPostgreSQLConverter, administrativeAreal2DPostgreSQLConverter, buildingModels_ByReference.Keys, countyIds_Candidate, cancellationToken: cancellationToken);
 
-            // A model carries no geometry, so the 2D building its reference names is the only thing that can say
-            // which part it belongs to. A model no named part holds is widened to every part of the named county
-            // before it is left unwritten, never filed under a guessed part.
-            Dictionary<string, int> countyIds_ByReference = await PostgreSQL.Query.CountyIdsByReferencesWithSiblingFallbackAsync(building2DPostgreSQLConverter, administrativeAreal2DPostgreSQLConverter, buildingModels_ByReference.Keys, countyIds_Candidate, cancellationToken: cancellationToken);
-
-            Dictionary<int, List<BuildingModel>> buildingModels_ByCountyId = [];
-            List<string> references_Unresolved = [];
-
-            foreach (KeyValuePair<string, List<BuildingModel>> keyValuePair in buildingModels_ByReference)
-            {
-                if (!countyIds_ByReference.TryGetValue(keyValuePair.Key, out int countyId))
+                if (countyIds_ByReference is null)
                 {
-                    references_Unresolved.Add(keyValuePair.Key);
-                    continue;
+                    // The lookup could not run at all, which is a different failure from running and resolving
+                    // nothing. Answering 204 here is exactly how the 33 687-model regeneration posted into an
+                    // unreachable database and reported success.
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "County parts could not be resolved: the building_2d lookup could not run (check the Main database configuration)");
+                    return StatusCode(500, "County parts could not be resolved: the building_2d lookup could not run.");
                 }
 
-                if (!buildingModels_ByCountyId.TryGetValue(countyId, out List<BuildingModel>? buildingModels_County) || buildingModels_County is null)
+                Dictionary<int, List<BuildingModel>> buildingModels_ByCountyId = [];
+                List<string> references_Unresolved = [];
+
+                foreach (KeyValuePair<string, List<BuildingModel>> keyValuePair in buildingModels_ByReference)
                 {
-                    buildingModels_County = [];
-                    buildingModels_ByCountyId[countyId] = buildingModels_County;
+                    if (!countyIds_ByReference.TryGetValue(keyValuePair.Key, out int countyId))
+                    {
+                        references_Unresolved.Add(keyValuePair.Key);
+                        continue;
+                    }
+
+                    if (!buildingModels_ByCountyId.TryGetValue(countyId, out List<BuildingModel>? buildingModels_County) || buildingModels_County is null)
+                    {
+                        buildingModels_County = [];
+                        buildingModels_ByCountyId[countyId] = buildingModels_County;
+                    }
+
+                    buildingModels_County.AddRange(keyValuePair.Value);
                 }
 
-                buildingModels_County.AddRange(keyValuePair.Value);
-            }
-
-            if (buildingModels_WithoutReference != 0)
-            {
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModels not written because they carry no reference: {Count}/{Total}", buildingModels_WithoutReference, buildingModels.Count);
-            }
-
-            if (references_Unresolved.Count != 0)
-            {
-                // No Building2D under any of these parts means nothing states where the model belongs, and
-                // storing it under a guessed part is exactly the state being repaired here.
-                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModels not written because no Building2D under the given parts carries their reference: {Count}/{Total}. References: {References}", references_Unresolved.Count, buildingModels.Count, string.Join(", ", references_Unresolved.Take(20)));
-            }
-
-            if (buildingModels_ByCountyId.Count == 0)
-            {
-                Serilog.Modify.Log("No BuildingModels to update");
-                return NoContent();
-            }
-
-            foreach (KeyValuePair<int, List<BuildingModel>> keyValuePair in buildingModels_ByCountyId)
-            {
-                IActionResult actionResult = await UpdateAsync(keyValuePair.Value, keyValuePair.Key);
-                if (actionResult is not OkResult)
+                if (buildingModels_WithoutReference != 0)
                 {
-                    return actionResult;
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModels not written because they carry no reference: {Count}/{Total}", buildingModels_WithoutReference, buildingModels.Count);
                 }
-            }
 
-            return Ok();
+                if (references_Unresolved.Count != 0)
+                {
+                    // No Building2D under any of these parts means nothing states where the model belongs, and
+                    // storing it under a guessed part is exactly the state being repaired here.
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingModels not written because no Building2D under the given parts carries their reference: {Count}/{Total}. References: {References}", references_Unresolved.Count, buildingModels.Count, string.Join(", ", references_Unresolved.Take(20)));
+                }
+
+                if (buildingModels_ByCountyId.Count == 0)
+                {
+                    // A non-empty batch that files nothing is a failure, not a no-op: the two warnings above
+                    // already say whether the models carried no reference or no Building2D held the ones that did.
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No BuildingModels to update: {WithoutReference} carried no reference and {Unresolved} matched no Building2D under any part", buildingModels_WithoutReference, references_Unresolved.Count);
+                    return StatusCode(500, $"All {buildingModels.Count} BuildingModels were rejected before the database; none could be filed under a county.");
+                }
+
+                foreach (KeyValuePair<int, List<BuildingModel>> keyValuePair in buildingModels_ByCountyId)
+                {
+                    IActionResult actionResult = await UpdateAsync(keyValuePair.Value, keyValuePair.Key);
+                    if (actionResult is not OkResult)
+                    {
+                        return actionResult;
+                    }
+                }
+
+                return Ok();
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(BuildingModelController), nameof(UpdateItemsByCountyIdsAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "Unhandled error during BuildingModelController.UpdateItemsByCountyIdsAsync");
+                return StatusCode(500, exception.Message);
+            }
         }
 
         /// <summary>
