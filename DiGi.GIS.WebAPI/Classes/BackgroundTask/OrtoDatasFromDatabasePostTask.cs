@@ -34,6 +34,13 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         public OrtoDatasBuilding2DOptions? OrtoDatasBuilding2DOptions { get; set; } = new();
 
+        /// <summary>
+        /// Gets or sets how many failed batches in a row stop the task. Defaults to 3; values below 1 are treated as 1.
+        /// <para>A batch fails when a request times out or the connection drops, when Building2Ds cannot be fetched, or when the upload or the acknowledge is not accepted. Its references stay claimed and return to the queue when their lease expires, so the run moves on to the next batch. A batch that stores OrtoDatas resets the count. Reaching the limit ends the task with a <see cref="TimeoutException"/> naming the county and the last failure, so a dead server still stops the run.</para>
+        /// <para>No host exposes this setting, so the default is the production value.</para>
+        /// </summary>
+        public int MaxConsecutiveFailureCount { get; set; } = 3;
+
         /// <inheritdoc />
         protected override async Task<bool> ExecuteAsync(IProgress<long> progress, CancellationToken cancellationToken)
         {
@@ -74,16 +81,45 @@ namespace DiGi.GIS.WebAPI.Classes
 
             PostOptions postOptions = new() { RequestResult = true };
 
-            PostResponse<List<Building2DReference>?> postResponse_Building2DReferences;
-            try
+            int maxConsecutiveFailureCount = MaxConsecutiveFailureCount < 1 ? 1 : MaxConsecutiveFailureCount;
+            int failureCount = 0;
+
+            // A request timeout surfaces as an OperationCanceledException while the task's own token is not cancelled -
+            // PostAsync bounds each attempt with its own token - so the token tells a user cancel from a timeout.
+            // A failure is counted, not thrown, until the limit is reached; the references it held stay claimed.
+            void RegisterFailure(string reason, Exception? exception)
             {
-                postResponse_Building2DReferences = await DiGi.WebAPI.Modify.PostAsync<List<Building2DReference>>(httpClient_OrtoDatas, requestUri_OrtoDatas, (HttpContent?)null, postOptions);
+                failureCount++;
+                if (failureCount >= maxConsecutiveFailureCount)
+                {
+                    throw new TimeoutException(string.Format("OrtoDatas upload stopped after {0} consecutive failed batches. Last failure: {1}{2}", failureCount, reason, exception is null ? string.Empty : string.Format(" ({0})", exception.Message)), exception);
+                }
             }
-            catch (Exception exception)
+
+            async Task<PostResponse<List<Building2DReference>?>> ClaimAsync()
             {
-                Serilog.Modify.Log(exception, "Failed to claim initial Building2DReferences from queue");
-                throw;
+                while (true)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    try
+                    {
+                        return await DiGi.WebAPI.Modify.PostAsync<List<Building2DReference>>(httpClient_OrtoDatas, requestUri_OrtoDatas, (HttpContent?)null, postOptions);
+                    }
+                    catch (OperationCanceledException operationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                    {
+                        Serilog.Modify.Log(operationCanceledException, "Claiming Building2DReferences timed out after {Delay}s", postOptions.Delay.TotalSeconds);
+                        RegisterFailure(string.Format("claiming Building2DReferences timed out after {0}s", postOptions.Delay.TotalSeconds), operationCanceledException);
+                    }
+                    catch (HttpRequestException httpRequestException)
+                    {
+                        Serilog.Modify.Log(httpRequestException, "HTTP error while claiming Building2DReferences");
+                        RegisterFailure("HTTP error while claiming Building2DReferences", httpRequestException);
+                    }
+                }
             }
+
+            PostResponse<List<Building2DReference>?> postResponse_Building2DReferences = await ClaimAsync();
 
             if (postResponse_Building2DReferences is null || !postResponse_Building2DReferences.Succeeded)
             {
@@ -119,7 +155,8 @@ namespace DiGi.GIS.WebAPI.Classes
                             PostResponse<List<GIS.Classes.Building2D>?> postResponse_Building2Ds = await DiGi.WebAPI.Modify.PostAsync<List<GIS.Classes.Building2D>>(httpClient_Building2D, requestUri_Building2D, async () => await Create.HttpContent(building2DReferences_Claimed, cancellationToken).ConfigureAwait(false) ?? throw new InvalidOperationException("HttpContent for Building2D references could not be created"), postOptions);
                             if (postResponse_Building2Ds is null || !postResponse_Building2Ds.Succeeded)
                             {
-                                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2Ds could not be fetched for {Count} references", building2DReferences_Claimed.Count);
+                                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building2Ds could not be fetched for {Count} references in county {CountyId}", building2DReferences_Claimed.Count, countyId.Value);
+                                RegisterFailure(string.Format("Building2Ds could not be fetched for county {0}", countyId.Value), null);
                                 continue;
                             }
 
@@ -150,6 +187,8 @@ namespace DiGi.GIS.WebAPI.Classes
                                 bool succeeded = await ExecuteAsync(ortoDatasList, countyId.Value, longProgressWrapper, cancellationToken);
                                 if (succeeded)
                                 {
+                                    failureCount = 0;
+
                                     HashSet<string> references_Stored = [];
                                     foreach (GIS.Classes.OrtoDatas ortoDatas in ortoDatasList)
                                     {
@@ -170,15 +209,15 @@ namespace DiGi.GIS.WebAPI.Classes
 
                                     if (ids.Count > 0 && httpClient_OrtoDatas_Acknowledge is not null && !string.IsNullOrWhiteSpace(path_OrtoDatas_Acknowledge))
                                     {
-                                        using CancellationTokenSource cancellationTokenSource_Ack = new(postOptions.Delay);
-                                        string? json_Ack = System.Text.Json.JsonSerializer.Serialize(ids);
-                                        if (!string.IsNullOrWhiteSpace(json_Ack))
+                                        string json_Ack = System.Text.Json.JsonSerializer.Serialize(ids);
+
+                                        // A factory rather than a single-use HttpContent, as for the Building2D fetch above, so a dropped
+                                        // connection is retried. Stored but unacknowledged references are re-processed after lease expiry.
+                                        PostResponse postResponse_Ack = await DiGi.WebAPI.Modify.PostAsync(httpClient_OrtoDatas_Acknowledge, path_OrtoDatas_Acknowledge, async () => await Create.HttpContent(json_Ack, cancellationToken).ConfigureAwait(false) ?? throw new InvalidOperationException("HttpContent for acknowledge could not be created"), postOptions);
+                                        if (postResponse_Ack is null || !postResponse_Ack.Succeeded)
                                         {
-                                            using HttpContent? httpContent_Ack = await Create.HttpContent(json_Ack, cancellationTokenSource_Ack.Token).ConfigureAwait(false);
-                                            if (httpContent_Ack is not null)
-                                            {
-                                                await DiGi.WebAPI.Modify.PostAsync(httpClient_OrtoDatas_Acknowledge, path_OrtoDatas_Acknowledge, httpContent_Ack, postOptions);
-                                            }
+                                            Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas stored but not acknowledged for {Count} references in county {CountyId}; they are re-processed after lease expiry", ids.Count, countyId.Value);
+                                            RegisterFailure(string.Format("acknowledge was not accepted for county {0}", countyId.Value), null);
                                         }
                                     }
 
@@ -190,6 +229,7 @@ namespace DiGi.GIS.WebAPI.Classes
                                 else
                                 {
                                     Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "OrtoDatas could not be updated for county {CountyId}. References remain claimed and will retry on lease expiry.", countyId.Value);
+                                    RegisterFailure(string.Format("OrtoDatas update was not accepted for county {0}", countyId.Value), null);
                                 }
                             }
                             else
@@ -197,16 +237,23 @@ namespace DiGi.GIS.WebAPI.Classes
                                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "No OrtoDatas imagery extracted for {Count} buildings in county {CountyId}", building2Ds.Count, countyId.Value);
                             }
                         }
-                        catch (OperationCanceledException)
+                        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                         {
                             Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "{Type}:{Name} canceled", nameof(OrtoDatasFromDatabasePostTask), nameof(ExecuteAsync));
                             throw;
                         }
+                        catch (OperationCanceledException operationCanceledException)
+                        {
+                            // A request timeout, not a user cancel: the references stay claimed and the lease expiry re-queues them.
+                            Serilog.Modify.Log(operationCanceledException, "Request timed out during OrtoDatas processing in county {CountyId}; {Count} references stay claimed until lease expiry", countyId.Value, building2DReferences_Claimed.Count);
+                            RegisterFailure(string.Format("request timed out in county {0} (upload limit {1}s x {2} attempts)", countyId.Value, SerializableObjectsPostOptions.Delay.TotalSeconds, SerializableObjectsPostOptions.RetryCount < 0 ? 1 : SerializableObjectsPostOptions.RetryCount + 1), operationCanceledException);
+                        }
                         catch (HttpRequestException httpRequestException)
                         {
-                            Serilog.Modify.Log(httpRequestException, "HTTP error during OrtoDatas processing in county {CountyId}", countyId.Value);
+                            Serilog.Modify.Log(httpRequestException, "HTTP error during OrtoDatas processing in county {CountyId}; {Count} references stay claimed until lease expiry", countyId.Value, building2DReferences_Claimed.Count);
+                            RegisterFailure(string.Format("HTTP error in county {0}", countyId.Value), httpRequestException);
                         }
-                        catch (Exception exception)
+                        catch (Exception exception) when (exception is not TimeoutException)
                         {
                             Serilog.Modify.Log(exception, "Unexpected error during OrtoDatas processing in county {CountyId}", countyId.Value);
                             throw;
@@ -214,17 +261,7 @@ namespace DiGi.GIS.WebAPI.Classes
                     }
                 }
 
-                cancellationToken.ThrowIfCancellationRequested();
-
-                try
-                {
-                    postResponse_Building2DReferences = await DiGi.WebAPI.Modify.PostAsync<List<Building2DReference>>(httpClient_OrtoDatas, requestUri_OrtoDatas, (HttpContent?)null, postOptions);
-                }
-                catch (Exception exception)
-                {
-                    Serilog.Modify.Log(exception, "Failed to claim next batch of Building2DReferences");
-                    throw;
-                }
+                postResponse_Building2DReferences = await ClaimAsync();
             }
 
             Serilog.Modify.Log("{Type}:{Name} completed successfully", nameof(OrtoDatasFromDatabasePostTask), nameof(ExecuteAsync));

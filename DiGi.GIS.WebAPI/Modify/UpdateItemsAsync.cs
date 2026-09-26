@@ -569,7 +569,7 @@ namespace DiGi.GIS.WebAPI
             }
             catch (OperationCanceledException operationCanceledException)
             {
-                Serilog.Modify.Log(operationCanceledException, string.Format("Timeout: {0}s limit reached, or the request was cancelled.", postOptions.Delay.TotalSeconds));
+                Serilog.Modify.Log(operationCanceledException, "Timeout: {Delay}s x {AttemptCount} attempts on {RequestUri} ({Bytes} bytes), or the request was cancelled.", postOptions.Delay.TotalSeconds, postOptions.RetryCount < 0 ? 1 : postOptions.RetryCount + 1, requestUri, utf8Json.Length);
                 throw;
             }
             catch (Exception exception)

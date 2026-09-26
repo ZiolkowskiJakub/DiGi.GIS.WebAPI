@@ -15,12 +15,24 @@ namespace DiGi.GIS.WebAPI.Classes
     {
         /// <summary>
         /// Handles the posting of OrtoDatas objects to the PostgreSQL web API.
+        /// <para>OrtoDatas carry imagery, so <see cref="SerializableObjectsPostTask{T}.SerializableObjectsPostOptions"/> defaults to <see cref="DefaultDelay"/> per attempt and <see cref="DefaultBatchMemorySize"/> per request instead of the general 20 s and 3 MB. No host exposes these settings, so these defaults are the production values.</para>
         /// </summary>
         /// <param name="GISWebAPIManager">The manager instance used to handle PostgreSQL web API operations.</param>
         public OrtoDatasPostTask(GISWebAPIManager GISWebAPIManager)
             : base(GISWebAPIManager)
         {
+            SerializableObjectsPostOptions = new() { Delay = DefaultDelay, BatchMemorySize = DefaultBatchMemorySize };
         }
+
+        /// <summary>
+        /// Default per-attempt upload timeout for OrtoDatas. Kept below the 60 s <see cref="System.Net.Http.HttpClient.Timeout"/> set in <see cref="Create.ServiceProvider"/>, which would otherwise cut the attempt first.
+        /// </summary>
+        public static readonly TimeSpan DefaultDelay = TimeSpan.FromSeconds(45);
+
+        /// <summary>
+        /// Default uncompressed batch size in bytes for OrtoDatas uploads (1 MB), so a slow write fails less often and a retry resends less.
+        /// </summary>
+        public const int DefaultBatchMemorySize = 1024 * 1024;
 
         /// <summary>
         /// Gets or sets the code associated with the OrtoDatas post task.
