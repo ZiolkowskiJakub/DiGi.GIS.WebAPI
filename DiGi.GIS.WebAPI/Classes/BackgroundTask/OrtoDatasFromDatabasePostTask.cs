@@ -246,7 +246,7 @@ namespace DiGi.GIS.WebAPI.Classes
                         {
                             // A request timeout, not a user cancel: the references stay claimed and the lease expiry re-queues them.
                             Serilog.Modify.Log(operationCanceledException, "Request timed out during OrtoDatas processing in county {CountyId}; {Count} references stay claimed until lease expiry", countyId.Value, building2DReferences_Claimed.Count);
-                            RegisterFailure(string.Format("request timed out in county {0} (upload limit {1}s x {2} attempts)", countyId.Value, SerializableObjectsPostOptions.Delay.TotalSeconds, SerializableObjectsPostOptions.RetryCount < 0 ? 1 : SerializableObjectsPostOptions.RetryCount + 1), operationCanceledException);
+                            RegisterFailure(string.Format("request timed out in county {0} (limits: upload {1}s x {2} attempts, Building2D fetch and acknowledge {3}s x {4} attempts)", countyId.Value, SerializableObjectsPostOptions.Delay.TotalSeconds, SerializableObjectsPostOptions.RetryCount < 0 ? 1 : SerializableObjectsPostOptions.RetryCount + 1, postOptions.Delay.TotalSeconds, postOptions.RetryCount < 0 ? 1 : postOptions.RetryCount + 1), operationCanceledException);
                         }
                         catch (HttpRequestException httpRequestException)
                         {
