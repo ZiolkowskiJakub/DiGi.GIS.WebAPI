@@ -19,7 +19,9 @@ namespace DiGi.GIS.WebAPI
                 httpClient.BaseAddress = Constants.Uri.BaseAddress;
                 httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
-                httpClient.Timeout = TimeSpan.FromSeconds(60);
+                // The client ceiling must not sit below the server's 600 s commandtimeout, or a slow global read
+                // (e.g. Building2D/referenceduplicates) is cancelled at the client before the server can answer.
+                httpClient.Timeout = TimeSpan.FromSeconds(600);
             })
             .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
             {
