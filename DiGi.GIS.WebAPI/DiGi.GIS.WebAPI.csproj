@@ -26,6 +26,12 @@
 		     references (10.0.5): both extensions are one probing set, so a Microsoft.IdentityModel version drift between
 		     the two is invisible until a MissingMethodException at the first token. Not in the ASP.NET shared framework. -->
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
+		<!-- TableWireFormatSchemaFilter implements the host's IWebAPISchemaFilter hook, whose signature
+		     needs Swashbuckle's SchemaFilterContext and Microsoft.OpenApi's IOpenApiSchema at compile time.
+		     DiGi.WebAPI is referenced by HintPath, which does not carry its NuGet dependencies here, so both
+		     are declared at the exact versions DiGi.WebAPI and the host pin (DiGi.GIS.WebAPI#44). -->
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.2.0" />
+		<PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
 	</ItemGroup>
 
 	<Target Name="CopyFiles" AfterTargets="Build">

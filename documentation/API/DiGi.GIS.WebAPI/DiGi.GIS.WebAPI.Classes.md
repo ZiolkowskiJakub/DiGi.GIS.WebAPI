@@ -3513,7 +3513,7 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the operation, typically containing a [DiGi\.PostgreSQL\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.postgresql.table.classes.table 'DiGi\.PostgreSQL\.Table\.Classes\.Table') if found\.
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') representing the result of the operation, typically containing a [DiGi\.Core\.IO\.Table\.Classes\.Table](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.table 'DiGi\.Core\.IO\.Table\.Classes\.Table') if found\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter,int,System.Threading.CancellationToken)'></a>
 
@@ -6584,6 +6584,23 @@ public int Count { get; set; }
 #### Property Value
 [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasFromDatabasePostTask.MaxConsecutiveFailureCount'></a>
+
+## OrtoDatasFromDatabasePostTask\.MaxConsecutiveFailureCount Property
+
+Gets or sets how many failed batches in a row stop the task\. Defaults to 3; values below 1 are treated as 1\.
+
+A batch fails when a request times out or the connection drops, when Building2Ds cannot be fetched, or when the upload or the acknowledge is not accepted. Its references stay claimed and return to the queue when their lease expires, so the run moves on to the next batch. A batch that stores OrtoDatas resets the count. Reaching the limit ends the task with a [System\.TimeoutException](https://learn.microsoft.com/en-us/dotnet/api/system.timeoutexception 'System\.TimeoutException') naming the county and the last failure, so a dead server still stops the run.
+
+No host exposes this setting, so the default is the production value.
+
+```csharp
+public int MaxConsecutiveFailureCount { get; set; }
+```
+
+#### Property Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasFromDatabasePostTask.OrtoDatasBuilding2DOptions'></a>
 
 ## OrtoDatasFromDatabasePostTask\.OrtoDatasBuilding2DOptions Property
@@ -6619,6 +6636,8 @@ Derived
 
 Handles the posting of OrtoDatas objects to the PostgreSQL web API\.
 
+OrtoDatas carry imagery, so [SerializableObjectsPostOptions](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.SerializableObjectsPostTask_T_.SerializableObjectsPostOptions 'DiGi\.GIS\.WebAPI\.Classes\.SerializableObjectsPostTask\<T\>\.SerializableObjectsPostOptions') defaults to [DefaultDelay](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask.DefaultDelay 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasPostTask\.DefaultDelay') per attempt and [DefaultBatchMemorySize](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask.DefaultBatchMemorySize 'DiGi\.GIS\.WebAPI\.Classes\.OrtoDatasPostTask\.DefaultBatchMemorySize') per request instead of the general 20 s and 3 MB. No host exposes these settings, so these defaults are the production values.
+
 ```csharp
 public OrtoDatasPostTask(DiGi.GIS.WebAPI.Classes.GISWebAPIManager GISWebAPIManager);
 ```
@@ -6629,6 +6648,33 @@ public OrtoDatasPostTask(DiGi.GIS.WebAPI.Classes.GISWebAPIManager GISWebAPIManag
 `GISWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
 
 The manager instance used to handle PostgreSQL web API operations\.
+### Fields
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask.DefaultBatchMemorySize'></a>
+
+## OrtoDatasPostTask\.DefaultBatchMemorySize Field
+
+Default uncompressed batch size in bytes for OrtoDatas uploads \(1 MB\), so a slow write fails less often and a retry resends less\.
+
+```csharp
+public const int DefaultBatchMemorySize = 1048576;
+```
+
+#### Field Value
+[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+<a name='DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask.DefaultDelay'></a>
+
+## OrtoDatasPostTask\.DefaultDelay Field
+
+Default per\-attempt upload timeout for OrtoDatas\. Kept below the 60 s [System\.Net\.Http\.HttpClient\.Timeout](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient.timeout 'System\.Net\.Http\.HttpClient\.Timeout') set in [ServiceProvider\(\)](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Create.ServiceProvider() 'DiGi\.GIS\.WebAPI\.Create\.ServiceProvider\(\)'), which would otherwise cut the attempt first\.
+
+```csharp
+public static readonly TimeSpan DefaultDelay;
+```
+
+#### Field Value
+[System\.TimeSpan](https://learn.microsoft.com/en-us/dotnet/api/system.timespan 'System\.TimeSpan')
 ### Properties
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasPostTask.Code'></a>
@@ -6974,6 +7020,142 @@ public DiGi.PostgreSQL.Table.Enums.SinglevalueAggregateFunction SinglevalueAggre
 
 ### Example
 Sum
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatDocumentFilter'></a>
+
+## TableWireFormatDocumentFilter Class
+
+Removes the Core\.IO [DiGi\.Core\.IO\.Table\.Classes\.Row](https://learn.microsoft.com/en-us/dotnet/api/digi.core.io.table.classes.row 'DiGi\.Core\.IO\.Table\.Classes\.Row') component a generated document no longer references\.
+
+Swashbuckle registers that component while it generates a table's schema - a Core.IO table is an `IEnumerable<Row>`, so the array items reference it - and [TableWireFormatSchemaFilter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TableWireFormatSchemaFilter 'DiGi\.GIS\.WebAPI\.Classes\.TableWireFormatSchemaFilter') then replaces those items with the `TableConverter` format, whose rows are positional value arrays (ZiolkowskiJakub/DiGi.GIS.WebAPI#44). Nothing else can reference the Core.IO `Row`, so without this filter the served document would keep advertising a row object schema the wire never carries.
+
+Registered through the host's `IWebAPIDocumentFilter` hook, after the host's own document filters, mirroring how `DiGi.WebAPI.WindowsService` removes its unreferenced enum components.
+
+```csharp
+public class TableWireFormatDocumentFilter : DiGi.WebAPI.Interfaces.IWebAPIDocumentFilter, Swashbuckle.AspNetCore.SwaggerGen.IDocumentFilter
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → TableWireFormatDocumentFilter
+
+Implements [DiGi\.WebAPI\.Interfaces\.IWebAPIDocumentFilter](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.interfaces.iwebapidocumentfilter 'DiGi\.WebAPI\.Interfaces\.IWebAPIDocumentFilter'), [Swashbuckle\.AspNetCore\.SwaggerGen\.IDocumentFilter](https://learn.microsoft.com/en-us/dotnet/api/swashbuckle.aspnetcore.swaggergen.idocumentfilter 'Swashbuckle\.AspNetCore\.SwaggerGen\.IDocumentFilter')
+### Methods
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatDocumentFilter.Apply(Microsoft.OpenApi.OpenApiDocument,Swashbuckle.AspNetCore.SwaggerGen.DocumentFilterContext)'></a>
+
+## TableWireFormatDocumentFilter\.Apply\(OpenApiDocument, DocumentFilterContext\) Method
+
+Removes the document's Core\.IO `Row` component when nothing in the document references it\.
+
+```csharp
+public void Apply(Microsoft.OpenApi.OpenApiDocument swaggerDoc, Swashbuckle.AspNetCore.SwaggerGen.DocumentFilterContext context);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatDocumentFilter.Apply(Microsoft.OpenApi.OpenApiDocument,Swashbuckle.AspNetCore.SwaggerGen.DocumentFilterContext).swaggerDoc'></a>
+
+`swaggerDoc` [Microsoft\.OpenApi\.OpenApiDocument](https://learn.microsoft.com/en-us/dotnet/api/microsoft.openapi.openapidocument 'Microsoft\.OpenApi\.OpenApiDocument')
+
+The OpenAPI document to be modified\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatDocumentFilter.Apply(Microsoft.OpenApi.OpenApiDocument,Swashbuckle.AspNetCore.SwaggerGen.DocumentFilterContext).context'></a>
+
+`context` [Swashbuckle\.AspNetCore\.SwaggerGen\.DocumentFilterContext](https://learn.microsoft.com/en-us/dotnet/api/swashbuckle.aspnetcore.swaggergen.documentfiltercontext 'Swashbuckle\.AspNetCore\.SwaggerGen\.DocumentFilterContext')
+
+The context of the document being generated\.
+
+Implements [Apply\(OpenApiDocument, DocumentFilterContext\)](https://learn.microsoft.com/en-us/dotnet/api/swashbuckle.aspnetcore.swaggergen.idocumentfilter.apply#swashbuckle-aspnetcore-swaggergen-idocumentfilter-apply(microsoft-openapi-openapidocument-swashbuckle-aspnetcore-swaggergen-documentfiltercontext) 'Swashbuckle\.AspNetCore\.SwaggerGen\.IDocumentFilter\.Apply\(Microsoft\.OpenApi\.OpenApiDocument,Swashbuckle\.AspNetCore\.SwaggerGen\.DocumentFilterContext\)')
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatDocumentFilter.SchemaReferenceVisitor'></a>
+
+## TableWireFormatDocumentFilter\.SchemaReferenceVisitor Class
+
+Collects the id of every schema component referenced in a walked OpenAPI document, the way `DiGi.WebAPI.WindowsService`'s own visitor does\.
+
+Overrides `Visit(IOpenApiReferenceHolder)`: the walker reports a `$ref` there, while `Visit(IOpenApiSchema)` never sees one.
+
+```csharp
+private sealed class TableWireFormatDocumentFilter.SchemaReferenceVisitor : Microsoft.OpenApi.OpenApiVisitorBase
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [Microsoft\.OpenApi\.OpenApiVisitorBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.openapi.openapivisitorbase 'Microsoft\.OpenApi\.OpenApiVisitorBase') → SchemaReferenceVisitor
+### Properties
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatDocumentFilter.SchemaReferenceVisitor.Ids'></a>
+
+## TableWireFormatDocumentFilter\.SchemaReferenceVisitor\.Ids Property
+
+Gets the ids of the referenced schema components collected so far\.
+
+```csharp
+public System.Collections.Generic.HashSet<string> Ids { get; }
+```
+
+#### Property Value
+[System\.Collections\.Generic\.HashSet&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1 'System\.Collections\.Generic\.HashSet\`1')
+### Methods
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatDocumentFilter.SchemaReferenceVisitor.Visit(Microsoft.OpenApi.IOpenApiReferenceHolder)'></a>
+
+## TableWireFormatDocumentFilter\.SchemaReferenceVisitor\.Visit\(IOpenApiReferenceHolder\) Method
+
+Records the component id of a schema reference\.
+
+```csharp
+public override void Visit(Microsoft.OpenApi.IOpenApiReferenceHolder referenceHolder);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatDocumentFilter.SchemaReferenceVisitor.Visit(Microsoft.OpenApi.IOpenApiReferenceHolder).referenceHolder'></a>
+
+`referenceHolder` [Microsoft\.OpenApi\.IOpenApiReferenceHolder](https://learn.microsoft.com/en-us/dotnet/api/microsoft.openapi.iopenapireferenceholder 'Microsoft\.OpenApi\.IOpenApiReferenceHolder')
+
+The reference being visited\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatSchemaFilter'></a>
+
+## TableWireFormatSchemaFilter Class
+
+Rewrites the schema of a Core\.IO table payload so that it describes the format the DiGi `TableConverter` writes, not what the MVC JSON options would\.
+
+Every `buildingdata/table*` operation answers with `Core.IO.Table.Convert.ToSystem_String<Table, Column, Row>`: a root object carrying exactly `Columns`, an array of DiGi-serialized column objects, and `Rows`, an array of positional value arrays - one value per column, in column order - with no root `_type` (ZiolkowskiJakub/DiGi.GIS.WebAPI#44).
+
+Registered through the host's `IWebAPISchemaFilter` hook, so it runs after `DiGi.WebAPI.WindowsService`'s `WireFormatSchemaFilter` and fully replaces whatever that filter produced for the type. A Core.IO table is not an `ISerializableObject`, so without this filter the host would describe the type's public members in camelCase, which matches neither writer.
+
+The column items are an open schema requiring only `_type` instead of referencing a component: the document's `Column` schema id is already taken by `DiGi.PostgreSQL.Table.Classes.Column` (the `buildingdata/columns*` operations serve it), and a second component registration would conflict on Swashbuckle's default id.
+
+```csharp
+public class TableWireFormatSchemaFilter : DiGi.WebAPI.Interfaces.IWebAPISchemaFilter, Swashbuckle.AspNetCore.SwaggerGen.ISchemaFilter
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → TableWireFormatSchemaFilter
+
+Implements [DiGi\.WebAPI\.Interfaces\.IWebAPISchemaFilter](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.interfaces.iwebapischemafilter 'DiGi\.WebAPI\.Interfaces\.IWebAPISchemaFilter'), [Swashbuckle\.AspNetCore\.SwaggerGen\.ISchemaFilter](https://learn.microsoft.com/en-us/dotnet/api/swashbuckle.aspnetcore.swaggergen.ischemafilter 'Swashbuckle\.AspNetCore\.SwaggerGen\.ISchemaFilter')
+### Methods
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatSchemaFilter.Apply(Microsoft.OpenApi.IOpenApiSchema,Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext)'></a>
+
+## TableWireFormatSchemaFilter\.Apply\(IOpenApiSchema, SchemaFilterContext\) Method
+
+Replaces the schema of a Core\.IO table with the `TableConverter` wire format: an object requiring exactly `Columns` and `Rows`\.
+
+```csharp
+public void Apply(Microsoft.OpenApi.IOpenApiSchema schema, Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext context);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatSchemaFilter.Apply(Microsoft.OpenApi.IOpenApiSchema,Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext).schema'></a>
+
+`schema` [Microsoft\.OpenApi\.IOpenApiSchema](https://learn.microsoft.com/en-us/dotnet/api/microsoft.openapi.iopenapischema 'Microsoft\.OpenApi\.IOpenApiSchema')
+
+The OpenAPI schema to be modified\.
+
+<a name='DiGi.GIS.WebAPI.Classes.TableWireFormatSchemaFilter.Apply(Microsoft.OpenApi.IOpenApiSchema,Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext).context'></a>
+
+`context` [Swashbuckle\.AspNetCore\.SwaggerGen\.SchemaFilterContext](https://learn.microsoft.com/en-us/dotnet/api/swashbuckle.aspnetcore.swaggergen.schemafiltercontext 'Swashbuckle\.AspNetCore\.SwaggerGen\.SchemaFilterContext')
+
+The context containing information about the schema being filtered\.
+
+Implements [Apply\(IOpenApiSchema, SchemaFilterContext\)](https://learn.microsoft.com/en-us/dotnet/api/swashbuckle.aspnetcore.swaggergen.ischemafilter.apply#swashbuckle-aspnetcore-swaggergen-ischemafilter-apply(microsoft-openapi-iopenapischema-swashbuckle-aspnetcore-swaggergen-schemafiltercontext) 'Swashbuckle\.AspNetCore\.SwaggerGen\.ISchemaFilter\.Apply\(Microsoft\.OpenApi\.IOpenApiSchema,Swashbuckle\.AspNetCore\.SwaggerGen\.SchemaFilterContext\)')
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController'></a>
 
