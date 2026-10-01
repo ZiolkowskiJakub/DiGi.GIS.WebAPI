@@ -1,6 +1,7 @@
 using DiGi.GIS.PostgreSQL.Classes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Npgsql;
 using System;
 using System.Collections.Generic;
@@ -145,7 +146,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Building2DUpdateItemsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "code")] string code, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Building2DUpdateItemsAsync([FromBody] JsonArray? jsonArray, [BindRequired, FromQuery(Name = "code")] string code, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(Building2DUpdateItemsAsync));
             Serilog.Modify.Log("Code provided: {Code}", code ?? string.Empty);
@@ -219,7 +220,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Building2DUpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Building2DUpdateItemsByCountyIdsAsync([FromBody] JsonArray? jsonArray, [BindRequired, FromQuery(Name = "countyids")] int[]? countyIds, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(Building2DUpdateItemsByCountyIdsAsync));
             Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
@@ -372,7 +373,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the operation, containing the requested items or an error response.</returns>
         [HttpGet("administrativeareal2d/itemsbyreference")]
-        public async Task<IActionResult> GetAdministrativeAreal2DItemsByReferenceAsync([FromQuery(Name = "reference")] string reference, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdministrativeAreal2DItemsByReferenceAsync([BindRequired, FromQuery(Name = "reference")] string reference, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(GetAdministrativeAreal2DItemsByReferenceAsync));
 
@@ -426,7 +427,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> containing the requested building 2D items, or a <see cref="BadRequestResult"/> if the reference is null or whitespace.</returns>
         [HttpGet("building2d/itemsbyreference")]
-        public async Task<IActionResult> GetBuilding2DItemsByReferenceAsync([FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetBuilding2DItemsByReferenceAsync([BindRequired, FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(GetBuilding2DItemsByReferenceAsync));
 

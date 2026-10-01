@@ -1,6 +1,7 @@
 using DiGi.Analytical.Building.HVAC.Classes;
 using DiGi.Analytical.Building.HVAC.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +31,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> representing the result of the request, containing the retrieved coefficients or an error status.</returns>
         [HttpGet("regulatedheattransfercoefficientsbyyear")]
-        public async Task<IActionResult> GetRegulatedHeatTransferCoefficientsByYearAsync([FromQuery(Name = "year")] short year, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRegulatedHeatTransferCoefficientsByYearAsync([BindRequired, FromQuery(Name = "year")] short year, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(HeatTransferCoefficientController), nameof(GetRegulatedHeatTransferCoefficientsByYearAsync));
 
