@@ -296,8 +296,10 @@ The terrain endpoints are unauthenticated reads with no natural ceiling of their
 
 The cap is a half-extent, so the largest search area is 4 km by 4 km. Counties are sampled onto a lattice between 10 m and 100 m, which puts the worst case at roughly 160 000 points. Raising this is safe only if the finest lattice is never queried at the new size - at 5 000 m the same lattice yields about a million points.
 
+`const` rather than `static readonly` so the terrain mesh endpoints can carry it as a [System\.ComponentModel\.DataAnnotations\.RangeAttribute](https://learn.microsoft.com/en-us/dotnet/api/system.componentmodel.dataannotations.rangeattribute 'System\.ComponentModel\.DataAnnotations\.RangeAttribute') maximum, which has to be a compile-time constant.
+
 ```csharp
-public static readonly double MaximumRadius;
+public const double MaximumRadius = 2000;
 ```
 
 #### Field Value
