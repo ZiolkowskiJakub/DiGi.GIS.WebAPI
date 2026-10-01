@@ -489,7 +489,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetBuilding2DDuplicateReferencesAsync([FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "limit")] int limit = 100, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetBuilding2DDuplicateReferencesAsync([FromQuery(Name = "countyid")] int? countyId = null, [Minimum(1), FromQuery(Name = "limit")] int limit = 100, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(GetBuilding2DDuplicateReferencesAsync));
 
@@ -558,7 +558,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetBuilding2DDuplicatesCountAsync([FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetBuilding2DDuplicatesCountAsync([FromQuery(Name = "countyid")] int? countyId = null, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OccupancyDataController), nameof(GetBuilding2DDuplicatesCountAsync));
 

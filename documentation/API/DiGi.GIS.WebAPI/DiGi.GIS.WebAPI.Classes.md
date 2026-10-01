@@ -5193,6 +5193,97 @@ public DiGi.PostgreSQL.Table.Enums.HistogramBucketing HistogramBucketing { get; 
 ### Example
 1
 
+<a name='DiGi.GIS.WebAPI.Classes.MinimumAttribute'></a>
+
+## MinimumAttribute Class
+
+Declares the smallest value a numeric action parameter may carry, without the ceiling a [System\.ComponentModel\.DataAnnotations\.RangeAttribute](https://learn.microsoft.com/en-us/dotnet/api/system.componentmodel.dataannotations.rangeattribute 'System\.ComponentModel\.DataAnnotations\.RangeAttribute') would force into the served document\.
+
+Applied to a query parameter it is enforced by MVC model validation, so `[ApiController]` answers a violation with HTTP 400 before the action runs - the same rejection the action's own guard already produced, now at binding (ZiolkowskiJakub/DiGi.GIS.WebAPI#47). A null value passes, so an optional parameter (an `int?` county filter) keeps its "omitted means no filter" meaning; a mandatory one is refused by `[BindRequired]`, not here.
+
+A floor states the guard it mirrors exactly: 0 for `commandTimeout < 0`, 1 for `countyId <= 0`, so the attribute never rejects a value the action accepts nor accepts one it rejects. A non-numeric or [System\.Double\.NaN](https://learn.microsoft.com/en-us/dotnet/api/system.double.nan 'System\.Double\.NaN') value is refused, matching the actions' own finiteness guards.
+
+[ParameterMinimumSchemaFilter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.ParameterMinimumSchemaFilter 'DiGi\.GIS\.WebAPI\.Classes\.ParameterMinimumSchemaFilter') carries the same floor into the parameter's OpenAPI schema as `minimum` - and as `exclusiveMinimum` when [Exclusive](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.MinimumAttribute.Exclusive 'DiGi\.GIS\.WebAPI\.Classes\.MinimumAttribute\.Exclusive') is set - so the document states the domain without the absurd `maximum` a `[Range(min, double.MaxValue)]` would emit.
+
+```csharp
+public sealed class MinimumAttribute : System.ComponentModel.DataAnnotations.ValidationAttribute
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [System\.Attribute](https://learn.microsoft.com/en-us/dotnet/api/system.attribute 'System\.Attribute') → [System\.ComponentModel\.DataAnnotations\.ValidationAttribute](https://learn.microsoft.com/en-us/dotnet/api/system.componentmodel.dataannotations.validationattribute 'System\.ComponentModel\.DataAnnotations\.ValidationAttribute') → MinimumAttribute
+### Constructors
+
+<a name='DiGi.GIS.WebAPI.Classes.MinimumAttribute.MinimumAttribute(double)'></a>
+
+## MinimumAttribute\(double\) Constructor
+
+Initializes a new instance of the [MinimumAttribute](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.MinimumAttribute 'DiGi\.GIS\.WebAPI\.Classes\.MinimumAttribute') class with an inclusive floor\.
+
+```csharp
+public MinimumAttribute(double minimum);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.MinimumAttribute.MinimumAttribute(double).minimum'></a>
+
+`minimum` [System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+
+The smallest value the parameter may carry\.
+### Properties
+
+<a name='DiGi.GIS.WebAPI.Classes.MinimumAttribute.Exclusive'></a>
+
+## MinimumAttribute\.Exclusive Property
+
+Whether the floor itself is excluded, for a domain that is strictly greater than the floor rather than at least it\.
+
+```csharp
+public bool Exclusive { get; set; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+<a name='DiGi.GIS.WebAPI.Classes.MinimumAttribute.Minimum'></a>
+
+## MinimumAttribute\.Minimum Property
+
+The smallest value the parameter may carry, inclusive unless [Exclusive](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.MinimumAttribute.Exclusive 'DiGi\.GIS\.WebAPI\.Classes\.MinimumAttribute\.Exclusive') is set\.
+
+```csharp
+public double Minimum { get; }
+```
+
+#### Property Value
+[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')
+### Methods
+
+<a name='DiGi.GIS.WebAPI.Classes.MinimumAttribute.IsValid(object,System.ComponentModel.DataAnnotations.ValidationContext)'></a>
+
+## MinimumAttribute\.IsValid\(object, ValidationContext\) Method
+
+Determines whether the bound value lies at or above the floor, or strictly above it when [Exclusive](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.MinimumAttribute.Exclusive 'DiGi\.GIS\.WebAPI\.Classes\.MinimumAttribute\.Exclusive') is set\.
+
+```csharp
+protected override System.ComponentModel.DataAnnotations.ValidationResult? IsValid(object? value, System.ComponentModel.DataAnnotations.ValidationContext validationContext);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.MinimumAttribute.IsValid(object,System.ComponentModel.DataAnnotations.ValidationContext).value'></a>
+
+`value` [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object')
+
+The bound value; null \(an omitted optional parameter\) is always valid\.
+
+<a name='DiGi.GIS.WebAPI.Classes.MinimumAttribute.IsValid(object,System.ComponentModel.DataAnnotations.ValidationContext).validationContext'></a>
+
+`validationContext` [System\.ComponentModel\.DataAnnotations\.ValidationContext](https://learn.microsoft.com/en-us/dotnet/api/system.componentmodel.dataannotations.validationcontext 'System\.ComponentModel\.DataAnnotations\.ValidationContext')
+
+The context describing the parameter being validated\.
+
+#### Returns
+[System\.ComponentModel\.DataAnnotations\.ValidationResult](https://learn.microsoft.com/en-us/dotnet/api/system.componentmodel.dataannotations.validationresult 'System\.ComponentModel\.DataAnnotations\.ValidationResult')  
+[System\.ComponentModel\.DataAnnotations\.ValidationResult\.Success](https://learn.microsoft.com/en-us/dotnet/api/system.componentmodel.dataannotations.validationresult.success 'System\.ComponentModel\.DataAnnotations\.ValidationResult\.Success') when the value lies inside the domain; otherwise a result naming the floor\.
+
 <a name='DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter'></a>
 
 ## MultivalueAggregateRequestParameter Class
@@ -6311,7 +6402,7 @@ The identifier of the county to compare\. One polygon part, not a code \- a mult
 
 `sampleCount` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-How many references to name back per disagreeing category\. The counts are exact whatever this is; the samples are what make a disagreement actionable\.
+How many references to name back per disagreeing category\. The counts are exact whatever this is; the samples are what make a disagreement actionable\. Between 0 and [MaximumSampleCount](DiGi.GIS.WebAPI.Constants.md#DiGi.GIS.WebAPI.Constants.OrtoDatas.MaximumSampleCount 'DiGi\.GIS\.WebAPI\.Constants\.OrtoDatas\.MaximumSampleCount'), inclusive\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetSubdivisionLinksByCountyIdAsync(int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
 
@@ -6422,19 +6513,19 @@ public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> NextB
 
 `count` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The maximum number of building 2D reference objects to retrieve\. Defaults to 100\.
+The maximum number of building 2D reference objects to retrieve\. Must be at least 1\. Defaults to 100\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).claimTimeoutMinutes'></a>
 
 `claimTimeoutMinutes` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The duration in minutes before an unacknowledged claim expires and returns to the queue\. Defaults to 30\.
+The duration in minutes before an unacknowledged claim expires and returns to the queue\. Must be at least 1\. Defaults to 30\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).maxAttempts'></a>
 
 `maxAttempts` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The maximum number of claim attempts before a reference is retired as a poison row\. Defaults to 5\.
+The maximum number of claim attempts before a reference is retired as a poison row\. Must be at least 1\. Defaults to 5\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).commandTimeout'></a>
 
@@ -6742,6 +6833,50 @@ The manager responsible for handling GIS PostgreSQL Web API operations\.
 `gISPostgreSQLConverterManager` [DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.gispostgresqlconvertermanager 'DiGi\.GIS\.PostgreSQL\.Classes\.GISPostgreSQLConverterManager')
 
 The manager that handles conversion processes for GIS data within a PostgreSQL database context\.
+
+<a name='DiGi.GIS.WebAPI.Classes.ParameterMinimumSchemaFilter'></a>
+
+## ParameterMinimumSchemaFilter Class
+
+Carries the floor a [MinimumAttribute](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.MinimumAttribute 'DiGi\.GIS\.WebAPI\.Classes\.MinimumAttribute') declares on an action parameter into that parameter's OpenAPI schema, so the served document states the domain with a `minimum` and no `maximum` \(ZiolkowskiJakub/DiGi\.GIS\.WebAPI\#47\)\.
+
+Swashbuckle maps only the DataAnnotations it knows, so a custom attribute is invisible to it; but the pass that generates a query parameter's schema runs every registered schema filter with the parameter in the context, which is where this one reads the floor from. Registered through the host's `IWebAPISchemaFilter` hook, the same way as [TableWireFormatSchemaFilter](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.TableWireFormatSchemaFilter 'DiGi\.GIS\.WebAPI\.Classes\.TableWireFormatSchemaFilter').
+
+The floor is rendered through [System\.Globalization\.CultureInfo\.InvariantCulture](https://learn.microsoft.com/en-us/dotnet/api/system.globalization.cultureinfo.invariantculture 'System\.Globalization\.CultureInfo\.InvariantCulture') because an OpenAPI number keyword is an identity, not prose: a decimal separator following the serving machine's culture would describe a different bound to every reader.
+
+```csharp
+public class ParameterMinimumSchemaFilter : DiGi.WebAPI.Interfaces.IWebAPISchemaFilter, Swashbuckle.AspNetCore.SwaggerGen.ISchemaFilter
+```
+
+Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → ParameterMinimumSchemaFilter
+
+Implements [DiGi\.WebAPI\.Interfaces\.IWebAPISchemaFilter](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.interfaces.iwebapischemafilter 'DiGi\.WebAPI\.Interfaces\.IWebAPISchemaFilter'), [Swashbuckle\.AspNetCore\.SwaggerGen\.ISchemaFilter](https://learn.microsoft.com/en-us/dotnet/api/swashbuckle.aspnetcore.swaggergen.ischemafilter 'Swashbuckle\.AspNetCore\.SwaggerGen\.ISchemaFilter')
+### Methods
+
+<a name='DiGi.GIS.WebAPI.Classes.ParameterMinimumSchemaFilter.Apply(Microsoft.OpenApi.IOpenApiSchema,Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext)'></a>
+
+## ParameterMinimumSchemaFilter\.Apply\(IOpenApiSchema, SchemaFilterContext\) Method
+
+Sets `minimum` \- and `exclusiveMinimum` for an exclusive floor \- on the schema of a parameter carrying [MinimumAttribute](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.MinimumAttribute 'DiGi\.GIS\.WebAPI\.Classes\.MinimumAttribute')\.
+
+```csharp
+public void Apply(Microsoft.OpenApi.IOpenApiSchema schema, Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext context);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.ParameterMinimumSchemaFilter.Apply(Microsoft.OpenApi.IOpenApiSchema,Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext).schema'></a>
+
+`schema` [Microsoft\.OpenApi\.IOpenApiSchema](https://learn.microsoft.com/en-us/dotnet/api/microsoft.openapi.iopenapischema 'Microsoft\.OpenApi\.IOpenApiSchema')
+
+The OpenAPI schema to be modified\.
+
+<a name='DiGi.GIS.WebAPI.Classes.ParameterMinimumSchemaFilter.Apply(Microsoft.OpenApi.IOpenApiSchema,Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext).context'></a>
+
+`context` [Swashbuckle\.AspNetCore\.SwaggerGen\.SchemaFilterContext](https://learn.microsoft.com/en-us/dotnet/api/swashbuckle.aspnetcore.swaggergen.schemafiltercontext 'Swashbuckle\.AspNetCore\.SwaggerGen\.SchemaFilterContext')
+
+The context containing information about the schema being filtered\.
+
+Implements [Apply\(IOpenApiSchema, SchemaFilterContext\)](https://learn.microsoft.com/en-us/dotnet/api/swashbuckle.aspnetcore.swaggergen.ischemafilter.apply#swashbuckle-aspnetcore-swaggergen-ischemafilter-apply(microsoft-openapi-iopenapischema-swashbuckle-aspnetcore-swaggergen-schemafiltercontext) 'Swashbuckle\.AspNetCore\.SwaggerGen\.ISchemaFilter\.Apply\(Microsoft\.OpenApi\.IOpenApiSchema,Swashbuckle\.AspNetCore\.SwaggerGen\.SchemaFilterContext\)')
 
 <a name='DiGi.GIS.WebAPI.Classes.SerializableObjectsPostOptions'></a>
 
@@ -7386,7 +7521,7 @@ The identifiers of the county partitions to measure, repeated once per county\. 
 
 `gridSize` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Double](https://learn.microsoft.com/en-us/dotnet/api/system.double 'System\.Double')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
 
-The lattice spacing a sampling run used, in metres, when it is known\.
+The lattice spacing a sampling run used, in metres, when it is known\. Strictly greater than zero when supplied\.
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetDensitiesByCountyIdsAsync(System.Collections.Generic.List_int_,System.Nullable_double_,int,System.Threading.CancellationToken).commandTimeout'></a>
 

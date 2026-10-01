@@ -242,7 +242,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetCountByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetCountByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(TerrainController), nameof(GetCountByCountyIdAsync), countyId);
 
@@ -351,7 +351,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Supplying <paramref name="gridSize"/> is what turns the density into a completeness. Without it the figure to read is the spacing, which needs no knowledge of what a run was asked for.</para>
         /// </summary>
         /// <param name="countyIds">The identifiers of the county partitions to measure, repeated once per county. At least one and at most <see cref="Constants.Terrain.MaximumDensityCountyCount"/>.</param>
-        /// <param name="gridSize">The lattice spacing a sampling run used, in metres, when it is known.</param>
+        /// <param name="gridSize">The lattice spacing a sampling run used, in metres, when it is known. Strictly greater than zero when supplied.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the densities as JSON, or an error status.</returns>
@@ -362,7 +362,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetDensitiesByCountyIdsAsync([BindRequired, FromQuery(Name = "countyids")] List<int>? countyIds, [FromQuery(Name = "gridsize")] double? gridSize, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetDensitiesByCountyIdsAsync([BindRequired, FromQuery(Name = "countyids")] List<int>? countyIds, [Minimum(0, Exclusive = true), FromQuery(Name = "gridsize")] double? gridSize, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for {CountyCount} counties", nameof(TerrainController), nameof(GetDensitiesByCountyIdsAsync), countyIds?.Count ?? 0);
 
@@ -458,7 +458,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetCoverageByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [BindRequired, FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "limit")] int limit = 1000, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetCoverageByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [BindRequired, Minimum(Constants.Terrain.MinimumGridSize), FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [Minimum(0), FromQuery(Name = "limit")] int limit = 1000, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for county {CountyId} at grid {GridSize}", nameof(TerrainController), nameof(GetCoverageByCountyIdAsync), countyId, gridSize);
 
@@ -542,7 +542,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetGapsByBoundingBoxAsync([BindRequired, FromQuery(Name = "x_1")] double x_1, [BindRequired, FromQuery(Name = "y_1")] double y_1, [BindRequired, FromQuery(Name = "x_2")] double x_2, [BindRequired, FromQuery(Name = "y_2")] double y_2, [BindRequired, FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [FromQuery(Name = "limit")] int limit = 1000, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetGapsByBoundingBoxAsync([BindRequired, FromQuery(Name = "x_1")] double x_1, [BindRequired, FromQuery(Name = "y_1")] double y_1, [BindRequired, FromQuery(Name = "x_2")] double x_2, [BindRequired, FromQuery(Name = "y_2")] double y_2, [BindRequired, Minimum(Constants.Terrain.MinimumGridSize), FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [Minimum(0), FromQuery(Name = "limit")] int limit = 1000, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started at grid {GridSize}", nameof(TerrainController), nameof(GetGapsByBoundingBoxAsync), gridSize);
 

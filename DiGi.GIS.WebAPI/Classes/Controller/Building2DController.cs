@@ -89,7 +89,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DCountyPartMismatchResult>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetCountyPartMismatchesAsync([FromQuery(Name = "code")] string? code = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetCountyPartMismatchesAsync([FromQuery(Name = "code")] string? code = null, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetCountyPartMismatchesAsync));
             Serilog.Modify.Log("Code provided: {Code}, CommandTimeout provided: {CommandTimeout}", code ?? string.Empty, commandTimeout);
@@ -252,7 +252,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DCentroid>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetPoint2DsByAdministrativeAreal2DIdAsync([BindRequired, FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetPoint2DsByAdministrativeAreal2DIdAsync([BindRequired, Minimum(1), FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetPoint2DsByAdministrativeAreal2DIdAsync));
             Serilog.Modify.Log("AdministrativeAreal2DId provided: {AdministrativeAreal2DId}, CommandTimeout provided: {CommandTimeout}", administrativeAreal2DId, commandTimeout);
@@ -296,7 +296,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetCentroidsByAdministrativeAreal2DIdAsync([BindRequired, FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetCentroidsByAdministrativeAreal2DIdAsync([BindRequired, Minimum(1), FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetCentroidsByAdministrativeAreal2DIdAsync));
             Serilog.Modify.Log("AdministrativeAreal2DId provided: {AdministrativeAreal2DId}, CommandTimeout provided: {CommandTimeout}", administrativeAreal2DId, commandTimeout);
@@ -911,7 +911,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReferenceDuplicate>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetReferenceDuplicatesAsync([FromQuery(Name = "limit")] int limit = 100, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetReferenceDuplicatesAsync([Minimum(1), FromQuery(Name = "limit")] int limit = 100, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferenceDuplicatesAsync));
             Serilog.Modify.Log("Limit provided: {Limit}, CommandTimeout provided: {CommandTimeout}", limit, commandTimeout);
@@ -952,7 +952,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetReferencesByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "subdivisionid")] int? subdivisionId = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetReferencesByCountyIdAsync([BindRequired, Minimum(1), FromQuery(Name = "countyid")] int countyId, [Minimum(1), FromQuery(Name = "subdivisionid")] int? subdivisionId = null, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferencesByCountyIdAsync));
             Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
@@ -1008,7 +1008,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(PostgreSQL.Classes.Building2DReferenceUniquenessSummary), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetReferenceUniquenessSummaryAsync([FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetReferenceUniquenessSummaryAsync([Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(Building2DController), nameof(GetReferenceUniquenessSummaryAsync));
             Serilog.Modify.Log("CommandTimeout provided: {CommandTimeout}", commandTimeout);

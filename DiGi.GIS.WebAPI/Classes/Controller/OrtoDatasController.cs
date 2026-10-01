@@ -137,7 +137,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetRandomBuilding2DReferenceAsync([FromQuery(Name = "countyids")] int[]? countyIds = null, [FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetRandomBuilding2DReferenceAsync([FromQuery(Name = "countyids")] int[]? countyIds = null, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 30, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetRandomBuilding2DReferenceAsync));
 
@@ -941,7 +941,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetCountByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetCountByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "estimated")] bool estimated = false, [FromQuery(Name = "analyze")] bool analyze = false, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(OrtoDatasController), nameof(GetCountByCountyIdAsync), countyId);
 
@@ -1069,7 +1069,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Read the result across a run rather than on its own. <c>OrtoDatasOnlyCount</c> counts rows whose orthophoto knows a subdivision the building no longer does, and nothing legitimate removes one, so a refresh that lowers it is doing damage. <c>Building2DOnlyCount</c> counts what a refresh exists to fix: it should fall to near zero and stay there, and climbing again once the download drains the queue is issue #36.</para>
         /// </summary>
         /// <param name="countyId">The identifier of the county to compare. One polygon part, not a code - a multi-part county is compared a part at a time.</param>
-        /// <param name="sampleCount">How many references to name back per disagreeing category. The counts are exact whatever this is; the samples are what make a disagreement actionable.</param>
+        /// <param name="sampleCount">How many references to name back per disagreeing category. The counts are exact whatever this is; the samples are what make a disagreement actionable. Between 0 and <see cref="Constants.OrtoDatas.MaximumSampleCount"/>, inclusive.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the comparison as JSON, or an error status.</returns>
@@ -1080,7 +1080,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetSubdivisionLinksByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "samplecount")] int sampleCount = 20, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetSubdivisionLinksByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [System.ComponentModel.DataAnnotations.Range(0, Constants.OrtoDatas.MaximumSampleCount), FromQuery(Name = "samplecount")] int sampleCount = 20, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(OrtoDatasController), nameof(GetSubdivisionLinksByCountyIdAsync), countyId);
 
@@ -1259,7 +1259,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(PostgreSQL.Classes.OrtoDatasReference), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetOrtoDatasReferenceByReferenceAsync([BindRequired, FromQuery(Name = "reference")] string reference, [FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetOrtoDatasReferenceByReferenceAsync([BindRequired, FromQuery(Name = "reference")] string reference, [Minimum(1), FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetOrtoDatasReferenceByReferenceAsync));
             Serilog.Modify.Log("Reference provided: {Reference}", reference ?? string.Empty);
@@ -1303,7 +1303,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.OrtoDatasReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetOrtoDatasReferencesByReferencesAsync([FromBody] IEnumerable<string> references, [FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetOrtoDatasReferencesByReferencesAsync([FromBody] IEnumerable<string> references, [Minimum(1), FromQuery(Name = "countyid")] int? countyId = null, [FromQuery(Name = "fallbackbyreference")] bool fallbackByReference = false, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetOrtoDatasReferencesByReferencesAsync));
             Serilog.Modify.Log("CountyId provided: {CountyId}", countyId?.ToString() ?? string.Empty);
@@ -1386,7 +1386,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.OrtoDatasReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetOrtoDatasReferencesByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "subdivisionids")] int[]? subdivisionIds = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetOrtoDatasReferencesByCountyIdAsync([BindRequired, Minimum(1), FromQuery(Name = "countyid")] int countyId, [FromQuery(Name = "subdivisionids")] int[]? subdivisionIds = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetOrtoDatasReferencesByCountyIdAsync));
             Serilog.Modify.Log("CountyId provided: {CountyId}", countyId);
@@ -1419,9 +1419,9 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Retrieves and claims the next batch of building 2D reference objects from the update queue.
         /// </summary>
-        /// <param name="count">The maximum number of building 2D reference objects to retrieve. Defaults to 100.</param>
-        /// <param name="claimTimeoutMinutes">The duration in minutes before an unacknowledged claim expires and returns to the queue. Defaults to 30.</param>
-        /// <param name="maxAttempts">The maximum number of claim attempts before a reference is retired as a poison row. Defaults to 5.</param>
+        /// <param name="count">The maximum number of building 2D reference objects to retrieve. Must be at least 1. Defaults to 100.</param>
+        /// <param name="claimTimeoutMinutes">The duration in minutes before an unacknowledged claim expires and returns to the queue. Must be at least 1. Defaults to 30.</param>
+        /// <param name="maxAttempts">The maximum number of claim attempts before a reference is retired as a poison row. Must be at least 1. Defaults to 5.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 60 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
@@ -1430,7 +1430,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> NextBuilding2DReferencesAsync([FromQuery(Name = "count")] int count = 100, [FromQuery(Name = "claimtimeoutminutes")] int claimTimeoutMinutes = 30, [FromQuery(Name = "maxattempts")] int maxAttempts = 5, [FromQuery(Name = "commandtimeout")] int commandTimeout = 60, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> NextBuilding2DReferencesAsync([Minimum(1), FromQuery(Name = "count")] int count = 100, [Minimum(1), FromQuery(Name = "claimtimeoutminutes")] int claimTimeoutMinutes = 30, [Minimum(1), FromQuery(Name = "maxattempts")] int maxAttempts = 5, [FromQuery(Name = "commandtimeout")] int commandTimeout = 60, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(NextBuilding2DReferencesAsync));
             Serilog.Modify.Log("Count provided: {Count}, ClaimTimeoutMinutes: {ClaimTimeoutMinutes}, MaxAttempts: {MaxAttempts}, CommandTimeout: {CommandTimeout}", count, claimTimeoutMinutes, maxAttempts, commandTimeout);

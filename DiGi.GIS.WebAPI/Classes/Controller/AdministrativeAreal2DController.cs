@@ -80,7 +80,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(AdministrativeAreal2DReference), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetAdministrativeAreal2DReferenceByIdAsync([BindRequired, FromQuery(Name = "id")] int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdministrativeAreal2DReferenceByIdAsync([BindRequired, Minimum(1), FromQuery(Name = "id")] int id, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferenceByIdAsync));
             Serilog.Modify.Log("Id provided: {Id}", id);
@@ -116,7 +116,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(AdministrativeAreal2DReferencePath), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetAdministrativeAreal2DReferencePathByIdAsync([BindRequired, FromQuery(Name = "id")] int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdministrativeAreal2DReferencePathByIdAsync([BindRequired, Minimum(1), FromQuery(Name = "id")] int id, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferencePathByIdAsync));
             Serilog.Modify.Log("Id provided: {Id}", id);
@@ -297,7 +297,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<AdministrativeAreal2DReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync([BindRequired, FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, [FromQuery(Name = "parentId")] int? parentId, [FromQuery(Name = "uniquecode")] bool? uniqueCode, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync([BindRequired, FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, [Minimum(1), FromQuery(Name = "parentId")] int? parentId, [FromQuery(Name = "uniquecode")] bool? uniqueCode, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetAdministrativeAreal2DReferencesByAdministrativeArealTypeAsync));
             Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);
@@ -644,7 +644,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(GIS.Classes.AdministrativeAreal2D), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemByIdAsync([BindRequired, FromQuery(Name = "id")] int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetItemByIdAsync([BindRequired, Minimum(1), FromQuery(Name = "id")] int id, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(AdministrativeAreal2DController), nameof(GetItemByIdAsync));
             Serilog.Modify.Log("Id provided: {Id}", id);
