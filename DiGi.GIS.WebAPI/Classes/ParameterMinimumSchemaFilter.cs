@@ -14,7 +14,7 @@ namespace DiGi.GIS.WebAPI.Classes
     public class ParameterMinimumSchemaFilter : IWebAPISchemaFilter
     {
         /// <summary>
-        /// Sets <c>minimum</c> - and <c>exclusiveMinimum</c> for an exclusive floor - on the schema of a parameter carrying <see cref="MinimumAttribute"/>.
+        /// Sets <c>minimum</c> on the schema of a parameter carrying <see cref="MinimumAttribute"/> - or <c>exclusiveMinimum</c> alone for an exclusive floor, which is how <c>Microsoft.OpenApi</c> carries a strict bound: setting <c>ExclusiveMinimum</c> clears <c>Minimum</c>, so the two never compete over the same edge.
         /// </summary>
         /// <param name="schema">The OpenAPI schema to be modified.</param>
         /// <param name="context">The context containing information about the schema being filtered.</param>
@@ -32,10 +32,13 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             string minimum = minimumAttribute.Minimum.ToString(CultureInfo.InvariantCulture);
-            openApiSchema.Minimum = minimum;
             if (minimumAttribute.Exclusive)
             {
                 openApiSchema.ExclusiveMinimum = minimum;
+            }
+            else
+            {
+                openApiSchema.Minimum = minimum;
             }
         }
     }

@@ -6857,7 +6857,7 @@ Implements [DiGi\.WebAPI\.Interfaces\.IWebAPISchemaFilter](https://learn.microso
 
 ## ParameterMinimumSchemaFilter\.Apply\(IOpenApiSchema, SchemaFilterContext\) Method
 
-Sets `minimum` \- and `exclusiveMinimum` for an exclusive floor \- on the schema of a parameter carrying [MinimumAttribute](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.MinimumAttribute 'DiGi\.GIS\.WebAPI\.Classes\.MinimumAttribute')\.
+Sets `minimum` on the schema of a parameter carrying [MinimumAttribute](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.MinimumAttribute 'DiGi\.GIS\.WebAPI\.Classes\.MinimumAttribute') \- or `exclusiveMinimum` alone for an exclusive floor, which is how `Microsoft.OpenApi` carries a strict bound: setting `ExclusiveMinimum` clears `Minimum`, so the two never compete over the same edge\.
 
 ```csharp
 public void Apply(Microsoft.OpenApi.IOpenApiSchema schema, Swashbuckle.AspNetCore.SwaggerGen.SchemaFilterContext context);
