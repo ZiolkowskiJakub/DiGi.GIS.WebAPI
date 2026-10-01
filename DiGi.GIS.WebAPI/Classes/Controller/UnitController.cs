@@ -5,6 +5,7 @@ using DiGi.GIS.PostgreSQL.Enums;
 using DiGi.WebAPI.Classes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
@@ -121,7 +122,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(Unit), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetItemByIdAsync([FromQuery(Name = "id")] string? id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetItemByIdAsync([BindRequired, FromQuery(Name = "id")] string? id, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(UnitController), nameof(GetItemByIdAsync));
             Serilog.Modify.Log("Id provided: {Id}", id ?? string.Empty);
@@ -350,7 +351,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(UnitComplianceResult), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetComplianceAsync([FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetComplianceAsync([BindRequired, FromQuery(Name = "administrativearealtype")] AdministrativeArealType? administrativeArealType, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(UnitController), nameof(GetComplianceAsync));
             Serilog.Modify.Log("AdministrativeArealType provided: {AdministrativeArealType}", administrativeArealType?.ToString() ?? string.Empty);

@@ -3,6 +3,7 @@ using DiGi.GIS.PostgreSQL;
 using DiGi.GIS.PostgreSQL.Classes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Npgsql;
 using System;
 using System.Collections.Generic;
@@ -425,7 +426,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<CityGML.Classes.Building>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> GetItemsByReferenceAsync([FromQuery(Name = "reference")] string? reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetItemsByReferenceAsync([BindRequired, FromQuery(Name = "reference")] string? reference, [FromQuery(Name = "countyid")] int? countyId, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingController), nameof(GetItemsByReferenceAsync));
 
@@ -490,7 +491,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(CityGML.Classes.Building), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> GetItemByReferenceAsync([FromQuery(Name = "reference")] string? reference, [FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "x")] double? x = null, [FromQuery(Name = "y")] double? y = null, [FromQuery(Name = "z")] double? z = null, [FromQuery(Name = "maxdistance")] double? maxDistance = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetItemByReferenceAsync([BindRequired, FromQuery(Name = "reference")] string? reference, [BindRequired, FromQuery(Name = "countyid")] int? countyId, [FromQuery(Name = "x")] double? x = null, [FromQuery(Name = "y")] double? y = null, [FromQuery(Name = "z")] double? z = null, [FromQuery(Name = "maxdistance")] double? maxDistance = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingController), nameof(GetItemByReferenceAsync));
 
