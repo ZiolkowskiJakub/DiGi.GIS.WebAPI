@@ -153,8 +153,8 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves the building models stored in the database for all buildings within a specified circle. </summary>
         /// <param name="x">The X-coordinate of the center point of the search circle.</param>
         /// <param name="y">The Y-coordinate of the center point of the search circle.</param>
-        /// <param name="radius">The radius of the search circle. This value can be null.</param>
-        /// <param name="diameter">The diameter of the search circle. This value can be null.</param>
+        /// <param name="radius">The radius of the search circle. Either radius or diameter must be supplied; if both are supplied, radius takes precedence.</param>
+        /// <param name="diameter">The diameter of the search circle. Either radius or diameter must be supplied; if both are supplied, radius takes precedence.</param>
         /// <param name="tolerance">An optional tolerance value for the spatial query. If not provided, the default distance tolerance is used.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>

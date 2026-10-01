@@ -252,9 +252,9 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Asynchronously finds the matching <see cref="StatisticalUnit"/> for an administrative area by its code and type, or by its integer identifier.
         /// </summary>
-        /// <param name="code">The unique administrative code.</param>
-        /// <param name="administrativeArealType">The administrative area type.</param>
-        /// <param name="id">The integer identifier of the administrative area in PostgreSQL.</param>
+        /// <param name="code">The unique administrative code. Either (code and administrativearealtype) or id must be supplied.</param>
+        /// <param name="administrativeArealType">The administrative area type. Either (code and administrativearealtype) or id must be supplied.</param>
+        /// <param name="id">The integer identifier of the administrative area in PostgreSQL. Either (code and administrativearealtype) or id must be supplied.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The matched statistical unit if found; otherwise, 404 Not Found.</returns>
         [HttpGet("match", Name = $"{nameof(UnitController)}_{nameof(GetMatchAsync)}")]
