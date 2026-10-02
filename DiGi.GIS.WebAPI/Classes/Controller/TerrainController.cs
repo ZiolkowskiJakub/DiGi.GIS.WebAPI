@@ -231,7 +231,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyId">The identifier of the county partition to count.</param>
         /// <param name="estimated">Reads the planner's row estimate instead of counting the rows. Far faster on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment. An unanalysed partition returns 204 NoContent.</param>
         /// <param name="analyze">A boolean value indicating whether to perform an ANALYZE operation before reading the estimate to ensure statistics are current.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the count, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county has no partition.</returns>
         [HttpGet("countbycountyid", Name = $"{nameof(TerrainController)}_{nameof(GetCountByCountyIdAsync)}")]
@@ -296,18 +296,25 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Naming no county summarises every partition. Counties holding no point are absent from the result rather than present with a zero.</para>
         /// </summary>
         /// <param name="countyIds">The identifiers of the county partitions to summarise, repeated once per county. Omit to summarise every one.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the summaries as JSON, or an error status.</returns>
         [HttpGet("summariesbycountyids", Name = $"{nameof(TerrainController)}_{nameof(GetSummariesByCountyIdsAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<TerrainPointCountyResult>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetSummariesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetSummariesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for {CountyCount} counties", nameof(TerrainController), nameof(GetSummariesByCountyIdsAsync), countyIds?.Count ?? 0);
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
 
             List<TerrainPointCountyResult>? terrainPointCountyResults;
             try
@@ -352,7 +359,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="countyIds">The identifiers of the county partitions to measure, repeated once per county. At least one and at most <see cref="Constants.Terrain.MaximumDensityCountyCount"/>.</param>
         /// <param name="gridSize">The lattice spacing a sampling run used, in metres, when it is known. Strictly greater than zero when supplied.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the densities as JSON, or an error status.</returns>
         [HttpGet("densitiesbycountyids", Name = $"{nameof(TerrainController)}_{nameof(GetDensitiesByCountyIdsAsync)}")]
@@ -362,9 +369,15 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetDensitiesByCountyIdsAsync([BindRequired, FromQuery(Name = "countyids")] List<int>? countyIds, [Minimum(0, Exclusive = true), FromQuery(Name = "gridsize")] double? gridSize, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetDensitiesByCountyIdsAsync([BindRequired, FromQuery(Name = "countyids")] List<int>? countyIds, [Minimum(0, Exclusive = true), FromQuery(Name = "gridsize")] double? gridSize, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for {CountyCount} counties", nameof(TerrainController), nameof(GetDensitiesByCountyIdsAsync), countyIds?.Count ?? 0);
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
 
             if (countyIds is null || countyIds.Count == 0 || countyIds.Count > Constants.Terrain.MaximumDensityCountyCount)
             {
@@ -448,7 +461,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="originY">The Y coordinate the lattice is anchored at. Leave at zero unless a run used something else.</param>
         /// <param name="tolerance">The distance a stored point may lie from a node and still be counted as that node, in metres. Capped at half a step.</param>
         /// <param name="limit">The largest number of missing coordinates returned. The count itself is reported in full regardless.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the <see cref="TerrainPointCoverageResult"/> as JSON, or an error status.</returns>
         [HttpGet("coveragebycountyid", Name = $"{nameof(TerrainController)}_{nameof(GetCoverageByCountyIdAsync)}")]
@@ -458,9 +471,15 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetCoverageByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [BindRequired, Minimum(Constants.Terrain.MinimumGridSize), FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [Minimum(0), FromQuery(Name = "limit")] int limit = 1000, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetCoverageByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [BindRequired, Minimum(Constants.Terrain.MinimumGridSize), FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [Minimum(0), FromQuery(Name = "limit")] int limit = 1000, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for county {CountyId} at grid {GridSize}", nameof(TerrainController), nameof(GetCoverageByCountyIdAsync), countyId, gridSize);
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
 
             if (!TryGetLatticeParameters(gridSize, originX, originY, tolerance, limit, out Point2D? origin, out double tolerance_Temp) || origin is null)
             {
@@ -532,7 +551,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="originY">The Y coordinate the lattice is anchored at. Leave at zero unless a run used something else.</param>
         /// <param name="tolerance">The distance a stored point may lie from a node and still be counted as that node, in metres. Capped at half a step.</param>
         /// <param name="limit">The largest number of missing coordinates returned.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the missing coordinates as JSON, or an error status.</returns>
         [HttpGet("gapsbyboundingbox", Name = $"{nameof(TerrainController)}_{nameof(GetGapsByBoundingBoxAsync)}")]
@@ -542,9 +561,15 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetGapsByBoundingBoxAsync([BindRequired, FromQuery(Name = "x_1")] double x_1, [BindRequired, FromQuery(Name = "y_1")] double y_1, [BindRequired, FromQuery(Name = "x_2")] double x_2, [BindRequired, FromQuery(Name = "y_2")] double y_2, [BindRequired, Minimum(Constants.Terrain.MinimumGridSize), FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [Minimum(0), FromQuery(Name = "limit")] int limit = 1000, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetGapsByBoundingBoxAsync([BindRequired, FromQuery(Name = "x_1")] double x_1, [BindRequired, FromQuery(Name = "y_1")] double y_1, [BindRequired, FromQuery(Name = "x_2")] double x_2, [BindRequired, FromQuery(Name = "y_2")] double y_2, [BindRequired, Minimum(Constants.Terrain.MinimumGridSize), FromQuery(Name = "gridsize")] double gridSize, [FromQuery(Name = "originx")] double originX, [FromQuery(Name = "originy")] double originY, [FromQuery(Name = "tolerance")] double? tolerance, [Minimum(0), FromQuery(Name = "limit")] int limit = 1000, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started at grid {GridSize}", nameof(TerrainController), nameof(GetGapsByBoundingBoxAsync), gridSize);
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
+            }
 
             if (!IsFinite(x_1) || !IsFinite(y_1) || !IsFinite(x_2) || !IsFinite(y_2))
             {

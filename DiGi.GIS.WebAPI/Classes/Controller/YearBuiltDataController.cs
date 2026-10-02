@@ -447,7 +447,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously retrieves the building references that carry stored year built data for a specified county identifier.
         /// </summary>
         /// <param name="countyId">The unique identifier of the county.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 30 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 30 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>An <see cref="IActionResult"/> containing a list of reference strings if found, or 404 if none are found.</returns>
         [HttpGet("referencesbycountyid", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetReferencesByCountyIdAsync)}")]
@@ -513,7 +513,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyId">The unique identifier of the county.</param>
         /// <param name="estimated">A boolean value indicating whether to return an estimated count from table statistics rather than an exact count.</param>
         /// <param name="analyze">A boolean value indicating whether to perform an ANALYZE operation before reading the estimate.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the count, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county has no partition.</returns>
         [HttpGet("countbycountyid", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetCountByCountyIdAsync)}")]
@@ -582,7 +582,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="references">The collection of unique reference strings used to identify the year built data items.</param>
         /// <param name="countyId">An optional integer representing the county identifier used to filter the search.</param>
         /// <param name="fallbackByReference">A boolean value indicating whether to perform a fallback search by reference alone for any references not found in the initial search.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 30 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 30 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, returning a list of year built data items or no content if none were found.</returns>
         [HttpPost("itemsbyreferences", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetItemsByReferencesAsync)}")]
@@ -663,7 +663,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter by; if null, searches across all counties.</param>
         /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> containing the list of duplicate references, or 404 if none are found.</returns>
         [HttpGet("referenceduplicates", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetReferenceDuplicatesAsync)}")]
@@ -735,7 +735,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Only parts holding at least one mismatched row are returned, so a clean measurement is an empty list, and single-part codes are left out entirely because with one part there is nothing to be filed under by mistake.</para>
         /// </summary>
         /// <param name="code">An optional county code to restrict the measurement to. When omitted every multi-part code is measured.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> carrying one entry per part holding a mismatched row, or 404 when no measured part holds one.</returns>
         [HttpGet("countypartmismatches", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetCountyPartMismatchesAsync)}")]

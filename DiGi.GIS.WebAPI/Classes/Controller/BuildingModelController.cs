@@ -45,7 +45,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Compared against <c>gis/Building2D/referencesbycountyid</c> it tells whether a county's regeneration covered every building; the count is exact, so it walks the partition.</para>
         /// </summary>
         /// <param name="countyId">The identifier of the county part (the <c>building_2d.county_id</c> value, one per polygon part).</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the row count, or 404 when the county has no building model partition.</returns>
         [HttpGet("countbycountyid", Name = $"{nameof(BuildingModelController)}_{nameof(GetCountByCountyIdAsync)}")]
@@ -100,7 +100,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>The model JSON carries no timestamp, so this is the only way to tell through the API whether a county holds the rows of the latest regeneration run or still those of an earlier one.</para>
         /// </summary>
         /// <param name="countyId">The identifier of the county part (the <c>building_2d.county_id</c> value, one per polygon part).</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the stamp as an ISO 8601 UTC string, or 404 when the county has no building model partition or it holds no rows.</returns>
         [HttpGet("latestcreatedatbycountyid", Name = $"{nameof(BuildingModelController)}_{nameof(GetLatestCreatedAtByCountyIdAsync)}")]

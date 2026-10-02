@@ -349,7 +349,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyId">The optional integer identifier of the county to filter the count; if null, the count is retrieved across all counties.</param>
         /// <param name="estimated">A boolean value indicating whether to read the estimated count from database statistics for faster execution on large partitions. An unanalysed partition returns 204 NoContent.</param>
         /// <param name="analyze">A boolean value indicating whether to run an analysis operation before fetching the estimated count to ensure higher accuracy.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>An <see cref="IActionResult"/> containing the row count as a long integer, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county partition does not exist.</returns>
         [HttpGet("count", Name = $"{nameof(BuildingController)}_{nameof(GetCountAsync)}")]

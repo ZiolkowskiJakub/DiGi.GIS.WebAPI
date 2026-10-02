@@ -479,7 +479,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter by; if null, searches across all counties.</param>
         /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> containing the list of duplicate references, or 404 if none are found.</returns>
         [HttpGet("building2d/duplicatereferences", Name = $"{nameof(OccupancyDataController)}_{nameof(GetBuilding2DDuplicateReferencesAsync)}")]
@@ -548,7 +548,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously retrieves the total count of building references that hold more than one occupancy data record, optionally filtered by county identifier.
         /// </summary>
         /// <param name="countyId">The optional integer identifier of the county to filter by; if null, counts across all counties.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the duplicates count, or 404 if the partition does not exist or count is negative.</returns>
         [HttpGet("building2d/duplicatescount", Name = $"{nameof(OccupancyDataController)}_{nameof(GetBuilding2DDuplicatesCountAsync)}")]

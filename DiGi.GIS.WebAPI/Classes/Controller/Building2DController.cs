@@ -81,7 +81,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>The count is a lower bound, not a total: a building inside the box of its part but outside the polygon needs the polygon to settle and is not counted. Read it as the number of rows known to be wrong, before and after a repair.</para>
         /// </summary>
         /// <param name="code">An optional county code to restrict the measurement to. When omitted every multi-part code is measured.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, returning one entry per county part holding buildings.</returns>
         [HttpGet("countypartmismatches", Name = $"{nameof(Building2DController)}_{nameof(GetCountyPartMismatchesAsync)}")]
@@ -244,7 +244,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>A cold partition can exceed the default timeout (precedent: issue #27) - retry once with a higher <c>commandtimeout</c> before treating a timeout as a defect.</para>
         /// </summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D used to filter the building centroids.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("point2dsbyadministrativeareal2Did", Name = $"{nameof(Building2DController)}_{nameof(GetPoint2DsByAdministrativeAreal2DIdAsync)}")]
@@ -288,7 +288,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>An area with no buildings answers 200 with four empty arrays; a failed area lookup answers 404. Rows without a reference or a county identifier are left out (<see cref="Convert.ToSystem_JsonObject(IEnumerable{PostgreSQL.Classes.Building2DCentroid}?)"/>).</para>
         /// </summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D whose buildings are returned.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("centroidsbyadministrativeareal2Did", Name = $"{nameof(Building2DController)}_{nameof(GetCentroidsByAdministrativeAreal2DIdAsync)}")]
@@ -903,7 +903,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously retrieves duplicate building references that occur across multiple counties, ordered by collision count descending.
         /// </summary>
         /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, returning a list of duplicate building references.</returns>
         [HttpGet("referenceduplicates", Name = $"{nameof(Building2DController)}_{nameof(GetReferenceDuplicatesAsync)}")]
@@ -944,7 +944,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves references of the building2Ds filtered by county Id. </summary>
         /// <param name="countyId">The unique identifier of the county used to filter the building 2D references.</param>
         /// <param name="subdivisionId">The optional unique identifier of the subdivision used to further filter the building 2D references. When set, the buildings are read by the subdivision's polygon (every container that holds a building answers), not by the stored <c>subdivision_id</c> - the subdivision layer is nested, so a building filed under its neighbourhood is still returned for its district and city.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token to observe.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("referencesbycountyid", Name = $"{nameof(Building2DController)}_{nameof(GetReferencesByCountyIdAsync)}")]
@@ -1000,7 +1000,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Asynchronously retrieves overall building reference uniqueness metrics across all partitions in the database.
         /// </summary>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task representing the asynchronous operation, returning the building reference uniqueness summary.</returns>
         [HttpGet("referenceuniquenesssummary", Name = $"{nameof(Building2DController)}_{nameof(GetReferenceUniquenessSummaryAsync)}")]

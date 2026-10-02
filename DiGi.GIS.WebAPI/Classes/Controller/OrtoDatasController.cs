@@ -126,7 +126,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>An optional repeated <c>countyids</c> confines the draw to those <c>building_2d</c> parts (<c>?countyids=73482&amp;countyids=73485</c>, one per polygon part - never a county code); omitted or empty draws from every covered part.</para>
         /// </summary>
         /// <param name="countyIds">Optional <c>building_2d</c> part ids that confine the draw; omitted or empty draws from every covered part.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 30 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 30 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. 200 with the drawn building, 404 when no unverified covered building remains (in the requested parts, when given), 401 without a valid user token, 400 for an invalid timeout, or 503 when the main (year built) store is not configured.</returns>
         [HttpGet("randombuilding2dreference", Name = $"{nameof(OrtoDatasController)}_{nameof(GetRandomBuilding2DReferenceAsync)}")]
@@ -276,7 +276,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Where building data is measured but no orthophoto partition has been created for a county, the county has zero orthophotos stored and yields a coverage factor of <c>0.0</c>. A coverage that cannot be measured (missing or unanalysed building data, or an unanalysed orthophoto partition) answers 204 NoContent; <c>countbycountyid?estimated=true</c> reads the state of one county, answering 200 when it is analysed, 204 when it is unanalysed and 404 when it has no partition.</para>
         /// </summary>
         /// <param name="administrativeAreal2DId">The unique identifier of the administrative area 2D.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the coverage factor, 204 NoContent when it could not be measured, or an error status code.</returns>
         [HttpGet("estimatedcoveragefactor", Name = $"{nameof(OrtoDatasController)}_{nameof(GetEstimatedCoverageFactorAsync)}")]
@@ -284,7 +284,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(double), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetEstimatedCoverageFactorAsync([BindRequired, FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetEstimatedCoverageFactorAsync([BindRequired, FromQuery(Name = "administrativeareal2Did")] int administrativeAreal2DId, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetEstimatedCoverageFactorAsync));
             Serilog.Modify.Log("AdministrativeAreal2D Id provided: {Id}", administrativeAreal2DId);
@@ -304,6 +304,12 @@ namespace DiGi.GIS.WebAPI.Classes
             if (building2DPostgreSQLConverter is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Building2DPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
                 return BadRequest();
             }
 
@@ -557,14 +563,14 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="administrativeAreal2DIds">The collection of administrative area 2D identifiers to be processed.</param>
         /// <param name="analyze">Refreshes the statistics before reading them. This applies only to the estimated county-and-above path and does nothing for a subdivision or a municipality, which are counted. It costs one <c>VACUUM ANALYZE</c> per resolved county partition on each of the two tables - for a country identifier that is several hundred maintenance statements against live partitions, so raise <c>commandtimeout</c> to match or leave the flag off.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("estimatedcoveragefactors", Name = $"{nameof(OrtoDatasController)}_{nameof(GetEstimatedCoverageFactorsAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<double?>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetEstimatedCoverageFactorsAsync([FromBody] IEnumerable<int> administrativeAreal2DIds, [FromQuery(Name = "analyze")] bool? analyze, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetEstimatedCoverageFactorsAsync([FromBody] IEnumerable<int> administrativeAreal2DIds, [FromQuery(Name = "analyze")] bool? analyze, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(GetEstimatedCoverageFactorsAsync));
             Serilog.Modify.Log("AdministrativeAreal2D Ids provided: {Ids}", string.Join(",", administrativeAreal2DIds ?? []));
@@ -593,6 +599,12 @@ namespace DiGi.GIS.WebAPI.Classes
             if (building2DPostgreSQLConverter is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Building2DPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
                 return BadRequest();
             }
 
@@ -930,7 +942,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyId">The identifier of the county partition to count.</param>
         /// <param name="estimated">Reads the planner's row estimate instead of counting the rows. Far faster on a large partition and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment. An unanalysed partition returns 204 NoContent.</param>
         /// <param name="analyze">A boolean value indicating whether to perform an ANALYZE operation before reading the estimate to ensure statistics are current.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the count, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county has no partition.</returns>
         [HttpGet("countbycountyid", Name = $"{nameof(OrtoDatasController)}_{nameof(GetCountByCountyIdAsync)}")]
@@ -1001,7 +1013,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Naming no county summarises every partition, in one grouped statement. Counties holding no row are absent from the result rather than present with a zero.</para>
         /// </summary>
         /// <param name="countyIds">The identifiers of the county partitions to summarise, repeated once per county. Omit to summarise every one.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the summaries as JSON, or an error status.</returns>
         [HttpGet("summariesbycountyids", Name = $"{nameof(OrtoDatasController)}_{nameof(GetSummariesByCountyIdsAsync)}")]
@@ -1011,13 +1023,19 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetSummariesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetSummariesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for {CountyCount} counties", nameof(OrtoDatasController), nameof(GetSummariesByCountyIdsAsync), countyIds?.Count ?? 0);
 
             if (ortoDatasPostgreSQLConverter is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatasPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
                 return BadRequest();
             }
 
@@ -1070,7 +1088,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="countyId">The identifier of the county to compare. One polygon part, not a code - a multi-part county is compared a part at a time.</param>
         /// <param name="sampleCount">How many references to name back per disagreeing category. The counts are exact whatever this is; the samples are what make a disagreement actionable. Between 0 and <see cref="Constants.OrtoDatas.MaximumSampleCount"/>, inclusive.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of each command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the comparison as JSON, or an error status.</returns>
         [HttpGet("subdivisionlinksbycountyid", Name = $"{nameof(OrtoDatasController)}_{nameof(GetSubdivisionLinksByCountyIdAsync)}")]
@@ -1080,7 +1098,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetSubdivisionLinksByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [System.ComponentModel.DataAnnotations.Range(0, Constants.OrtoDatas.MaximumSampleCount), FromQuery(Name = "samplecount")] int sampleCount = 20, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetSubdivisionLinksByCountyIdAsync([BindRequired, FromQuery(Name = "countyid")] int countyId, [System.ComponentModel.DataAnnotations.Range(0, Constants.OrtoDatas.MaximumSampleCount), FromQuery(Name = "samplecount")] int sampleCount = 20, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for county {CountyId}", nameof(OrtoDatasController), nameof(GetSubdivisionLinksByCountyIdAsync), countyId);
 
@@ -1093,6 +1111,12 @@ namespace DiGi.GIS.WebAPI.Classes
             if (building2DPostgreSQLConverter is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Building2DPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
                 return BadRequest();
             }
 
@@ -1147,7 +1171,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Naming no county reports every one. Counties with nothing waiting are absent from the result rather than present with a zero, so an empty result means the queue is drained.</para>
         /// </summary>
         /// <param name="countyIds">The identifiers of the counties to report on, repeated once per county. Omit to report every one.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the queue depths as JSON, or an error status.</returns>
         [HttpGet("queuesummariesbycountyids", Name = $"{nameof(OrtoDatasController)}_{nameof(GetQueueSummariesByCountyIdsAsync)}")]
@@ -1157,13 +1181,19 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetQueueSummariesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetQueueSummariesByCountyIdsAsync([FromQuery(Name = "countyids")] List<int>? countyIds, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started for {CountyCount} counties", nameof(OrtoDatasController), nameof(GetQueueSummariesByCountyIdsAsync), countyIds?.Count ?? 0);
 
             if (ortoDatasPostgreSQLConverter is null)
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "OrtoDatasPostgreSQLConverter cannot be null");
+                return BadRequest();
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
                 return BadRequest();
             }
 
@@ -1422,7 +1452,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="count">The maximum number of building 2D reference objects to retrieve. Must be at least 1. Defaults to 100.</param>
         /// <param name="claimTimeoutMinutes">The duration in minutes before an unacknowledged claim expires and returns to the queue. Must be at least 1. Defaults to 30.</param>
         /// <param name="maxAttempts">The maximum number of claim attempts before a reference is retired as a poison row. Must be at least 1. Defaults to 5.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 60 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 60 seconds.</param>
         /// <param name="cancellationToken">A cancellation token that can be used by the caller to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("nextbuilding2dreferences", Name = $"{nameof(OrtoDatasController)}_{nameof(NextBuilding2DReferencesAsync)}")]
@@ -1430,7 +1460,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(typeof(List<PostgreSQL.Classes.Building2DReference>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> NextBuilding2DReferencesAsync([Minimum(1), FromQuery(Name = "count")] int count = 100, [Minimum(1), FromQuery(Name = "claimtimeoutminutes")] int claimTimeoutMinutes = 30, [Minimum(1), FromQuery(Name = "maxattempts")] int maxAttempts = 5, [FromQuery(Name = "commandtimeout")] int commandTimeout = 60, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> NextBuilding2DReferencesAsync([Minimum(1), FromQuery(Name = "count")] int count = 100, [Minimum(1), FromQuery(Name = "claimtimeoutminutes")] int claimTimeoutMinutes = 30, [Minimum(1), FromQuery(Name = "maxattempts")] int maxAttempts = 5, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 60, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(OrtoDatasController), nameof(NextBuilding2DReferencesAsync));
             Serilog.Modify.Log("Count provided: {Count}, ClaimTimeoutMinutes: {ClaimTimeoutMinutes}, MaxAttempts: {MaxAttempts}, CommandTimeout: {CommandTimeout}", count, claimTimeoutMinutes, maxAttempts, commandTimeout);
@@ -1451,6 +1481,12 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Max attempts must be greater than 0");
                 return BadRequest("Max attempts must be greater than 0.");
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
             }
 
             if (ortoDatasPostgreSQLConverter is null)

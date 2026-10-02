@@ -1271,7 +1271,7 @@ The unique identifier of the administrative area 2D whose buildings are returned
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCentroidsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -1308,7 +1308,7 @@ An optional county code to restrict the measurement to\. When omitted every mult
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -1639,7 +1639,7 @@ The unique identifier of the administrative area 2D used to filter the building 
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetPoint2DsByAdministrativeAreal2DIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -1705,7 +1705,7 @@ The maximum number of duplicate references to return\. Defaults to 100\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferenceDuplicatesAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -1744,7 +1744,7 @@ The optional unique identifier of the subdivision used to further filter the bui
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferencesByCountyIdAsync(int,System.Nullable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -1771,7 +1771,7 @@ public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetRe
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.Building2DController.GetReferenceUniquenessSummaryAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -2297,7 +2297,7 @@ A boolean value indicating whether to run an analysis operation before fetching 
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingController.GetCountAsync(System.Nullable_int_,bool,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3017,7 +3017,7 @@ public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCa
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCategoriesAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3050,7 +3050,7 @@ An optional list of category names to filter the column references by\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnReferencesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3077,7 +3077,7 @@ public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetCo
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsAsync(int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3110,7 +3110,7 @@ An optional list of category names to filter the columns by\. If null, the filte
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3143,7 +3143,7 @@ The parameter containing the categories for querying columns\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnsByCategoriesParameterAsync(DiGi.GIS.WebAPI.Classes.ColumnsByCategoriesParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3176,7 +3176,7 @@ An optional list of category names used to filter the column references\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetColumnUniqueIdsAsync(System.Collections.Generic.List_string_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3223,7 +3223,7 @@ A boolean value indicating whether to perform an ANALYZE operation before readin
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountByCountyIdAsync(int,bool,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3258,7 +3258,7 @@ The building reference to look up\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCountyIdsByReferenceAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3295,7 +3295,7 @@ The identifier of the county to measure\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetCoverageByCountyIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3330,7 +3330,7 @@ The maximum number of references to return\. Defaults to 100\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetDuplicateReferencesAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3365,7 +3365,7 @@ The parameter containing the target column, county identifier, desired bucket co
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetHistogramSummaryAsync(DiGi.GIS.WebAPI.Classes.HistogramRequestParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3398,7 +3398,7 @@ The parameter containing target column, multi\-value aggregate function, county 
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetMultivalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.MultivalueAggregateRequestParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3431,7 +3431,7 @@ The parameter containing target column, single\-value aggregate function, and co
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetSinglevalueAggregateSummaryAsync(DiGi.GIS.WebAPI.Classes.SinglevalueAggregateRequestParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3470,7 +3470,7 @@ The parameter containing paging options, including column projections, county id
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByPagingParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByPagingParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3503,7 +3503,7 @@ The parameter containing references for querying building data, including column
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataByReferencesParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByReferencesParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3536,7 +3536,7 @@ The parameter containing the subdivision IDs and optional column unique identifi
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByBuildingDataBySubdivisionIdsParameterAsync(DiGi.GIS.WebAPI.Classes.BuildingDataBySubdivisionIdsParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3569,7 +3569,7 @@ The parameter containing the dynamic filter group and optional column unique ide
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByFilterGroupAsync(DiGi.GIS.WebAPI.Classes.BuildingDataByFilterGroupParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3608,7 +3608,7 @@ The unique identifier of the county for which building belongs to\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetTableByReferenceAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3647,7 +3647,7 @@ The optional integer identifier of the county used to filter the results\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 90 seconds; a national \(unfiltered\) unique\-values scan runs well past that and should pass `commandtimeout=600` explicitly\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 90 seconds; a national \(unfiltered\) unique\-values scan runs well past that and should pass `commandtimeout=600` explicitly\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesAsync(string,System.Nullable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3680,7 +3680,7 @@ The parameter containing the column unique identifier, optional county identifie
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 90 seconds; a national \(unfiltered\) unique\-values scan runs well past that and should pass `commandtimeout=600` explicitly\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 90 seconds; a national \(unfiltered\) unique\-values scan runs well past that and should pass `commandtimeout=600` explicitly\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.GetUniqueValuesByColumnUniqueIdParameterAsync(DiGi.GIS.WebAPI.Classes.UniqueValuesByColumnUniqueIdParameter,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3723,7 +3723,7 @@ The identifiers of the county rows the building data belongs to\. Normally every
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the database command\. Defaults to 600\.
+The timeout in seconds for the execution of the database command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingDataController.UpdateItemsByCountyIdsAsync(System.Text.Json.Nodes.JsonObject,int[],int,string,System.Threading.CancellationToken).key'></a>
 
@@ -3813,7 +3813,7 @@ The identifier of the county part \(the `building_2d.county_id` value, one per p
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetCountByCountyIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -3938,7 +3938,7 @@ The identifier of the county part \(the `building_2d.county_id` value, one per p
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.BuildingModelController.GetLatestCreatedAtByCountyIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -5632,7 +5632,7 @@ The maximum number of duplicate references to return\. Defaults to 100\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.GetBuilding2DDuplicateReferencesAsync(System.Nullable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -5665,7 +5665,7 @@ The optional integer identifier of the county to filter by; if null, counts acro
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.GetBuilding2DDuplicatesCountAsync(System.Nullable_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -5950,7 +5950,7 @@ A boolean value indicating whether to perform an ANALYZE operation before readin
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetCountByCountyIdAsync(int,bool,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -5987,7 +5987,7 @@ The unique identifier of the administrative area 2D\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetEstimatedCoverageFactorAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -6032,7 +6032,7 @@ Refreshes the statistics before reading them\. This applies only to the estimate
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetEstimatedCoverageFactorsAsync(System.Collections.Generic.IEnumerable_int_,System.Nullable_bool_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -6328,7 +6328,7 @@ The identifiers of the counties to report on, repeated once per county\. Omit to
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetQueueSummariesByCountyIdsAsync(System.Collections.Generic.List_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -6365,7 +6365,7 @@ Optional `building_2d` part ids that confine the draw; omitted or empty draws fr
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 30 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 30 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetRandomBuilding2DReferenceAsync(int[],int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -6408,7 +6408,7 @@ How many references to name back per disagreeing category\. The counts are exact
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of each command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of each command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetSubdivisionLinksByCountyIdAsync(int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -6445,7 +6445,7 @@ The identifiers of the county partitions to summarise, repeated once per county\
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.GetSummariesByCountyIdsAsync(System.Collections.Generic.List_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -6531,7 +6531,7 @@ The maximum number of claim attempts before a reference is retired as a poison r
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 60 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 60 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OrtoDatasController.NextBuilding2DReferencesAsync(int,int,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -7417,7 +7417,7 @@ A boolean value indicating whether to perform an ANALYZE operation before readin
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCountByCountyIdAsync(int,bool,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -7484,7 +7484,7 @@ The largest number of missing coordinates returned\. The count itself is reporte
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetCoverageByCountyIdAsync(int,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -7527,7 +7527,7 @@ The lattice spacing a sampling run used, in metres, when it is known\. Strictly 
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetDensitiesByCountyIdsAsync(System.Collections.Generic.List_int_,System.Nullable_double_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -7610,7 +7610,7 @@ The largest number of missing coordinates returned\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetGapsByBoundingBoxAsync(double,double,double,double,double,double,double,System.Nullable_double_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -7755,7 +7755,7 @@ The identifiers of the county partitions to summarise, repeated once per county\
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.TerrainController.GetSummariesByCountyIdsAsync(System.Collections.Generic.List_int_,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -8488,7 +8488,7 @@ A boolean value indicating whether to perform an ANALYZE operation before readin
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetCountByCountyIdAsync(int,bool,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -8525,7 +8525,7 @@ An optional county code to restrict the measurement to\. When omitted every mult
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetCountyPartMismatchesAsync(string,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -8603,7 +8603,7 @@ A boolean value indicating whether to perform a fallback search by reference alo
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 30 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 30 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetItemsByReferencesAsync(System.Collections.Generic.IEnumerable_string_,System.Nullable_int_,bool,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -8642,7 +8642,7 @@ The maximum number of duplicate references to return\. Defaults to 100\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 600 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferenceDuplicatesAsync(System.Nullable_int_,int,int,System.Threading.CancellationToken).cancellationToken'></a>
 
@@ -8675,7 +8675,7 @@ The unique identifier of the county\.
 
 `commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
 
-The timeout in seconds for the execution of the command\. A value of 0 disables the timeout\. Defaults to 30 seconds\.
+The timeout in seconds for the execution of the command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 30 seconds\.
 
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferencesByCountyIdAsync(int,int,System.Threading.CancellationToken).cancellationToken'></a>
 

@@ -56,7 +56,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Asynchronously retrieves all available building data column categories.
         /// </summary>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("categories", Name = $"{nameof(BuildingDataController)}_{nameof(GetCategoriesAsync)}")]
@@ -115,7 +115,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously retrieves all column references, optionally filtered by the specified categories.
         /// </summary>
         /// <param name="categories">An optional list of category names to filter the column references by.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation, returning a list of column references.</returns>
         [HttpGet("columnreferences", Name = $"{nameof(BuildingDataController)}_{nameof(GetColumnReferencesAsync)}")]
@@ -171,7 +171,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary>
         /// Asynchronously retrieves all available column definitions for building data.
         /// </summary>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("columns", Name = $"{nameof(BuildingDataController)}_{nameof(GetColumnsAsync)}")]
@@ -230,7 +230,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Asynchronously retrieves all columns filtered by the specified categories.
         /// </summary>
         /// <param name="categories">An optional list of category names to filter the columns by. If null, the filtering behavior is determined by the underlying data source.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("columnsbycategories", Name = $"{nameof(BuildingDataController)}_{nameof(GetColumnsByCategoriesAsync)}")]
@@ -289,7 +289,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Retrieves all columns with given categories by columns by categories parameter (which contains categories).
         /// </summary>
         /// <param name="columnsByCategoriesParameter"> The parameter containing the categories for querying columns. </param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>Column <see cref="DiGi.PostgreSQL.Table.Classes.Column"/></returns>
         [HttpPost("columnsbycategoriesparameter", Name = $"{nameof(BuildingDataController)}_{nameof(GetColumnsByCategoriesParameterAsync)}")]
@@ -348,7 +348,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Retrieves the unique identifiers for columns, optionally filtered by the specified categories.
         /// </summary>
         /// <param name="categories">An optional list of category names used to filter the column references.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("columnuniqueids", Name = $"{nameof(BuildingDataController)}_{nameof(GetColumnUniqueIdsAsync)}")]
@@ -419,7 +419,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="countyId">The identifier of the county to count.</param>
         /// <param name="estimated">Reads the planner's row estimate instead of counting the rows. Far faster on a partition of millions and accurate to a few percent, but it reflects the last time the partition was analysed rather than this moment. An unanalysed partition returns 204 NoContent.</param>
         /// <param name="analyze">A boolean value indicating whether to perform an ANALYZE operation before reading the estimate to ensure statistics are current.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the count, 204 NoContent when the partition exists but is unanalysed, or 404 NotFound when the county has no partition.</returns>
         [HttpGet("countbycountyid", Name = $"{nameof(BuildingDataController)}_{nameof(GetCountByCountyIdAsync)}")]
@@ -483,7 +483,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>A reference addresses one building of one county, so more than one identifier coming back means the reference was written outside the county it belongs to.</para>
         /// </summary>
         /// <param name="reference">The building reference to look up.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the county identifiers in ascending order, or 404 when the reference is not stored.</returns>
         [HttpGet("countyidsbyreference", Name = $"{nameof(BuildingDataController)}_{nameof(GetCountyIdsByReferenceAsync)}")]
@@ -546,7 +546,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Reads both databases - the buildings from the main one and their data from the storage one - so it costs more than a count. Call it per county rather than in a sweep.</para>
         /// </summary>
         /// <param name="countyId">The identifier of the county to measure.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the <see cref="BuildingDataCoverageResult"/>, or 404 when either side could not be read.</returns>
         [HttpGet("coveragebycountyid", Name = $"{nameof(BuildingDataController)}_{nameof(GetCoverageByCountyIdAsync)}")]
@@ -606,7 +606,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Expected to come back empty. A reference addresses one building of one county, so anything listed here was written outside the county it belongs to and nothing removes it afterwards.</para>
         /// </summary>
         /// <param name="limit">The maximum number of references to return. Defaults to 100.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 600 seconds.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult"/> carrying the duplicated references, or 404 when there are none.</returns>
         [HttpGet("duplicatereferences", Name = $"{nameof(BuildingDataController)}_{nameof(GetDuplicateReferencesAsync)}")]
@@ -672,7 +672,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para>Each row of the answer is one bucket - <c>{bucket, rangeStart, rangeEnd, count}</c>, the actual minimum and maximum of the values the bucket holds and their count. The buckets are of equal value width unless the body asks for <see cref="DiGi.PostgreSQL.Table.Enums.HistogramBucketing.EqualCount"/> (<c>HistogramBucketing: 1</c>), which gives every bucket the same number of rows and keeps a skewed column's resolution where its rows are (ZiolkowskiJakub/DiGi.GIS.WebAPI#35).</para>
         /// </summary>
         /// <param name="histogramRequestParameter">The parameter containing the target column, county identifier, desired bucket count, bucketing rule, and optional dynamic filters.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation, returning the histogram bucket list as a JSON array.</returns>
         [HttpPost("histogramsummary", Name = $"{nameof(BuildingDataController)}_{nameof(GetHistogramSummaryAsync)}")]
@@ -725,7 +725,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Computes multi-value statistical summaries (SplitDistinctCount, SplitValueDistribution) on a partition column.
         /// </summary>
         /// <param name="multivalueAggregateRequestParameter">The parameter containing target column, multi-value aggregate function, county identifier, and optional separator.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation, returning the aggregate result as a JSON node.</returns>
         [HttpPost("aggregatesummary/multivalue", Name = $"{nameof(BuildingDataController)}_{nameof(GetMultivalueAggregateSummaryAsync)}")]
@@ -778,7 +778,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Computes single-value statistical summaries (Avg, Sum, Min, Max, Count, DistinctCount) on a partition column.
         /// </summary>
         /// <param name="singlevalueAggregateRequestParameter">The parameter containing target column, single-value aggregate function, and county identifier.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation, returning the aggregate result as a JSON node.</returns>
         [HttpPost("aggregatesummary/singlevalue", Name = $"{nameof(BuildingDataController)}_{nameof(GetSinglevalueAggregateSummaryAsync)}")]
@@ -834,7 +834,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <para><b>Concurrent writes.</b> Each request reads its own snapshot. In physical order a row rewritten during a walk moves: it is repeated when its new version lands ahead of the walk and missed when it lands behind. Clients dedup on <c>(reference, county_id)</c>, which covers the repeats. The misses are the price of the sequential read and matter only while the part is being rewritten.</para>
         /// </summary>
         /// <param name="buildingDataByPagingParameter">The parameter containing paging options, including column projections, county identifier, cursor, page size and order.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation, returning the populated table. In physical order the next cursor, if any, is in the <c>DiGi-Next-Cursor</c> header.</returns>
         [HttpPost("tablebybuildingdatabypagingparameter", Name = $"{nameof(BuildingDataController)}_{nameof(GetTableByBuildingDataByPagingParameterAsync)}")]
@@ -938,7 +938,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves a building data table by building data by references parameter (column unique ids, county id and references).</summary>
         /// <param name="buildingDataByReferencesParameter">The parameter containing references for querying building data, including column unique identifiers, county identifier, and specific references.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult" /> representing the result of the operation, typically containing a <see cref="DiGi.Core.IO.Table.Classes.Table" /> if found.</returns>
         [HttpPost("tablebybuildingdatabyreferencesparameter", Name = $"{nameof(BuildingDataController)}_{nameof(GetTableByBuildingDataByReferencesParameterAsync)}")]
@@ -1016,7 +1016,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves a building data table by building data by subdivision ids parameter (column unique ids, subdivision ids). </summary>
         /// <param name="buildingDataBySubdivisionIdsParameter">The parameter containing the subdivision IDs and optional column unique identifiers for querying building data.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpPost("tablebybuildingdatabysubdivisionidsparameter", Name = $"{nameof(BuildingDataController)}_{nameof(GetTableByBuildingDataBySubdivisionIdsParameterAsync)}")]
@@ -1079,7 +1079,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// Retrieves a building data table filtered by the specified dynamic hierarchical filters.
         /// </summary>
         /// <param name="buildingDataByFilterGroupParameter">The parameter containing the dynamic filter group and optional column unique identifiers.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation, returning the populated filtered table.</returns>
         [HttpPost("tablebyfiltergroup", Name = $"{nameof(BuildingDataController)}_{nameof(GetTableByFilterGroupAsync)}")]
@@ -1151,7 +1151,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="reference">Building reference</param>
         /// <param name="countyId">The unique identifier of the county for which building belongs to.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation, returning the populated filtered table with data for sigle building.</returns>
         [HttpGet("tablebyreference", Name = $"{nameof(BuildingDataController)}_{nameof(GetTableByReferenceAsync)}")]
@@ -1210,7 +1210,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <summary> Retrieves unique values for a specified column unique identifier and an optional county identifier. </summary>
         /// <param name="columnUniqueId">The unique identifier of the column from which to retrieve unique values.</param>
         /// <param name="countyId">The optional integer identifier of the county used to filter the results.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 90 seconds; a national (unfiltered) unique-values scan runs well past that and should pass <c>commandtimeout=600</c> explicitly.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 90 seconds; a national (unfiltered) unique-values scan runs well past that and should pass <c>commandtimeout=600</c> explicitly.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
         [HttpGet("uniquevalues", Name = $"{nameof(BuildingDataController)}_{nameof(GetUniqueValuesAsync)}")]
@@ -1282,7 +1282,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         /// <summary> Retrieves unique values for a given <see cref="UniqueValuesByColumnUniqueIdParameter" /> (column unique id and optionally county id), applying optional dynamic filters. </summary>
         /// <param name="uniqueValuesByColumnUniqueIdParameter">The parameter containing the column unique identifier, optional county identifier, and optional dynamic filters.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout. Defaults to 90 seconds; a national (unfiltered) unique-values scan runs well past that and should pass <c>commandtimeout=600</c> explicitly.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 90 seconds; a national (unfiltered) unique-values scan runs well past that and should pass <c>commandtimeout=600</c> explicitly.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>An <see cref="IActionResult" /> representing the result of the operation, typically a list of unique values or a not found status.</returns>
         [HttpPost("uniquevaluesbycolumnuniqueidparameter", Name = $"{nameof(BuildingDataController)}_{nameof(GetUniqueValuesByColumnUniqueIdParameterAsync)}")]
@@ -1366,7 +1366,7 @@ namespace DiGi.GIS.WebAPI.Classes
         /// </summary>
         /// <param name="jsonObject">The JSON object containing the table structure and data to be updated.</param>
         /// <param name="countyIds">The identifiers of the county rows the building data belongs to. Normally every polygon part of one county.</param>
-        /// <param name="commandTimeout">The timeout in seconds for the execution of the database command. Defaults to 600.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the execution of the database command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600.</param>
         /// <param name="key">The secret access key supplied in the request header.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A task representing the asynchronous operation with an <see cref="IActionResult"/> containing an <see cref="UpdateItemsResult"/>.</returns>
@@ -1378,7 +1378,7 @@ namespace DiGi.GIS.WebAPI.Classes
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonObject? jsonObject, [BindRequired, FromQuery(Name = "countyids")] int[]? countyIds, [FromQuery(Name = "commandtimeout")] int commandTimeout = 600, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateItemsByCountyIdsAsync([FromBody] JsonObject? jsonObject, [BindRequired, FromQuery(Name = "countyids")] int[]? countyIds, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
         {
             Serilog.Modify.Log("{Type}:{Name} started", nameof(BuildingDataController), nameof(UpdateItemsByCountyIdsAsync));
             Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
@@ -1393,6 +1393,12 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingData update not allowed");
                 return Unauthorized();
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                return BadRequest();
             }
 
             if (countyIds is null || countyIds.Length == 0)
