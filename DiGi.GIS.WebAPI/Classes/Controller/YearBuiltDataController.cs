@@ -23,6 +23,7 @@ namespace DiGi.GIS.WebAPI.Classes
 
         private readonly AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter;
         private readonly Building2DPostgreSQLConverter building2DPostgreSQLConverter; //States which polygon part of a multi-part county a datum belongs to, from the 2D building already stored under it.
+        private readonly BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter; //Holds the predicted, user and calculated year built columns derived from the stored history.
         private readonly GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher;
         private readonly YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter;
         private readonly DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager;
@@ -35,14 +36,16 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="yearBuiltDataPostgreSQLConverter">The converter for YearBuiltData objects when interacting with a PostgreSQL database.</param>
         /// <param name="building2DPostgreSQLConverter">The converter for Building2D objects, used to read which county row a reference is already filed under.</param>
         /// <param name="administrativeAreal2DPostgreSQLConverter">The converter for administrative areal 2D data when interacting with a PostgreSQL database.</param>
+        /// <param name="buildingDataPostgreSQLConverter">The converter of the building data table, whose derived year built columns are recomputed after the stored history changes.</param>
         /// <param name="securityKeyManager">The user extension&apos;s security key manager; <c>null</c> when the user extension is not loaded, in which case every user-token check denies.</param>
         /// <param name="tokenRevocationStore">The user extension&apos;s token revocation store; <c>null</c> when the user extension is not loaded, in which case every user-token check denies.</param>
-        public YearBuiltDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter, DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager = null, DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore = null)
+        public YearBuiltDataController(GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, Building2DPostgreSQLConverter building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter, BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter, DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager = null, DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore = null)
         {
             this.GISWebAPIConfigurationFileWatcher = GISWebAPIConfigurationFileWatcher;
             this.yearBuiltDataPostgreSQLConverter = yearBuiltDataPostgreSQLConverter;
             this.building2DPostgreSQLConverter = building2DPostgreSQLConverter;
             this.administrativeAreal2DPostgreSQLConverter = administrativeAreal2DPostgreSQLConverter;
+            this.buildingDataPostgreSQLConverter = buildingDataPostgreSQLConverter;
             this.securityKeyManager = securityKeyManager;
             this.tokenRevocationStore = tokenRevocationStore;
         }
@@ -385,7 +388,488 @@ namespace DiGi.GIS.WebAPI.Classes
             }
 
             Serilog.Modify.Log("SetUserYearBuilt recorded year {Year} for reference {Reference} of part {CountyId} as {User}", year, reference, countyId, email);
+
+            await RefreshBuildingDataYearBuiltAsync(countyId, [reference], cancellationToken);
+
             return Ok();
+        }
+
+        /// <summary>
+        /// Withdraws the signed-in visitor&apos;s own user-provided year built entry from one building.
+        /// <para>The bearer token identifies the user, exactly as for <see cref="SetUserYearBuiltAsync"/>, and the same <see cref="GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData"/> flag gates it: withdrawing one&apos;s own label is the counterpart of setting it, not a moderation delete. The entry is looked for under every polygon part of the county the given part belongs to, and only an entry recorded by this user is withdrawn - a building whose entry another user recorded answers 403 and is left untouched. The objects themselves are kept.</para>
+        /// <para>After a committed withdrawal the building&apos;s derived <c>building_data</c> columns are recomputed, best-effort: a failure there is logged and the withdrawal still answers 200.</para>
+        /// </summary>
+        /// <param name="parameter">The building to withdraw the entry of; <see cref="Parameter.UserYearBuiltParameter.Year"/> and <see cref="Parameter.UserYearBuiltParameter.Relation"/> are ignored.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. 200 when the entry was withdrawn, 404 when the building holds no user entry, 403 when the entry belongs to another user, 401 without a valid user token, 400 for a disabled flag or an invalid body, or 500 when the withdrawal failed.</returns>
+        [HttpPost("removeuseryearbuilt", Name = $"{nameof(YearBuiltDataController)}_{nameof(RemoveUserYearBuiltAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RemoveUserYearBuiltAsync([FromBody] Parameter.UserYearBuiltParameter? parameter, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(RemoveUserYearBuiltAsync));
+
+            string? email = Query.GetUserEmail(securityKeyManager, tokenRevocationStore, HttpContext.Request.Headers.Authorization);
+            if (email is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "RemoveUserYearBuilt rejected: no valid user token");
+                return Unauthorized();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "RemoveUserYearBuilt rejected: AllowUpdateYearBuiltData is disabled");
+                return BadRequest();
+            }
+
+            if (parameter?.CountyId is not int countyId || string.IsNullOrWhiteSpace(parameter.Reference))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "RemoveUserYearBuilt rejected: CountyId and Reference are required");
+                return BadRequest();
+            }
+
+            string reference = parameter.Reference!;
+
+            UserYearBuiltRemoveResult? userYearBuiltRemoveResult;
+            try
+            {
+                // A building's data is filed under the part holding its building_2d row, which need not be the part the visitor's view names.
+                HashSet<int>? countyIds = await PostgreSQL.Query.SiblingCountyIdsAsync(administrativeAreal2DPostgreSQLConverter, [countyId], cancellationToken: cancellationToken);
+                if (countyIds is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "RemoveUserYearBuilt: the polygon parts of county {CountyId} could not be read", countyId);
+                    return StatusCode(500, "The county parts could not be read.");
+                }
+
+                userYearBuiltRemoveResult = await yearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(countyIds, [reference], email, false, commandTimeout: 30, cancellationToken: cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(YearBuiltDataController), nameof(RemoveUserYearBuiltAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(RemoveUserYearBuiltAsync));
+                return StatusCode(500, "Internal server error during user year built withdrawal");
+            }
+
+            if (userYearBuiltRemoveResult is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "RemoveUserYearBuilt: withdrawal for reference {Reference} of part {CountyId} failed and rolled back", reference, countyId);
+                return StatusCode(500, "User year built withdrawal failed.");
+            }
+
+            if (userYearBuiltRemoveResult.NotOwnedReferences.Contains(reference))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "RemoveUserYearBuilt rejected: the entry of reference {Reference} was not recorded by {User}", reference, email);
+                return StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            if (!userYearBuiltRemoveResult.RemovedReferences.Contains(reference))
+            {
+                Serilog.Modify.Log("RemoveUserYearBuilt: reference {Reference} of part {CountyId} holds no user entry", reference, countyId);
+                return NotFound();
+            }
+
+            Serilog.Modify.Log("RemoveUserYearBuilt withdrew the entry of reference {Reference} of part {CountyId} recorded by {User}", reference, countyId, email);
+
+            await RefreshBuildingDataYearBuiltAsync(countyId, [reference], cancellationToken);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Deletes stored year built data objects of the given county parts - by default only the objects holding no entry at all.
+        /// <para>Gated by the access key and by <see cref="GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData"/>, a flag of its own because a delete has no undo; either gate failing answers 401. The scope is always the named county parts - normally every polygon part of one county - narrowed to the references in the body when one is sent. Without a body only <c>emptyonly=true</c> is accepted, so the widest request this action takes deletes the empty objects of a county.</para>
+        /// <para><c>dryrun</c> defaults to true: the rows are selected and counted, nothing is deleted. A request matching more rows than <c>limit</c> deletes nothing and answers 413 carrying the counts, so a mistaken scope is refused whole rather than cut short. The result is a <see cref="YearBuiltDataRemoveResult"/>.</para>
+        /// </summary>
+        /// <param name="references">The references of the buildings whose objects are deleted, or none for every building of the parts (only with <paramref name="emptyOnly"/>).</param>
+        /// <param name="countyIds">The county parts to delete from, as a repeated <c>countyids</c> parameter. Normally every polygon part of one county.</param>
+        /// <param name="emptyOnly">A value indicating whether only objects holding no entry are deleted. Defaults to true.</param>
+        /// <param name="dryRun">A value indicating whether the rows are only counted. Defaults to true.</param>
+        /// <param name="limit">The largest number of rows the request may delete, from 1 to 10000. Defaults to 10000.</param>
+        /// <param name="commandTimeout">The timeout in seconds for each database command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. 200 with the counts, 413 with the counts when the scope exceeds <paramref name="limit"/>, 401 without a valid key or with the flag disabled, 400 for invalid parameters, 503 on a transient database failure, or 500 when the delete failed.</returns>
+        [HttpPost("removeitemsbycountyids")]
+        [ProducesResponseType(typeof(YearBuiltDataRemoveResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(YearBuiltDataRemoveResult), StatusCodes.Status413PayloadTooLarge)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RemoveItemsByCountyIdsAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] IEnumerable<string>? references, [BindRequired, FromQuery(Name = "countyids")] int[]? countyIds, [FromQuery(Name = "emptyonly")] bool emptyOnly = true, [FromQuery(Name = "dryrun")] bool dryRun = true, [Minimum(1), FromQuery(Name = "limit")] int limit = referenceCount_Maximum, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(RemoveItemsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}, EmptyOnly: {EmptyOnly}, DryRun: {DryRun}, Limit: {Limit}", countyIds is null ? string.Empty : string.Join(", ", countyIds), emptyOnly, dryRun, limit);
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "YearBuiltData delete not authorized");
+                return Unauthorized();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "YearBuiltData delete not allowed (AllowDeleteYearBuiltData is disabled)");
+                return Unauthorized();
+            }
+
+            string[]? references_Array = references is null ? null : [.. references];
+            if (!IsValid(countyIds, references_Array, limit, commandTimeout, out IActionResult? actionResult))
+            {
+                return actionResult!;
+            }
+
+            if ((references_Array is null || references_Array.Length == 0) && !emptyOnly)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Without references only empty objects can be deleted");
+                return BadRequest("Without references only empty objects (emptyonly=true) can be deleted.");
+            }
+
+            try
+            {
+                YearBuiltDataRemoveResult? yearBuiltDataRemoveResult = await yearBuiltDataPostgreSQLConverter.RemoveItemsAsync(countyIds, references_Array is null || references_Array.Length == 0 ? null : references_Array, emptyOnly, dryRun, limit, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                if (yearBuiltDataRemoveResult is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "YearBuiltData delete could not run");
+                    return StatusCode(500, "Year built data delete could not run.");
+                }
+
+                Serilog.Modify.Log("YearBuiltData delete ended. Matched: {Matched}, Removed: {Removed}, Unmatched references: {Unmatched}, DryRun: {DryRun}", yearBuiltDataRemoveResult.Matched, yearBuiltDataRemoveResult.Removed, yearBuiltDataRemoveResult.UnmatchedReferences.Count, dryRun);
+
+                return Result(yearBuiltDataRemoveResult, !dryRun && yearBuiltDataRemoveResult.Matched > limit);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(YearBuiltDataController), nameof(RemoveItemsByCountyIdsAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(RemoveItemsByCountyIdsAsync));
+                return StatusCode(500, "Internal server error during year built data delete");
+            }
+        }
+
+        /// <summary>
+        /// Removes one prediction run - the predicted year built entries stamped <paramref name="ticks"/> - from the stored year built data objects of the given county parts, in one transaction, and optionally recomputes the derived <c>building_data</c> columns of the buildings it changed.
+        /// <para>Gated by the access key and by <see cref="GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData"/>; with <c>updatebuildingdata=true</c> also by <see cref="GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData"/>, checked before anything is written. Any gate failing answers 401.</para>
+        /// <para>The stamp is the run&apos;s <see cref="DateTime.Ticks"/> - the key each entry is stored under, as <c>predictedyearbuiltruns</c> reports it - never a formatted date. Other stamps and user entries are untouched; an object left with no entry is kept and listed in <see cref="PredictedYearBuiltRemoveResult.EmptiedReferences"/> for an explicit <c>removeitemsbycountyids</c>. <c>dryrun</c> defaults to true, and a run on more objects than <c>limit</c> answers 413 and writes nothing. Removing a run already removed matches nothing, so a retry is harmless.</para>
+        /// </summary>
+        /// <param name="references">The references of the buildings to remove the run from, or none for every building of the parts.</param>
+        /// <param name="countyIds">The county parts to remove the run from, as a repeated <c>countyids</c> parameter. Normally every polygon part of one county.</param>
+        /// <param name="ticks">The stamp of the run, as <see cref="DateTime.Ticks"/>. Required.</param>
+        /// <param name="dryRun">A value indicating whether the entries are only counted. Defaults to true.</param>
+        /// <param name="limit">The largest number of objects the request may rewrite, from 1 to 10000. Defaults to 10000.</param>
+        /// <param name="updateBuildingData">A value indicating whether the derived <c>building_data</c> columns of the changed buildings are recomputed after the removal commits. Defaults to false.</param>
+        /// <param name="commandTimeout">The timeout in seconds for each database command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. 200 with a <see cref="PredictedYearBuiltRemoveResult"/>, 413 with it when the run exceeds <paramref name="limit"/>, 401 without a valid key or with a flag disabled, 400 for invalid parameters, 503 on a transient database failure, or 500 when the removal - or the recompute after it - failed.</returns>
+        [HttpPost("removepredictedyearbuiltsbycountyids")]
+        [ProducesResponseType(typeof(PredictedYearBuiltRemoveResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PredictedYearBuiltRemoveResult), StatusCodes.Status413PayloadTooLarge)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RemovePredictedYearBuiltsByCountyIdsAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] IEnumerable<string>? references, [BindRequired, FromQuery(Name = "countyids")] int[]? countyIds, [FromQuery(Name = "ticks")] long? ticks, [FromQuery(Name = "dryrun")] bool dryRun = true, [Minimum(1), FromQuery(Name = "limit")] int limit = referenceCount_Maximum, [FromQuery(Name = "updatebuildingdata")] bool updateBuildingData = false, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(RemovePredictedYearBuiltsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}, Ticks: {Ticks}, DryRun: {DryRun}, Limit: {Limit}, UpdateBuildingData: {UpdateBuildingData}", countyIds is null ? string.Empty : string.Join(", ", countyIds), ticks?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty, dryRun, limit, updateBuildingData);
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "PredictedYearBuilt removal not authorized");
+                return Unauthorized();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "PredictedYearBuilt removal not allowed (AllowDeleteYearBuiltData is disabled)");
+                return Unauthorized();
+            }
+
+            if (updateBuildingData && !GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "PredictedYearBuilt removal with building data recompute not allowed (AllowUpdateBuildingData is disabled)");
+                return Unauthorized();
+            }
+
+            string[]? references_Array = references is null ? null : [.. references];
+            if (!IsValid(countyIds, references_Array, limit, commandTimeout, out IActionResult? actionResult))
+            {
+                return actionResult!;
+            }
+
+            if (ticks is null || ticks.Value < DateTime.MinValue.Ticks || ticks.Value > DateTime.MaxValue.Ticks)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Ticks has to name a DateTime");
+                return BadRequest("ticks is required and has to be a DateTime.Ticks value.");
+            }
+
+            try
+            {
+                PredictedYearBuiltRemoveResult? predictedYearBuiltRemoveResult = await yearBuiltDataPostgreSQLConverter.RemovePredictedYearBuiltsAsync(countyIds, new DateTime(ticks.Value), references_Array is null || references_Array.Length == 0 ? null : references_Array, dryRun, limit, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                if (predictedYearBuiltRemoveResult is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "PredictedYearBuilt removal could not run or rolled back");
+                    return StatusCode(500, "Prediction run removal could not run.");
+                }
+
+                Serilog.Modify.Log("PredictedYearBuilt removal ended. Matched: {Matched}, Removed: {Removed}, Emptied: {Emptied}, DryRun: {DryRun}", predictedYearBuiltRemoveResult.Matched, predictedYearBuiltRemoveResult.Removed, predictedYearBuiltRemoveResult.EmptiedReferences.Count, dryRun);
+
+                if (updateBuildingData && predictedYearBuiltRemoveResult.Removed > 0)
+                {
+                    BuildingDataYearBuiltUpdateResult? buildingDataYearBuiltUpdateResult = await PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(buildingDataPostgreSQLConverter, yearBuiltDataPostgreSQLConverter, building2DPostgreSQLConverter, countyIds, predictedYearBuiltRemoveResult.References, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                    if (buildingDataYearBuiltUpdateResult is null)
+                    {
+                        // The removal is committed; a retry matches nothing, so the recompute has to be asked for on its own.
+                        Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "PredictedYearBuilt run removed from {Count} objects but the building data recompute failed", predictedYearBuiltRemoveResult.Removed);
+                        return StatusCode(500, $"The run was removed from {predictedYearBuiltRemoveResult.Removed} objects, but the building data recompute failed. Call updatebuildingdatabycountyids for the same county parts.");
+                    }
+
+                    Serilog.Modify.Log("Building data year built recomputed. Matched: {Matched}, Updated: {Updated}, Cleared: {Cleared}", buildingDataYearBuiltUpdateResult.Matched, buildingDataYearBuiltUpdateResult.Updated, buildingDataYearBuiltUpdateResult.Cleared);
+                }
+
+                return Result(predictedYearBuiltRemoveResult, !dryRun && predictedYearBuiltRemoveResult.Matched > limit);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(YearBuiltDataController), nameof(RemovePredictedYearBuiltsByCountyIdsAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(RemovePredictedYearBuiltsByCountyIdsAsync));
+                return StatusCode(500, "Internal server error during prediction run removal");
+            }
+        }
+
+        /// <summary>
+        /// Withdraws the user-provided year built entry of the given buildings, whoever recorded it - the moderation counterpart of <see cref="RemoveUserYearBuiltAsync"/>.
+        /// <para>Gated by the access key and by <see cref="GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData"/>; either failing answers 401. The references are required, and are looked for under the named county parts only. <c>dryrun</c> defaults to true. The objects are kept. After a committed withdrawal the derived <c>building_data</c> columns of the withdrawn buildings are recomputed best-effort when <see cref="GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData"/> allows it.</para>
+        /// </summary>
+        /// <param name="references">The references of the buildings to withdraw the user entry of. Required.</param>
+        /// <param name="countyIds">The county parts the buildings are stored under, as a repeated <c>countyids</c> parameter. Normally every polygon part of one county.</param>
+        /// <param name="dryRun">A value indicating whether the buildings are only classified. Defaults to true.</param>
+        /// <param name="commandTimeout">The timeout in seconds for each database command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. 200 with a <see cref="UserYearBuiltRemoveResult"/>, 401 without a valid key or with the flag disabled, 400 for invalid parameters, 503 on a transient database failure, or 500 when the withdrawal failed.</returns>
+        [HttpPost("removeuseryearbuiltsbycountyids")]
+        [ProducesResponseType(typeof(UserYearBuiltRemoveResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RemoveUserYearBuiltsByCountyIdsAsync([FromBody] IEnumerable<string>? references, [BindRequired, FromQuery(Name = "countyids")] int[]? countyIds, [FromQuery(Name = "dryrun")] bool dryRun = true, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(RemoveUserYearBuiltsByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}, DryRun: {DryRun}", countyIds is null ? string.Empty : string.Join(", ", countyIds), dryRun);
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "UserYearBuilt withdrawal not authorized");
+                return Unauthorized();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "UserYearBuilt withdrawal not allowed (AllowDeleteYearBuiltData is disabled)");
+                return Unauthorized();
+            }
+
+            string[]? references_Array = references is null ? null : [.. references];
+            if (!IsValid(countyIds, references_Array, referenceCount_Maximum, commandTimeout, out IActionResult? actionResult))
+            {
+                return actionResult!;
+            }
+
+            if (references_Array is null || references_Array.Length == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "At least one reference has to be provided");
+                return BadRequest();
+            }
+
+            try
+            {
+                UserYearBuiltRemoveResult? userYearBuiltRemoveResult = await yearBuiltDataPostgreSQLConverter.RemoveUserYearBuiltsAsync(countyIds, references_Array, null, dryRun, commandTimeout, cancellationToken);
+                if (userYearBuiltRemoveResult is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "UserYearBuilt withdrawal could not run or rolled back");
+                    return StatusCode(500, "User year built withdrawal could not run.");
+                }
+
+                Serilog.Modify.Log("UserYearBuilt withdrawal ended. Removed: {Removed}, NotFound: {NotFound}, DryRun: {DryRun}", userYearBuiltRemoveResult.RemovedReferences.Count, userYearBuiltRemoveResult.NotFoundReferences.Count, dryRun);
+
+                if (!dryRun && userYearBuiltRemoveResult.RemovedReferences.Count != 0)
+                {
+                    await RefreshBuildingDataYearBuiltAsync(countyIds!, userYearBuiltRemoveResult.RemovedReferences, cancellationToken);
+                }
+
+                return Content(Core.Convert.ToSystem_String(userYearBuiltRemoveResult) ?? string.Empty, "application/json");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(YearBuiltDataController), nameof(RemoveUserYearBuiltsByCountyIdsAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(RemoveUserYearBuiltsByCountyIdsAsync));
+                return StatusCode(500, "Internal server error during user year built withdrawal");
+            }
+        }
+
+        /// <summary>
+        /// Recomputes the derived year built columns of <c>building_data</c> - predicted, user and calculated - from the stored history of the given county parts, writing NULL where the history no longer holds a value.
+        /// <para>Gated by the access key and by <see cref="GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData"/>; either failing answers 401. With references in the body only those buildings are recomputed; without, every building holding a <c>year_built_data</c> or a <c>building_data</c> row under the parts. A building with neither a building data row nor a value is not written, so the call never adds empty rows. The result is a <see cref="BuildingDataYearBuiltUpdateResult"/>.</para>
+        /// </summary>
+        /// <param name="references">The references of the buildings to recompute, or none for every building of the parts.</param>
+        /// <param name="countyIds">The county parts to recompute, as a repeated <c>countyids</c> parameter. Normally every polygon part of one county.</param>
+        /// <param name="commandTimeout">The timeout in seconds for each database command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
+        /// <param name="key">The secret access key supplied in the request header.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. 200 with the counts, 401 without a valid key or with the flag disabled, 400 for invalid parameters, 503 on a transient database failure, or 500 when the recompute failed.</returns>
+        [HttpPost("updatebuildingdatabycountyids")]
+        [ProducesResponseType(typeof(BuildingDataYearBuiltUpdateResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateBuildingDataByCountyIdsAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] IEnumerable<string>? references, [BindRequired, FromQuery(Name = "countyids")] int[]? countyIds, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, [FromHeader(Name = "key")] string? key = null, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(UpdateBuildingDataByCountyIdsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+
+            if (!GISWebAPIConfigurationFileWatcher.IsAuthorized(key))
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingData year built recompute not authorized");
+                return Unauthorized();
+            }
+
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "BuildingData year built recompute not allowed (AllowUpdateBuildingData is disabled)");
+                return Unauthorized();
+            }
+
+            string[]? references_Array = references is null ? null : [.. references];
+            if (!IsValid(countyIds, references_Array, referenceCount_Maximum, commandTimeout, out IActionResult? actionResult))
+            {
+                return actionResult!;
+            }
+
+            try
+            {
+                BuildingDataYearBuiltUpdateResult? buildingDataYearBuiltUpdateResult = await PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(buildingDataPostgreSQLConverter, yearBuiltDataPostgreSQLConverter, building2DPostgreSQLConverter, countyIds, references_Array is null || references_Array.Length == 0 ? null : references_Array, commandTimeout: commandTimeout, cancellationToken: cancellationToken);
+                if (buildingDataYearBuiltUpdateResult is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "BuildingData year built recompute could not run");
+                    return StatusCode(500, "Building data year built recompute could not run.");
+                }
+
+                Serilog.Modify.Log("BuildingData year built recompute ended. Matched: {Matched}, Updated: {Updated}, Cleared: {Cleared}", buildingDataYearBuiltUpdateResult.Matched, buildingDataYearBuiltUpdateResult.Updated, buildingDataYearBuiltUpdateResult.Cleared);
+
+                return Content(Core.Convert.ToSystem_String(buildingDataYearBuiltUpdateResult) ?? string.Empty, "application/json");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(YearBuiltDataController), nameof(UpdateBuildingDataByCountyIdsAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(UpdateBuildingDataByCountyIdsAsync));
+                return StatusCode(500, "Internal server error during building data year built recompute");
+            }
+        }
+
+        /// <summary>
+        /// Lists the prediction runs stored under the given county parts: one entry per part, stamp and model identifier, with the number of objects carrying it.
+        /// <para>The stamp is reported as <see cref="DateTime.Ticks"/>, the value <c>removepredictedyearbuiltsbycountyids</c> takes, and the model identifier is null for entries written before it was recorded. A part holding no prediction answers <c>200 []</c>; a query that could not run answers 500, so "none" and "failed" are never confused.</para>
+        /// </summary>
+        /// <param name="countyIds">The county parts to list, as a repeated <c>countyids</c> parameter. Required.</param>
+        /// <param name="commandTimeout">The timeout in seconds for the query. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation. 200 with a list of <see cref="PredictedYearBuiltRunResult"/>, 400 for invalid parameters, 503 on a transient database failure, or 500 when the query failed.</returns>
+        [HttpGet("predictedyearbuiltruns", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetPredictedYearBuiltRunsAsync)}")]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        [ProducesResponseType(typeof(List<PredictedYearBuiltRunResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetPredictedYearBuiltRunsAsync([BindRequired, FromQuery(Name = "countyids")] int[]? countyIds, [Minimum(0), FromQuery(Name = "commandtimeout")] int commandTimeout = 600, CancellationToken cancellationToken = default)
+        {
+            Serilog.Modify.Log("{Type}:{Name} started", nameof(YearBuiltDataController), nameof(GetPredictedYearBuiltRunsAsync));
+            Serilog.Modify.Log("CountyIds provided: {CountyIds}", countyIds is null ? string.Empty : string.Join(", ", countyIds));
+
+            if (!IsValid(countyIds, null, referenceCount_Maximum, commandTimeout, out IActionResult? actionResult))
+            {
+                return actionResult!;
+            }
+
+            try
+            {
+                List<PredictedYearBuiltRunResult>? predictedYearBuiltRunResults = await yearBuiltDataPostgreSQLConverter.GetPredictedYearBuiltRunsAsync(countyIds, commandTimeout, cancellationToken);
+                if (predictedYearBuiltRunResults is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Prediction runs could not be read");
+                    return StatusCode(500, "Prediction runs could not be read.");
+                }
+
+                return Content(Core.Convert.ToSystem_String(predictedYearBuiltRunResults) ?? "[]", "application/json");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (NpgsqlException exception) when (exception.IsTransient)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed (transient database failure)", nameof(YearBuiltDataController), nameof(GetPredictedYearBuiltRunsAsync));
+                HttpContext.Response.Headers["Retry-After"] = "30";
+                return StatusCode(503, "Database temporarily unavailable; retry shortly");
+            }
+            catch (Exception exception)
+            {
+                Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(GetPredictedYearBuiltRunsAsync));
+                return StatusCode(500, "Internal server error during database query");
+            }
         }
 
         /// <summary>
@@ -665,11 +1149,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
-        /// <returns>An <see cref="IActionResult"/> containing the list of duplicate references, or 404 if none are found.</returns>
+        /// <returns>An <see cref="IActionResult"/> containing the list of duplicate references - <c>200 []</c> when there are none - or 500 when the query could not run, so "clean" and "failed" are never the same answer.</returns>
         [HttpGet("referenceduplicates", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetReferenceDuplicatesAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<Building2DReferenceDuplicate>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -698,19 +1181,17 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
+                // A 404 for "none" could not be told from a missing route, and a null from the converter - a query that
+                // could not run - was answered the same way, so a clean result, a failure and an undeployed build all
+                // looked alike (DiGi.GIS.WebAPI#49). None is an empty list; a failure is a 500.
                 List<Building2DReferenceDuplicate>? building2DReferenceDuplicates = await yearBuiltDataPostgreSQLConverter.GetBuilding2DReferenceDuplicatesAsync(countyId, limit, commandTimeout, cancellationToken);
-                if (building2DReferenceDuplicates is null || building2DReferenceDuplicates.Count == 0)
+                if (building2DReferenceDuplicates is null)
                 {
-                    return NotFound();
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Year built data reference duplicates could not be read");
+                    return StatusCode(500, "Reference duplicates could not be read.");
                 }
 
-                string? json = Core.Convert.ToSystem_String(building2DReferenceDuplicates);
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    return NotFound();
-                }
-
-                return Content(json, "application/json");
+                return Content(Core.Convert.ToSystem_String(building2DReferenceDuplicates) ?? "[]", "application/json");
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -737,11 +1218,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="code">An optional county code to restrict the measurement to. When omitted every multi-part code is measured.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
-        /// <returns>An <see cref="IActionResult"/> carrying one entry per part holding a mismatched row, or 404 when no measured part holds one.</returns>
+        /// <returns>An <see cref="IActionResult"/> carrying one entry per part holding a mismatched row - <c>200 []</c> when no measured part holds one - or 500 when the measurement could not run.</returns>
         [HttpGet("countypartmismatches", Name = $"{nameof(YearBuiltDataController)}_{nameof(GetCountyPartMismatchesAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<Building2DReferencedObjectCountyPartMismatchResult>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -763,19 +1243,18 @@ namespace DiGi.GIS.WebAPI.Classes
             try
             {
                 List<Building2DReferencedObjectCountyPartMismatchResult>? building2DReferencedObjectCountyPartMismatchResults = await yearBuiltDataPostgreSQLConverter.GetCountyPartMismatchesAsync(code, commandTimeout, cancellationToken);
-                if (building2DReferencedObjectCountyPartMismatchResults is null || building2DReferencedObjectCountyPartMismatchResults.Count == 0)
+                if (building2DReferencedObjectCountyPartMismatchResults is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Year built data part mismatches could not be measured for {Code}", code ?? string.Empty);
+                    return StatusCode(500, "County part mismatches could not be measured.");
+                }
+
+                if (building2DReferencedObjectCountyPartMismatchResults.Count == 0)
                 {
                     Serilog.Modify.Log("No year built data part mismatch found for {Code}", code ?? string.Empty);
-                    return NotFound();
                 }
 
-                string? json = Core.Convert.ToSystem_String(building2DReferencedObjectCountyPartMismatchResults);
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    return NotFound();
-                }
-
-                return Content(json, "application/json");
+                return Content(Core.Convert.ToSystem_String(building2DReferencedObjectCountyPartMismatchResults) ?? "[]", "application/json");
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -791,6 +1270,130 @@ namespace DiGi.GIS.WebAPI.Classes
             {
                 Serilog.Modify.Log(exception, "{Type}:{Name} failed", nameof(YearBuiltDataController), nameof(GetCountyPartMismatchesAsync));
                 return StatusCode(500, "Internal server error during database query");
+            }
+        }
+
+        /// <summary>
+        /// Checks the parameters the year built maintenance actions share: at least one county part, a non-negative command timeout, a limit from 1 to the reference maximum, and no more references than that maximum.
+        /// </summary>
+        /// <param name="countyIds">The county parts of the request.</param>
+        /// <param name="references">The references of the request, or null when none was sent.</param>
+        /// <param name="limit">The limit of the request.</param>
+        /// <param name="commandTimeout">The command timeout of the request.</param>
+        /// <param name="actionResult">When the parameters are refused, the 400 to answer with; otherwise, null.</param>
+        /// <returns>True when the parameters are accepted; otherwise, false.</returns>
+        private bool IsValid(int[]? countyIds, string[]? references, int limit, int commandTimeout, out IActionResult? actionResult)
+        {
+            actionResult = null;
+
+            if (countyIds is null || countyIds.Length == 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CountyIds cannot be null or empty");
+                actionResult = BadRequest();
+                return false;
+            }
+
+            if (commandTimeout < 0)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "CommandTimeout cannot be negative");
+                actionResult = BadRequest();
+                return false;
+            }
+
+            if (limit < 1 || limit > referenceCount_Maximum)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Limit has to be between 1 and {Maximum}", referenceCount_Maximum);
+                actionResult = BadRequest($"limit has to be between 1 and {referenceCount_Maximum}.");
+                return false;
+            }
+
+            if (references is not null && references.Length > referenceCount_Maximum)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "At most {Maximum} references can be sent in one request", referenceCount_Maximum);
+                actionResult = BadRequest($"At most {referenceCount_Maximum} references can be sent in one request.");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Answers a maintenance result as DiGi JSON: 200, or 413 when the request matched more than its limit and was therefore refused whole.
+        /// </summary>
+        /// <param name="serializableObject">The result to answer with.</param>
+        /// <param name="exceeded">A value indicating whether the request exceeded its limit.</param>
+        /// <returns>The <see cref="ContentResult"/> carrying the result.</returns>
+        private ContentResult Result(Core.Interfaces.ISerializableObject serializableObject, bool exceeded)
+        {
+            ContentResult contentResult = Content(Core.Convert.ToSystem_String(serializableObject) ?? string.Empty, "application/json");
+            if (exceeded)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Request refused: it matched more than its limit, nothing was written");
+                contentResult.StatusCode = StatusCodes.Status413PayloadTooLarge;
+            }
+
+            return contentResult;
+        }
+
+        /// <summary>
+        /// Recomputes the derived <c>building_data</c> year built columns of the given buildings after a committed user write, widening the given part to every polygon part of its county first. Best-effort - see <see cref="RefreshBuildingDataYearBuiltAsync(IEnumerable{int}, IEnumerable{string}, CancellationToken)"/>.
+        /// </summary>
+        /// <param name="countyId">The county part the request named.</param>
+        /// <param name="references">The references of the buildings to recompute.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        private async Task RefreshBuildingDataYearBuiltAsync(int countyId, IEnumerable<string> references, CancellationToken cancellationToken)
+        {
+            HashSet<int>? countyIds;
+            try
+            {
+                countyIds = await PostgreSQL.Query.SiblingCountyIdsAsync(administrativeAreal2DPostgreSQLConverter, [countyId], cancellationToken: cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                Serilog.Modify.Log(exception, "Building data year built recompute skipped: the polygon parts of county {CountyId} could not be read", countyId);
+                return;
+            }
+
+            if (countyIds is null)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data year built recompute skipped: the polygon parts of county {CountyId} could not be read", countyId);
+                return;
+            }
+
+            await RefreshBuildingDataYearBuiltAsync(countyIds, references, cancellationToken);
+        }
+
+        /// <summary>
+        /// Recomputes the derived <c>building_data</c> year built columns of the given buildings after a committed write to their history, so <c>Calculated year built</c> follows a user entry at once rather than at the next building data run.
+        /// <para>Best-effort: the history write has already committed and stands, so a recompute that is not allowed (<see cref="GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData"/> disabled) or fails is logged and swallowed, and the next recompute or building data run catches the columns up.</para>
+        /// </summary>
+        /// <param name="countyIds">The county parts the buildings are stored under.</param>
+        /// <param name="references">The references of the buildings to recompute.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to observe for cancellation requests.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        private async Task RefreshBuildingDataYearBuiltAsync(IEnumerable<int> countyIds, IEnumerable<string> references, CancellationToken cancellationToken)
+        {
+            if (!GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData)
+            {
+                Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data year built recompute skipped: AllowUpdateBuildingData is disabled");
+                return;
+            }
+
+            try
+            {
+                BuildingDataYearBuiltUpdateResult? buildingDataYearBuiltUpdateResult = await PostgreSQL.Modify.UpdateBuildingDataYearBuiltAsync(buildingDataPostgreSQLConverter, yearBuiltDataPostgreSQLConverter, building2DPostgreSQLConverter, countyIds, references, commandTimeout: 30, cancellationToken: cancellationToken);
+                if (buildingDataYearBuiltUpdateResult is null)
+                {
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Warning, "Building data year built recompute could not run for {References}", string.Join(", ", references.Take(20)));
+                    return;
+                }
+
+                Serilog.Modify.Log("Building data year built recomputed. Matched: {Matched}, Updated: {Updated}, Cleared: {Cleared}", buildingDataYearBuiltUpdateResult.Matched, buildingDataYearBuiltUpdateResult.Updated, buildingDataYearBuiltUpdateResult.Cleared);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                Serilog.Modify.Log(exception, "Building data year built recompute failed for {References}", string.Join(", ", references.Take(20)));
             }
         }
     }

@@ -481,11 +481,10 @@ namespace DiGi.GIS.WebAPI.Classes
         /// <param name="limit">The maximum number of duplicate references to return. Defaults to 100.</param>
         /// <param name="commandTimeout">The timeout in seconds for the execution of the command. A value of 0 disables the timeout; a negative value is refused with HTTP 400. Defaults to 600 seconds.</param>
         /// <param name="cancellationToken">The cancellation token used to observe while waiting for the task to complete.</param>
-        /// <returns>An <see cref="IActionResult"/> containing the list of duplicate references, or 404 if none are found.</returns>
+        /// <returns>An <see cref="IActionResult"/> containing the list of duplicate references - <c>200 []</c> when there are none - or 500 when the query could not run, so "clean" and "failed" are never the same answer.</returns>
         [HttpGet("building2d/duplicatereferences", Name = $"{nameof(OccupancyDataController)}_{nameof(GetBuilding2DDuplicateReferencesAsync)}")]
         [ApiExplorerSettings(IgnoreApi = false)]
         [ProducesResponseType(typeof(List<Building2DReferenceDuplicate>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -513,19 +512,16 @@ namespace DiGi.GIS.WebAPI.Classes
 
             try
             {
+                // None is an empty list and a query that could not run is a 500 - a 404 for both could not be told
+                // from a missing route (DiGi.GIS.WebAPI#49).
                 List<Building2DReferenceDuplicate>? building2DReferenceDuplicates = await building2DOccupancyDataPostgreSQLConverter.GetBuilding2DReferenceDuplicatesAsync(countyId, limit, commandTimeout, cancellationToken);
-                if (building2DReferenceDuplicates is null || building2DReferenceDuplicates.Count == 0)
+                if (building2DReferenceDuplicates is null)
                 {
-                    return NotFound();
+                    Serilog.Modify.Log(Serilog.Enums.LogEventLevel.Error, "Occupancy data reference duplicates could not be read");
+                    return StatusCode(500, "Reference duplicates could not be read.");
                 }
 
-                string? json = Core.Convert.ToSystem_String(building2DReferenceDuplicates);
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    return NotFound();
-                }
-
-                return Content(json, "application/json");
+                return Content(Core.Convert.ToSystem_String(building2DReferenceDuplicates) ?? "[]", "application/json");
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

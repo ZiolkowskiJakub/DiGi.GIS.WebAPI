@@ -2817,7 +2817,7 @@ Gets or sets the unique identifiers of the columns \(Column\.UniqueId\)\. All co
 Required if performance is a concern and the column unique identifiers are available; otherwise, the column unique identifiers will be determined by the building data PostgreSQL converter\.
 
 ```csharp
-public System.Collections.Generic.IEnumerable<string> ColumnUniqueIds { get; set; }
+public System.Collections.Generic.IEnumerable<string>? ColumnUniqueIds { get; set; }
 ```
 
 #### Property Value
@@ -2916,7 +2916,7 @@ Gets or sets the unique identifiers of the columns \(Column\.UniqueId\)\. All co
 Required if performance is a concern and the column unique identifiers are available; otherwise, the column unique identifiers will be determined by the building data PostgreSQL converter\.
 
 ```csharp
-public System.Collections.Generic.IEnumerable<string> ColumnUniqueIds { get; set; }
+public System.Collections.Generic.IEnumerable<string>? ColumnUniqueIds { get; set; }
 ```
 
 #### Property Value
@@ -4711,6 +4711,21 @@ The path to the configuration file to be watched\.
 The time interval in milliseconds between checks for changes to the configuration file\.
 ### Properties
 
+<a name='DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData'></a>
+
+## GISWebAPIConfigurationFileWatcher\.AllowDeleteYearBuiltData Property
+
+Gets a value indicating whether stored year built data may be deleted \- whole objects, one prediction run, or user entries withdrawn by moderation\.
+
+Kept apart from [AllowUpdateYearBuiltData](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher\.AllowUpdateYearBuiltData') because a delete has no undo: a host can accept new predictions and user entries while refusing removals. A missing value denies.
+
+```csharp
+public bool AllowDeleteYearBuiltData { get; }
+```
+
+#### Property Value
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
 <a name='DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateAdministrativeAreal2D'></a>
 
 ## GISWebAPIConfigurationFileWatcher\.AllowUpdateAdministrativeAreal2D Property
@@ -5642,7 +5657,7 @@ The cancellation token used to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing the list of duplicate references, or 404 if none are found\.
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing the list of duplicate references \- `200 []` when there are none \- or 500 when the query could not run, so "clean" and "failed" are never the same answer\.
 
 <a name='DiGi.GIS.WebAPI.Classes.OccupancyDataController.GetBuilding2DDuplicatesCountAsync(System.Nullable_int_,int,System.Threading.CancellationToken)'></a>
 
@@ -8407,48 +8422,54 @@ public class YearBuiltDataController : DiGi.WebAPI.Classes.WebAPIController
 Inheritance [System\.Object](https://learn.microsoft.com/en-us/dotnet/api/system.object 'System\.Object') → [Microsoft\.AspNetCore\.Mvc\.ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase 'Microsoft\.AspNetCore\.Mvc\.ControllerBase') → [DiGi\.WebAPI\.Classes\.WebAPIController](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.webapicontroller 'DiGi\.WebAPI\.Classes\.WebAPIController') → YearBuiltDataController
 ### Constructors
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore)'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore)'></a>
 
-## YearBuiltDataController\(GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter, Building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter, SecurityKeyManager, TokenRevocationStore\) Constructor
+## YearBuiltDataController\(GISWebAPIConfigurationFileWatcher, YearBuiltDataPostgreSQLConverter, Building2DPostgreSQLConverter, AdministrativeAreal2DPostgreSQLConverter, BuildingDataPostgreSQLConverter, SecurityKeyManager, TokenRevocationStore\) Constructor
 
 Initializes a new instance of the YearBuiltDataController class\.
 
 ```csharp
-public YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter, DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager=null, DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore=null);
+public YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher GISWebAPIConfigurationFileWatcher, DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter yearBuiltDataPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter building2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter administrativeAreal2DPostgreSQLConverter, DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter buildingDataPostgreSQLConverter, DiGi.WebAPI.Classes.SecurityKeyManager? securityKeyManager=null, DiGi.WebAPI.Classes.TokenRevocationStore? tokenRevocationStore=null);
 ```
 #### Parameters
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).GISWebAPIConfigurationFileWatcher'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).GISWebAPIConfigurationFileWatcher'></a>
 
 `GISWebAPIConfigurationFileWatcher` [GISWebAPIConfigurationFileWatcher](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher')
 
 The configuration file watcher used to monitor changes to the PostgreSQL Web API configuration\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).yearBuiltDataPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).yearBuiltDataPostgreSQLConverter'></a>
 
 `yearBuiltDataPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.yearbuiltdatapostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataPostgreSQLConverter')
 
 The converter for YearBuiltData objects when interacting with a PostgreSQL database\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).building2DPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).building2DPostgreSQLConverter'></a>
 
 `building2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.building2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.Building2DPostgreSQLConverter')
 
 The converter for Building2D objects, used to read which county row a reference is already filed under\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).administrativeAreal2DPostgreSQLConverter'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).administrativeAreal2DPostgreSQLConverter'></a>
 
 `administrativeAreal2DPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.administrativeareal2dpostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.AdministrativeAreal2DPostgreSQLConverter')
 
 The converter for administrative areal 2D data when interacting with a PostgreSQL database\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).securityKeyManager'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).buildingDataPostgreSQLConverter'></a>
+
+`buildingDataPostgreSQLConverter` [DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.buildingdatapostgresqlconverter 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataPostgreSQLConverter')
+
+The converter of the building data table, whose derived year built columns are recomputed after the stored history changes\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).securityKeyManager'></a>
 
 `securityKeyManager` [DiGi\.WebAPI\.Classes\.SecurityKeyManager](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.securitykeymanager 'DiGi\.WebAPI\.Classes\.SecurityKeyManager')
 
 The user extension's security key manager; `null` when the user extension is not loaded, in which case every user\-token check denies\.
 
-<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).tokenRevocationStore'></a>
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.YearBuiltDataController(DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher,DiGi.GIS.PostgreSQL.Classes.YearBuiltDataPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.Building2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.AdministrativeAreal2DPostgreSQLConverter,DiGi.GIS.PostgreSQL.Classes.BuildingDataPostgreSQLConverter,DiGi.WebAPI.Classes.SecurityKeyManager,DiGi.WebAPI.Classes.TokenRevocationStore).tokenRevocationStore'></a>
 
 `tokenRevocationStore` [DiGi\.WebAPI\.Classes\.TokenRevocationStore](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.tokenrevocationstore 'DiGi\.WebAPI\.Classes\.TokenRevocationStore')
 
@@ -8535,7 +8556,7 @@ The cancellation token used to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying one entry per part holding a mismatched row, or 404 when no measured part holds one\.
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') carrying one entry per part holding a mismatched row \- `200 []` when no measured part holds one \- or 500 when the measurement could not run\.
 
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetItemsByReferenceAsync(string,System.Nullable_int_,System.Threading.CancellationToken)'></a>
 
@@ -8615,6 +8636,41 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task representing the asynchronous operation, returning a list of year built data items or no content if none were found\.
 
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetPredictedYearBuiltRunsAsync(int[],int,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.GetPredictedYearBuiltRunsAsync\(int\[\], int, CancellationToken\) Method
+
+Lists the prediction runs stored under the given county parts: one entry per part, stamp and model identifier, with the number of objects carrying it\.
+
+The stamp is reported as [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks'), the value `removepredictedyearbuiltsbycountyids` takes, and the model identifier is null for entries written before it was recorded. A part holding no prediction answers `200 []`; a query that could not run answers 500, so "none" and "failed" are never confused.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> GetPredictedYearBuiltRunsAsync(int[]? countyIds, int commandTimeout=600, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetPredictedYearBuiltRunsAsync(int[],int,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The county parts to list, as a repeated `countyids` parameter\. Required\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetPredictedYearBuiltRunsAsync(int[],int,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the query\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetPredictedYearBuiltRunsAsync(int[],int,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. 200 with a list of [DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.predictedyearbuiltrunresult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult'), 400 for invalid parameters, 503 on a transient database failure, or 500 when the query failed\.
+
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferenceDuplicatesAsync(System.Nullable_int_,int,int,System.Threading.CancellationToken)'></a>
 
 ## YearBuiltDataController\.GetReferenceDuplicatesAsync\(Nullable\<int\>, int, int, CancellationToken\) Method
@@ -8652,7 +8708,7 @@ The cancellation token used to observe while waiting for the task to complete\.
 
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
-An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing the list of duplicate references, or 404 if none are found\.
+An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing the list of duplicate references \- `200 []` when there are none \- or 500 when the query could not run, so "clean" and "failed" are never the same answer\.
 
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.GetReferencesByCountyIdAsync(int,int,System.Threading.CancellationToken)'></a>
 
@@ -8687,6 +8743,370 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 An [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult') containing a list of reference strings if found, or 404 if none are found\.
 
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.IsValid(int[],string[],int,int,Microsoft.AspNetCore.Mvc.IActionResult)'></a>
+
+## YearBuiltDataController\.IsValid\(int\[\], string\[\], int, int, IActionResult\) Method
+
+Checks the parameters the year built maintenance actions share: at least one county part, a non\-negative command timeout, a limit from 1 to the reference maximum, and no more references than that maximum\.
+
+```csharp
+private bool IsValid(int[]? countyIds, string[]? references, int limit, int commandTimeout, out Microsoft.AspNetCore.Mvc.IActionResult? actionResult);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.IsValid(int[],string[],int,int,Microsoft.AspNetCore.Mvc.IActionResult).countyIds'></a>
+
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The county parts of the request\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.IsValid(int[],string[],int,int,Microsoft.AspNetCore.Mvc.IActionResult).references'></a>
+
+`references` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The references of the request, or null when none was sent\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.IsValid(int[],string[],int,int,Microsoft.AspNetCore.Mvc.IActionResult).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The limit of the request\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.IsValid(int[],string[],int,int,Microsoft.AspNetCore.Mvc.IActionResult).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The command timeout of the request\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.IsValid(int[],string[],int,int,Microsoft.AspNetCore.Mvc.IActionResult).actionResult'></a>
+
+`actionResult` [Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')
+
+When the parameters are refused, the 400 to answer with; otherwise, null\.
+
+#### Returns
+[System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
+True when the parameters are accepted; otherwise, false\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RefreshBuildingDataYearBuiltAsync(int,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.RefreshBuildingDataYearBuiltAsync\(int, IEnumerable\<string\>, CancellationToken\) Method
+
+Recomputes the derived `building_data` year built columns of the given buildings after a committed user write, widening the given part to every polygon part of its county first\. Best\-effort \- see [RefreshBuildingDataYearBuiltAsync\(IEnumerable&lt;int&gt;, IEnumerable&lt;string&gt;, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RefreshBuildingDataYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.RefreshBuildingDataYearBuiltAsync\(System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, System\.Threading\.CancellationToken\)')\.
+
+```csharp
+private System.Threading.Tasks.Task RefreshBuildingDataYearBuiltAsync(int countyId, System.Collections.Generic.IEnumerable<string> references, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RefreshBuildingDataYearBuiltAsync(int,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken).countyId'></a>
+
+`countyId` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The county part the request named\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RefreshBuildingDataYearBuiltAsync(int,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to recompute\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RefreshBuildingDataYearBuiltAsync(int,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task 'System\.Threading\.Tasks\.Task')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RefreshBuildingDataYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.RefreshBuildingDataYearBuiltAsync\(IEnumerable\<int\>, IEnumerable\<string\>, CancellationToken\) Method
+
+Recomputes the derived `building_data` year built columns of the given buildings after a committed write to their history, so `Calculated year built` follows a user entry at once rather than at the next building data run\.
+
+Best-effort: the history write has already committed and stands, so a recompute that is not allowed ([AllowUpdateBuildingData](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher\.AllowUpdateBuildingData') disabled) or fails is logged and swallowed, and the next recompute or building data run catches the columns up.
+
+```csharp
+private System.Threading.Tasks.Task RefreshBuildingDataYearBuiltAsync(System.Collections.Generic.IEnumerable<int> countyIds, System.Collections.Generic.IEnumerable<string> references, System.Threading.CancellationToken cancellationToken);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RefreshBuildingDataYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts the buildings are stored under\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RefreshBuildingDataYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to recompute\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RefreshBuildingDataYearBuiltAsync(System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task 'System\.Threading\.Tasks\.Task')  
+A task that represents the asynchronous operation\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.RemoveItemsByCountyIdsAsync\(IEnumerable\<string\>, int\[\], bool, bool, int, int, string, CancellationToken\) Method
+
+Deletes stored year built data objects of the given county parts \- by default only the objects holding no entry at all\.
+
+Gated by the access key and by [AllowDeleteYearBuiltData](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher\.AllowDeleteYearBuiltData'), a flag of its own because a delete has no undo; either gate failing answers 401. The scope is always the named county parts - normally every polygon part of one county - narrowed to the references in the body when one is sent. Without a body only `emptyonly=true` is accepted, so the widest request this action takes deletes the empty objects of a county.
+
+`dryrun` defaults to true: the rows are selected and counted, nothing is deleted. A request matching more rows than `limit` deletes nothing and answers 413 carrying the counts, so a mistaken scope is refused whole rather than cut short. The result is a [DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.yearbuiltdataremoveresult 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult').
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable<string>? references, int[]? countyIds, bool emptyOnly=true, bool dryRun=true, int limit=10000, int commandTimeout=600, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings whose objects are deleted, or none for every building of the parts \(only with [emptyOnly](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).emptyOnly 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.RemoveItemsByCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int\[\], bool, bool, int, int, string, System\.Threading\.CancellationToken\)\.emptyOnly')\)\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The county parts to delete from, as a repeated `countyids` parameter\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).emptyOnly'></a>
+
+`emptyOnly` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether only objects holding no entry are deleted\. Defaults to true\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the rows are only counted\. Defaults to true\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of rows the request may delete, from 1 to 10000\. Defaults to 10000\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each database command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. 200 with the counts, 413 with the counts when the scope exceeds [limit](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveItemsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,bool,int,int,string,System.Threading.CancellationToken).limit 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.RemoveItemsByCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int\[\], bool, bool, int, int, string, System\.Threading\.CancellationToken\)\.limit'), 401 without a valid key or with the flag disabled, 400 for invalid parameters, 503 on a transient database failure, or 500 when the delete failed\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.RemovePredictedYearBuiltsByCountyIdsAsync\(IEnumerable\<string\>, int\[\], Nullable\<long\>, bool, int, bool, int, string, CancellationToken\) Method
+
+Removes one prediction run \- the predicted year built entries stamped [ticks](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).ticks 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.RemovePredictedYearBuiltsByCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int\[\], System\.Nullable\<long\>, bool, int, bool, int, string, System\.Threading\.CancellationToken\)\.ticks') \- from the stored year built data objects of the given county parts, in one transaction, and optionally recomputes the derived `building_data` columns of the buildings it changed\.
+
+Gated by the access key and by [AllowDeleteYearBuiltData](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher\.AllowDeleteYearBuiltData'); with `updatebuildingdata=true` also by [AllowUpdateBuildingData](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher\.AllowUpdateBuildingData'), checked before anything is written. Any gate failing answers 401.
+
+The stamp is the run's [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks') - the key each entry is stored under, as `predictedyearbuiltruns` reports it - never a formatted date. Other stamps and user entries are untouched; an object left with no entry is kept and listed in [DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.EmptiedReferences](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.predictedyearbuiltremoveresult.emptiedreferences 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult\.EmptiedReferences') for an explicit `removeitemsbycountyids`. `dryrun` defaults to true, and a run on more objects than `limit` answers 413 and writes nothing. Removing a run already removed matches nothing, so a retry is harmless.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable<string>? references, int[]? countyIds, System.Nullable<long> ticks, bool dryRun=true, int limit=10000, bool updateBuildingData=false, int commandTimeout=600, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to remove the run from, or none for every building of the parts\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The county parts to remove the run from, as a repeated `countyids` parameter\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).ticks'></a>
+
+`ticks` [System\.Nullable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')[System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.nullable-1 'System\.Nullable\`1')
+
+The stamp of the run, as [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks')\. Required\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the entries are only counted\. Defaults to true\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of objects the request may rewrite, from 1 to 10000\. Defaults to 10000\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).updateBuildingData'></a>
+
+`updateBuildingData` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the derived `building_data` columns of the changed buildings are recomputed after the removal commits\. Defaults to false\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each database command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. 200 with a [DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.predictedyearbuiltremoveresult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult'), 413 with it when the run exceeds [limit](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemovePredictedYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],System.Nullable_long_,bool,int,bool,int,string,System.Threading.CancellationToken).limit 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.RemovePredictedYearBuiltsByCountyIdsAsync\(System\.Collections\.Generic\.IEnumerable\<string\>, int\[\], System\.Nullable\<long\>, bool, int, bool, int, string, System\.Threading\.CancellationToken\)\.limit'), 401 without a valid key or with a flag disabled, 400 for invalid parameters, 503 on a transient database failure, or 500 when the removal \- or the recompute after it \- failed\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltAsync(DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.RemoveUserYearBuiltAsync\(UserYearBuiltParameter, CancellationToken\) Method
+
+Withdraws the signed\-in visitor's own user\-provided year built entry from one building\.
+
+The bearer token identifies the user, exactly as for [SetUserYearBuiltAsync\(UserYearBuiltParameter, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.SetUserYearBuiltAsync(DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.SetUserYearBuiltAsync\(DiGi\.GIS\.WebAPI\.Classes\.Parameter\.UserYearBuiltParameter, System\.Threading\.CancellationToken\)'), and the same [AllowUpdateYearBuiltData](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateYearBuiltData 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher\.AllowUpdateYearBuiltData') flag gates it: withdrawing one's own label is the counterpart of setting it, not a moderation delete. The entry is looked for under every polygon part of the county the given part belongs to, and only an entry recorded by this user is withdrawn - a building whose entry another user recorded answers 403 and is left untouched. The objects themselves are kept.
+
+After a committed withdrawal the building's derived `building_data` columns are recomputed, best-effort: a failure there is logged and the withdrawal still answers 200.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveUserYearBuiltAsync(DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter? parameter, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltAsync(DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter,System.Threading.CancellationToken).parameter'></a>
+
+`parameter` [UserYearBuiltParameter](DiGi.GIS.WebAPI.Classes.Parameter.md#DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter 'DiGi\.GIS\.WebAPI\.Classes\.Parameter\.UserYearBuiltParameter')
+
+The building to withdraw the entry of; [Year](DiGi.GIS.WebAPI.Classes.Parameter.md#DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter.Year 'DiGi\.GIS\.WebAPI\.Classes\.Parameter\.UserYearBuiltParameter\.Year') and [Relation](DiGi.GIS.WebAPI.Classes.Parameter.md#DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter.Relation 'DiGi\.GIS\.WebAPI\.Classes\.Parameter\.UserYearBuiltParameter\.Relation') are ignored\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltAsync(DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. 200 when the entry was withdrawn, 404 when the building holds no user entry, 403 when the entry belongs to another user, 401 without a valid user token, 400 for a disabled flag or an invalid body, or 500 when the withdrawal failed\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,int,string,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.RemoveUserYearBuiltsByCountyIdsAsync\(IEnumerable\<string\>, int\[\], bool, int, string, CancellationToken\) Method
+
+Withdraws the user\-provided year built entry of the given buildings, whoever recorded it \- the moderation counterpart of [RemoveUserYearBuiltAsync\(UserYearBuiltParameter, CancellationToken\)](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltAsync(DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Classes\.YearBuiltDataController\.RemoveUserYearBuiltAsync\(DiGi\.GIS\.WebAPI\.Classes\.Parameter\.UserYearBuiltParameter, System\.Threading\.CancellationToken\)')\.
+
+Gated by the access key and by [AllowDeleteYearBuiltData](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowDeleteYearBuiltData 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher\.AllowDeleteYearBuiltData'); either failing answers 401. The references are required, and are looked for under the named county parts only. `dryrun` defaults to true. The objects are kept. After a committed withdrawal the derived `building_data` columns of the withdrawn buildings are recomputed best-effort when [AllowUpdateBuildingData](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher\.AllowUpdateBuildingData') allows it.
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveUserYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable<string>? references, int[]? countyIds, bool dryRun=true, int commandTimeout=600, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,int,string,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to withdraw the user entry of\. Required\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,int,string,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The county parts the buildings are stored under, as a repeated `countyids` parameter\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,int,string,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the buildings are only classified\. Defaults to true\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,int,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each database command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,int,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.RemoveUserYearBuiltsByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],bool,int,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. 200 with a [DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.useryearbuiltremoveresult 'DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult'), 401 without a valid key or with the flag disabled, 400 for invalid parameters, 503 on a transient database failure, or 500 when the withdrawal failed\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.Result(DiGi.Core.Interfaces.ISerializableObject,bool)'></a>
+
+## YearBuiltDataController\.Result\(ISerializableObject, bool\) Method
+
+Answers a maintenance result as DiGi JSON: 200, or 413 when the request matched more than its limit and was therefore refused whole\.
+
+```csharp
+private Microsoft.AspNetCore.Mvc.ContentResult Result(DiGi.Core.Interfaces.ISerializableObject serializableObject, bool exceeded);
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.Result(DiGi.Core.Interfaces.ISerializableObject,bool).serializableObject'></a>
+
+`serializableObject` [DiGi\.Core\.Interfaces\.ISerializableObject](https://learn.microsoft.com/en-us/dotnet/api/digi.core.interfaces.iserializableobject 'DiGi\.Core\.Interfaces\.ISerializableObject')
+
+The result to answer with\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.Result(DiGi.Core.Interfaces.ISerializableObject,bool).exceeded'></a>
+
+`exceeded` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the request exceeded its limit\.
+
+#### Returns
+[Microsoft\.AspNetCore\.Mvc\.ContentResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.contentresult 'Microsoft\.AspNetCore\.Mvc\.ContentResult')  
+The [Microsoft\.AspNetCore\.Mvc\.ContentResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.contentresult 'Microsoft\.AspNetCore\.Mvc\.ContentResult') carrying the result\.
+
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.SetUserYearBuiltAsync(DiGi.GIS.WebAPI.Classes.Parameter.UserYearBuiltParameter,System.Threading.CancellationToken)'></a>
 
 ## YearBuiltDataController\.SetUserYearBuiltAsync\(UserYearBuiltParameter, CancellationToken\) Method
@@ -8715,6 +9135,53 @@ The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dot
 #### Returns
 [System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
 A task that represents the asynchronous operation\. 200 on a committed write, 404 when no building holds the reference under the given part, 401 without a valid user token, 400 for a disabled flag or an invalid body, or 500 when the write failed\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateBuildingDataByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],int,string,System.Threading.CancellationToken)'></a>
+
+## YearBuiltDataController\.UpdateBuildingDataByCountyIdsAsync\(IEnumerable\<string\>, int\[\], int, string, CancellationToken\) Method
+
+Recomputes the derived year built columns of `building_data` \- predicted, user and calculated \- from the stored history of the given county parts, writing NULL where the history no longer holds a value\.
+
+Gated by the access key and by [AllowUpdateBuildingData](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIConfigurationFileWatcher.AllowUpdateBuildingData 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIConfigurationFileWatcher\.AllowUpdateBuildingData'); either failing answers 401. With references in the body only those buildings are recomputed; without, every building holding a `year_built_data` or a `building_data` row under the parts. A building with neither a building data row nor a value is not written, so the call never adds empty rows. The result is a [DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.buildingdatayearbuiltupdateresult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult').
+
+```csharp
+public System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateBuildingDataByCountyIdsAsync(System.Collections.Generic.IEnumerable<string>? references, int[]? countyIds, int commandTimeout=600, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateBuildingDataByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],int,string,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to recompute, or none for every building of the parts\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateBuildingDataByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],int,string,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[\[\]](https://learn.microsoft.com/en-us/dotnet/api/system.array 'System\.Array')
+
+The county parts to recompute, as a repeated `countyids` parameter\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateBuildingDataByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],int,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each database command\. A value of 0 disables the timeout; a negative value is refused with HTTP 400\. Defaults to 600 seconds\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateBuildingDataByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],int,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The secret access key supplied in the request header\.
+
+<a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateBuildingDataByCountyIdsAsync(System.Collections.Generic.IEnumerable_string_,int[],int,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe for cancellation requests\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[Microsoft\.AspNetCore\.Mvc\.IActionResult](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.iactionresult 'Microsoft\.AspNetCore\.Mvc\.IActionResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task that represents the asynchronous operation\. 200 with the counts, 401 without a valid key or with the flag disabled, 400 for invalid parameters, 503 on a transient database failure, or 500 when the recompute failed\.
 
 <a name='DiGi.GIS.WebAPI.Classes.YearBuiltDataController.UpdateItemsAsync(System.Text.Json.Nodes.JsonArray,string,string,System.Threading.CancellationToken)'></a>
 

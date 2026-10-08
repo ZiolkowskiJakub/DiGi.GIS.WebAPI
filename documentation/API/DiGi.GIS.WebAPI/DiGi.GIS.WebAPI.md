@@ -370,6 +370,357 @@ The [Microsoft\.Extensions\.DependencyInjection\.IServiceCollection](https://lea
 [System\.Threading\.Tasks\.Task](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task 'System\.Threading\.Tasks\.Task')  
 A [System\.Threading\.Tasks\.Task](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task 'System\.Threading\.Tasks\.Task') representing the asynchronous operation\.
 
+<a name='DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken)'></a>
+
+## Modify\.PostReferencesAsync\<TSerializableObject\>\(this HttpClient, string, IEnumerable\<string\>, int, PostOptions, string, CancellationToken\) Method
+
+Asynchronously posts a list of building references to a protected maintenance endpoint and reads back the DiGi result it answers with\.
+
+The shared plumbing of the year built maintenance clients: the access key travels in the `key` header, never the query string; a null or empty [references](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).references 'DiGi\.GIS\.WebAPI\.Modify\.PostReferencesAsync\<TSerializableObject\>\(this System\.Net\.Http\.HttpClient, string, System\.Collections\.Generic\.IEnumerable\<string\>, int, DiGi\.WebAPI\.Classes\.PostOptions, string, System\.Threading\.CancellationToken\)\.references') sends no body, which those endpoints read as "every building of the parts"; and the per-attempt delay is stretched to the server's command timeout so a long delete is not cut off by the 20 s client default (`Coding - WebAPI Contracts.md` §3). A refused request - 401, 400, or 413 for a scope over its limit - and a failed one both answer null; the server log carries the reason.
+
+```csharp
+public static System.Threading.Tasks.Task<TSerializableObject?> PostReferencesAsync<TSerializableObject>(this System.Net.Http.HttpClient? httpClient, string? requestUri, System.Collections.Generic.IEnumerable<string>? references, int commandTimeout, DiGi.WebAPI.Classes.PostOptions? postOptions, string? key, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken))
+    where TSerializableObject : DiGi.Core.Interfaces.ISerializableObject;
+```
+#### Type parameters
+
+<a name='DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).TSerializableObject'></a>
+
+`TSerializableObject`
+
+The type of the DiGi result the endpoint answers with\.
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).httpClient'></a>
+
+`httpClient` [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient')
+
+The [System\.Net\.Http\.HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient 'System\.Net\.Http\.HttpClient') to post with\.
+
+<a name='DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).requestUri'></a>
+
+`requestUri` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The request URI, query string included\.
+
+<a name='DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references to post, or null to post no body\.
+
+<a name='DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The server command timeout the request carries, in seconds; the per\-attempt delay is stretched to it\.
+
+<a name='DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).postOptions'></a>
+
+`postOptions` [DiGi\.WebAPI\.Classes\.PostOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.postoptions 'DiGi\.WebAPI\.Classes\.PostOptions')
+
+Optional configuration options for the HTTP request\.
+
+<a name='DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The access key of the protected endpoint\.
+
+<a name='DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[TSerializableObject](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Modify.PostReferencesAsync_TSerializableObject_(thisSystem.Net.Http.HttpClient,string,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).TSerializableObject 'DiGi\.GIS\.WebAPI\.Modify\.PostReferencesAsync\<TSerializableObject\>\(this System\.Net\.Http\.HttpClient, string, System\.Collections\.Generic\.IEnumerable\<string\>, int, DiGi\.WebAPI\.Classes\.PostOptions, string, System\.Threading\.CancellationToken\)\.TSerializableObject')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task returning the result, or null when the request was refused or failed\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken)'></a>
+
+## Modify\.RemovePredictedYearBuiltsAsync\(this GISWebAPIManager, IEnumerable\<int\>, long, IEnumerable\<string\>, bool, int, bool, int, PostOptions, string, CancellationToken\) Method
+
+Asynchronously removes one prediction run from the stored year built data objects of the given county parts through `gis/yearbuiltdata/removepredictedyearbuiltsbycountyids`, by default as a dry run\.
+
+The run is named by its stamp as [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks') - the value [PredictedYearBuiltRunsAsync\(this GISWebAPIManager, IEnumerable&lt;int&gt;, int, PostOptions, CancellationToken\)](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Query.PredictedYearBuiltRunsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,int,DiGi.WebAPI.Classes.PostOptions,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Query\.PredictedYearBuiltRunsAsync\(this DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager, System\.Collections\.Generic\.IEnumerable\<int\>, int, DiGi\.WebAPI\.Classes\.PostOptions, System\.Threading\.CancellationToken\)') reports. Needs the access key and `AllowDeleteYearBuiltData` on the host, and `AllowUpdateBuildingData` as well with [updateBuildingData](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).updateBuildingData 'DiGi\.GIS\.WebAPI\.Modify\.RemovePredictedYearBuiltsAsync\(this DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager, System\.Collections\.Generic\.IEnumerable\<int\>, long, System\.Collections\.Generic\.IEnumerable\<string\>, bool, int, bool, int, DiGi\.WebAPI\.Classes\.PostOptions, string, System\.Threading\.CancellationToken\)\.updateBuildingData'). A run on more objects than [limit](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).limit 'DiGi\.GIS\.WebAPI\.Modify\.RemovePredictedYearBuiltsAsync\(this DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager, System\.Collections\.Generic\.IEnumerable\<int\>, long, System\.Collections\.Generic\.IEnumerable\<string\>, bool, int, bool, int, DiGi\.WebAPI\.Classes\.PostOptions, string, System\.Threading\.CancellationToken\)\.limit') is refused whole (HTTP 413) and answers null here.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRemoveResult?> RemovePredictedYearBuiltsAsync(this DiGi.GIS.WebAPI.Classes.GISWebAPIManager? gisWebAPIManager, System.Collections.Generic.IEnumerable<int>? countyIds, long ticks, System.Collections.Generic.IEnumerable<string>? references=null, bool dryRun=true, int limit=10000, bool updateBuildingData=false, int commandTimeout=600, DiGi.WebAPI.Classes.PostOptions? postOptions=null, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).gisWebAPIManager'></a>
+
+`gisWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
+
+The [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager') instance used to communicate with the Web API\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to remove the run from\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).ticks'></a>
+
+`ticks` [System\.Int64](https://learn.microsoft.com/en-us/dotnet/api/system.int64 'System\.Int64')
+
+The stamp of the run, as [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks')\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to remove the run from, or null for every building of the parts\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the entries are only counted\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of objects the request may rewrite, from 1 to 10000\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).updateBuildingData'></a>
+
+`updateBuildingData` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the derived building data year built columns of the changed buildings are recomputed after the removal\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each database command on the server\. A value of 0 disables it\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).postOptions'></a>
+
+`postOptions` [DiGi\.WebAPI\.Classes\.PostOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.postoptions 'DiGi\.WebAPI\.Classes\.PostOptions')
+
+Optional configuration options for the HTTP request\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The access key; defaults to the manager's\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.predictedyearbuiltremoveresult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRemoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task returning the counts, or null when the request was refused or failed\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveUserYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken)'></a>
+
+## Modify\.RemoveUserYearBuiltsAsync\(this GISWebAPIManager, IEnumerable\<int\>, IEnumerable\<string\>, bool, int, PostOptions, string, CancellationToken\) Method
+
+Asynchronously withdraws the user\-provided year built entry of the given buildings, whoever recorded it, through `gis/yearbuiltdata/removeuseryearbuiltsbycountyids` \- the moderation path, by default as a dry run\.
+
+Needs the access key and `AllowDeleteYearBuiltData` on the host. The objects are kept; the derived building data columns of the withdrawn buildings are recomputed on the host when it allows building data updates.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.UserYearBuiltRemoveResult?> RemoveUserYearBuiltsAsync(this DiGi.GIS.WebAPI.Classes.GISWebAPIManager? gisWebAPIManager, System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.IEnumerable<string>? references, bool dryRun=true, int commandTimeout=600, DiGi.WebAPI.Classes.PostOptions? postOptions=null, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveUserYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).gisWebAPIManager'></a>
+
+`gisWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
+
+The [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager') instance used to communicate with the Web API\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveUserYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts the buildings are stored under\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveUserYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to withdraw the user entry of\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveUserYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the buildings are only classified\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveUserYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each database command on the server\. A value of 0 disables it\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveUserYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).postOptions'></a>
+
+`postOptions` [DiGi\.WebAPI\.Classes\.PostOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.postoptions 'DiGi\.WebAPI\.Classes\.PostOptions')
+
+Optional configuration options for the HTTP request\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveUserYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The access key; defaults to the manager's\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveUserYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.useryearbuiltremoveresult 'DiGi\.GIS\.PostgreSQL\.Classes\.UserYearBuiltRemoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task returning the classification of every reference, or null when the request was refused or failed\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken)'></a>
+
+## Modify\.RemoveYearBuiltDatasAsync\(this GISWebAPIManager, IEnumerable\<int\>, IEnumerable\<string\>, bool, bool, int, int, PostOptions, string, CancellationToken\) Method
+
+Asynchronously deletes stored year built data objects of the given county parts through `gis/yearbuiltdata/removeitemsbycountyids` \- by default only the objects holding no entry, and by default as a dry run\.
+
+Needs the access key and `AllowDeleteYearBuiltData` on the host. Without references only [emptyOnly](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).emptyOnly 'DiGi\.GIS\.WebAPI\.Modify\.RemoveYearBuiltDatasAsync\(this DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, DiGi\.WebAPI\.Classes\.PostOptions, string, System\.Threading\.CancellationToken\)\.emptyOnly') is accepted. A scope matching more rows than [limit](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).limit 'DiGi\.GIS\.WebAPI\.Modify\.RemoveYearBuiltDatasAsync\(this DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager, System\.Collections\.Generic\.IEnumerable\<int\>, System\.Collections\.Generic\.IEnumerable\<string\>, bool, bool, int, int, DiGi\.WebAPI\.Classes\.PostOptions, string, System\.Threading\.CancellationToken\)\.limit') is refused whole (HTTP 413) and answers null here - run it as a dry run first to read the count.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.YearBuiltDataRemoveResult?> RemoveYearBuiltDatasAsync(this DiGi.GIS.WebAPI.Classes.GISWebAPIManager? gisWebAPIManager, System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.IEnumerable<string>? references=null, bool emptyOnly=true, bool dryRun=true, int limit=10000, int commandTimeout=600, DiGi.WebAPI.Classes.PostOptions? postOptions=null, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).gisWebAPIManager'></a>
+
+`gisWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
+
+The [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager') instance used to communicate with the Web API\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to delete from\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings whose objects are deleted, or null for every building of the parts\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).emptyOnly'></a>
+
+`emptyOnly` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether only objects holding no entry are deleted\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).dryRun'></a>
+
+`dryRun` [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')
+
+A value indicating whether the rows are only counted\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).limit'></a>
+
+`limit` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The largest number of rows the request may delete, from 1 to 10000\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each database command on the server\. A value of 0 disables it\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).postOptions'></a>
+
+`postOptions` [DiGi\.WebAPI\.Classes\.PostOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.postoptions 'DiGi\.WebAPI\.Classes\.PostOptions')
+
+Optional configuration options for the HTTP request\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The access key; defaults to the manager's\.
+
+<a name='DiGi.GIS.WebAPI.Modify.RemoveYearBuiltDatasAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,bool,bool,int,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.yearbuiltdataremoveresult 'DiGi\.GIS\.PostgreSQL\.Classes\.YearBuiltDataRemoveResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task returning the counts, or null when the request was refused or failed\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken)'></a>
+
+## Modify\.UpdateBuildingDataYearBuiltAsync\(this GISWebAPIManager, IEnumerable\<int\>, IEnumerable\<string\>, int, PostOptions, string, CancellationToken\) Method
+
+Asynchronously recomputes the derived building data year built columns \- predicted, user and calculated \- of the given county parts from their stored history, through `gis/yearbuiltdata/updatebuildingdatabycountyids`, writing NULL where the history no longer holds a value\.
+
+Needs the access key and `AllowUpdateBuildingData` on the host.
+
+```csharp
+public static System.Threading.Tasks.Task<DiGi.GIS.PostgreSQL.Classes.BuildingDataYearBuiltUpdateResult?> UpdateBuildingDataYearBuiltAsync(this DiGi.GIS.WebAPI.Classes.GISWebAPIManager? gisWebAPIManager, System.Collections.Generic.IEnumerable<int>? countyIds, System.Collections.Generic.IEnumerable<string>? references=null, int commandTimeout=600, DiGi.WebAPI.Classes.PostOptions? postOptions=null, string? key=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).gisWebAPIManager'></a>
+
+`gisWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
+
+The [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager') instance used to communicate with the Web API\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to recompute\. Normally every polygon part of one county\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).references'></a>
+
+`references` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The references of the buildings to recompute, or null for every building of the parts\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for each database command on the server\. A value of 0 disables it\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).postOptions'></a>
+
+`postOptions` [DiGi\.WebAPI\.Classes\.PostOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.postoptions 'DiGi\.WebAPI\.Classes\.PostOptions')
+
+Optional configuration options for the HTTP request\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).key'></a>
+
+`key` [System\.String](https://learn.microsoft.com/en-us/dotnet/api/system.string 'System\.String')
+
+The access key; defaults to the manager's\.
+
+<a name='DiGi.GIS.WebAPI.Modify.UpdateBuildingDataYearBuiltAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,System.Collections.Generic.IEnumerable_string_,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.buildingdatayearbuiltupdateresult 'DiGi\.GIS\.PostgreSQL\.Classes\.BuildingDataYearBuiltUpdateResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task returning the counts, or null when the request was refused or failed\.
+
 <a name='DiGi.GIS.WebAPI.Modify.UpdateItemsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,byte[],int,DiGi.WebAPI.Classes.PostOptions,string)'></a>
 
 ## Modify\.UpdateItemsAsync\(this GISWebAPIManager, byte\[\], int, PostOptions, string\) Method
@@ -1943,6 +2294,53 @@ The access key to validate\.
 #### Returns
 [System\.Boolean](https://learn.microsoft.com/en-us/dotnet/api/system.boolean 'System\.Boolean')  
 True if access is authorized; otherwise, false\.
+
+<a name='DiGi.GIS.WebAPI.Query.PredictedYearBuiltRunsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,int,DiGi.WebAPI.Classes.PostOptions,System.Threading.CancellationToken)'></a>
+
+## Query\.PredictedYearBuiltRunsAsync\(this GISWebAPIManager, IEnumerable\<int\>, int, PostOptions, CancellationToken\) Method
+
+Asynchronously lists the prediction runs stored under the given county parts through `gis/yearbuiltdata/predictedyearbuiltruns`: one entry per part, stamp and model identifier, with the number of objects carrying it\.
+
+The stamp is [System\.DateTime\.Ticks](https://learn.microsoft.com/en-us/dotnet/api/system.datetime.ticks 'System\.DateTime\.Ticks'), the value [RemovePredictedYearBuiltsAsync\(this GISWebAPIManager, IEnumerable&lt;int&gt;, long, IEnumerable&lt;string&gt;, bool, int, bool, int, PostOptions, string, CancellationToken\)](DiGi.GIS.WebAPI.md#DiGi.GIS.WebAPI.Modify.RemovePredictedYearBuiltsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,long,System.Collections.Generic.IEnumerable_string_,bool,int,bool,int,DiGi.WebAPI.Classes.PostOptions,string,System.Threading.CancellationToken) 'DiGi\.GIS\.WebAPI\.Modify\.RemovePredictedYearBuiltsAsync\(this DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager, System\.Collections\.Generic\.IEnumerable\<int\>, long, System\.Collections\.Generic\.IEnumerable\<string\>, bool, int, bool, int, DiGi\.WebAPI\.Classes\.PostOptions, string, System\.Threading\.CancellationToken\)') takes. An empty list means no prediction is stored; null means the request failed.
+
+```csharp
+public static System.Threading.Tasks.Task<System.Collections.Generic.List<DiGi.GIS.PostgreSQL.Classes.PredictedYearBuiltRunResult>?> PredictedYearBuiltRunsAsync(this DiGi.GIS.WebAPI.Classes.GISWebAPIManager? gisWebAPIManager, System.Collections.Generic.IEnumerable<int>? countyIds, int commandTimeout=600, DiGi.WebAPI.Classes.PostOptions? postOptions=null, System.Threading.CancellationToken cancellationToken=default(System.Threading.CancellationToken));
+```
+#### Parameters
+
+<a name='DiGi.GIS.WebAPI.Query.PredictedYearBuiltRunsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,int,DiGi.WebAPI.Classes.PostOptions,System.Threading.CancellationToken).gisWebAPIManager'></a>
+
+`gisWebAPIManager` [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager')
+
+The [GISWebAPIManager](DiGi.GIS.WebAPI.Classes.md#DiGi.GIS.WebAPI.Classes.GISWebAPIManager 'DiGi\.GIS\.WebAPI\.Classes\.GISWebAPIManager') instance used to communicate with the Web API\.
+
+<a name='DiGi.GIS.WebAPI.Query.PredictedYearBuiltRunsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,int,DiGi.WebAPI.Classes.PostOptions,System.Threading.CancellationToken).countyIds'></a>
+
+`countyIds` [System\.Collections\.Generic\.IEnumerable&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')[System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.ienumerable-1 'System\.Collections\.Generic\.IEnumerable\`1')
+
+The county parts to list\.
+
+<a name='DiGi.GIS.WebAPI.Query.PredictedYearBuiltRunsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,int,DiGi.WebAPI.Classes.PostOptions,System.Threading.CancellationToken).commandTimeout'></a>
+
+`commandTimeout` [System\.Int32](https://learn.microsoft.com/en-us/dotnet/api/system.int32 'System\.Int32')
+
+The timeout in seconds for the query on the server\. A value of 0 disables it\.
+
+<a name='DiGi.GIS.WebAPI.Query.PredictedYearBuiltRunsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,int,DiGi.WebAPI.Classes.PostOptions,System.Threading.CancellationToken).postOptions'></a>
+
+`postOptions` [DiGi\.WebAPI\.Classes\.PostOptions](https://learn.microsoft.com/en-us/dotnet/api/digi.webapi.classes.postoptions 'DiGi\.WebAPI\.Classes\.PostOptions')
+
+Optional configuration options for the HTTP request\.
+
+<a name='DiGi.GIS.WebAPI.Query.PredictedYearBuiltRunsAsync(thisDiGi.GIS.WebAPI.Classes.GISWebAPIManager,System.Collections.Generic.IEnumerable_int_,int,DiGi.WebAPI.Classes.PostOptions,System.Threading.CancellationToken).cancellationToken'></a>
+
+`cancellationToken` [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken')
+
+The [System\.Threading\.CancellationToken](https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken 'System\.Threading\.CancellationToken') to observe while waiting for the task to complete\.
+
+#### Returns
+[System\.Threading\.Tasks\.Task&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')[System\.Collections\.Generic\.List&lt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult](https://learn.microsoft.com/en-us/dotnet/api/digi.gis.postgresql.classes.predictedyearbuiltrunresult 'DiGi\.GIS\.PostgreSQL\.Classes\.PredictedYearBuiltRunResult')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1 'System\.Collections\.Generic\.List\`1')[&gt;](https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task-1 'System\.Threading\.Tasks\.Task\`1')  
+A task returning the runs, or null when the request failed\.
 
 <a name='DiGi.GIS.WebAPI.Query.RejectionSample(thisSystem.Collections.Generic.IEnumerable_DiGi.GIS.WebAPI.Classes.UpdateItemsResult.Rejection_,int)'></a>
 

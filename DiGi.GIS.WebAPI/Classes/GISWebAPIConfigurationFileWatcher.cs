@@ -134,6 +134,18 @@ namespace DiGi.GIS.WebAPI.Classes
         }
 
         /// <summary>
+        /// Gets a value indicating whether stored year built data may be deleted - whole objects, one prediction run, or user entries withdrawn by moderation.
+        /// <para>Kept apart from <see cref="AllowUpdateYearBuiltData"/> because a delete has no undo: a host can accept new predictions and user entries while refusing removals. A missing value denies.</para>
+        /// </summary>
+        public bool AllowDeleteYearBuiltData
+        {
+            get
+            {
+                return ConfigurationFile.GetValue<bool>(nameof(AllowDeleteYearBuiltData));
+            }
+        }
+
+        /// <summary>
         /// Gets a value indicating whether updates to buildings are permitted based on the configuration file settings.
         /// </summary>
         public bool AllowUpdateBuilding
