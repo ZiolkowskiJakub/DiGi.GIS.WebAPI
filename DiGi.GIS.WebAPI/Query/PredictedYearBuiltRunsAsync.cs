@@ -30,7 +30,6 @@ namespace DiGi.GIS.WebAPI
                 return null;
             }
 
-            // TODO [YearBuiltMaintenanceEndpoints]: the route ships with DiGi.GIS.WebAPI#50 and answers 404 until the gis extension carrying it is deployed. Remove this note once /swagger/gis/swagger.json on api.digiproject.uk lists gis/yearbuiltdata/predictedyearbuiltruns (tracked in DiGi.GIS.WebAPI#51).
             HttpClient? httpClient = gisWebAPIManager.CreateHttpClient<YearBuiltDataController>(nameof(YearBuiltDataController.GetPredictedYearBuiltRunsAsync), out string? path);
             if (httpClient is null || string.IsNullOrWhiteSpace(path))
             {
